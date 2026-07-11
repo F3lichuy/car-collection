@@ -1,0 +1,2684 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Garage — Colección de Coches</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1c130c">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="favicon-64.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mi Garage">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     TOKENS  — themeable via [data-theme]
+     ============================================================ */
+  :root{
+    --bg:#14110f; --bg2:#1c1815; --card:#221d19; --card2:#2a241f;
+    --line:#3a322b; --ink:#f3ece3; --ink-dim:#b6a99a; --ink-faint:#8a7d6f;
+    --accent:#c9302c; --accent2:#e8b04b; --good:#76c66b; --shadow:rgba(0,0,0,.45);
+    --radius:14px; --display:"Bebas Neue",Impact,sans-serif; --body:"Inter",system-ui,sans-serif;
+  }
+  [data-theme="retro"]{
+    --bg:#1d1812; --bg2:#241d15; --card:#2b2318; --card2:#332a1d;
+    --line:#48392618; --line:#473a26; --ink:#f1e4cd; --ink-dim:#c4ab83; --ink-faint:#94795a;
+    --accent:#c0451f; --accent2:#d9a441; --good:#8aa14a; --shadow:rgba(0,0,0,.5);
+  }
+  [data-theme="dark"]{
+    --bg:#0c0d0f; --bg2:#121316; --card:#16181c; --card2:#1d2025;
+    --line:#2a2e35; --ink:#eef1f5; --ink-dim:#9aa3af; --ink-faint:#6b7280;
+    --accent:#ff4d4d; --accent2:#37c0ff; --good:#48d597; --shadow:rgba(0,0,0,.6);
+  }
+  [data-theme="light"]{
+    --bg:#f4f1ea; --bg2:#ebe6dc; --card:#ffffff; --card2:#f6f2ea;
+    --line:#ddd5c7; --ink:#211d18; --ink-dim:#5c5448; --ink-faint:#8c8273;
+    --accent:#b5341d; --accent2:#b8862a; --good:#4f8a3d; --shadow:rgba(120,110,90,.18);
+  }
+  [data-theme="rosso"]{
+    --bg:#1a0d0c; --bg2:#240f0d; --card:#2b1311; --card2:#371613;
+    --line:#4d211c; --ink:#fbeae6; --ink-dim:#d3a59c; --ink-faint:#a8746a;
+    --accent:#ff2a1a; --accent2:#ffce4a; --good:#6fd06a; --shadow:rgba(0,0,0,.55);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 600px at 80% -10%, var(--bg2), var(--bg)) fixed;
+    color:var(--ink); font-family:var(--body);
+    -webkit-font-smoothing:antialiased; line-height:1.45; min-height:100vh;
+  }
+  a{color:inherit}
+  button{font-family:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 18px 80px}
+  /* ---------- Header ---------- */
+  header.top{
+    position:sticky;top:0;z-index:40;
+    background:linear-gradient(var(--bg), color-mix(in srgb,var(--bg) 80%, transparent));
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
+  }
+  .topbar{max-width:1180px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .brand{display:flex;align-items:baseline;gap:10px;flex:1;min-width:200px}
+  .brand .wm{font-family:var(--display);font-size:34px;letter-spacing:1px;line-height:.9}
+  .brand .wm b{color:var(--accent)}
+  .brand .sub{color:var(--ink-faint);font-size:12px;text-transform:uppercase;letter-spacing:2px}
+  .themes{display:flex;gap:6px;flex-wrap:wrap}
+  .themes button{
+    border:1px solid var(--line);background:var(--card);color:var(--ink-dim);
+    border-radius:999px;padding:6px 11px;font-size:12px;display:flex;align-items:center;gap:6px;
+  }
+  .themes button.on{border-color:var(--accent);color:var(--ink)}
+  .swatch{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid #0003}
+  /* ---------- Tabs ---------- */
+  .tabs{display:flex;gap:4px;max-width:1180px;margin:0 auto;padding:0 18px}
+  .tabs button{
+    background:none;border:none;border-bottom:2px solid transparent;
+    color:var(--ink-faint);padding:12px 16px;font-size:14px;font-weight:600;letter-spacing:.3px;
+  }
+  .tabs button.on{color:var(--ink);border-color:var(--accent)}
+  .tabs button:hover{color:var(--ink-dim)}
+  /* ---------- Toolbar ---------- */
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:20px 0 14px}
+  .toolbar .grow{flex:1;min-width:120px}
+  .btn{
+    border:1px solid var(--line);background:var(--card);color:var(--ink);
+    border-radius:10px;padding:9px 14px;font-size:13px;font-weight:600;
+    display:inline-flex;align-items:center;gap:7px;transition:.15s;
+  }
+  .btn:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{filter:brightness(1.08)}
+  .btn.ghost{background:transparent}
+  .btn.sm{padding:6px 10px;font-size:12px;border-radius:8px}
+  select.ctrl,input.ctrl{
+    background:var(--card);border:1px solid var(--line);color:var(--ink);
+    border-radius:10px;padding:9px 12px;font-size:13px;
+  }
+  input.ctrl::placeholder{color:var(--ink-faint)}
+  /* ---------- Chips / tag filters ---------- */
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin:4px 0 18px}
+  .chip{
+    border:1px solid var(--line);background:var(--card);color:var(--ink-dim);
+    border-radius:999px;padding:5px 12px;font-size:12px;font-weight:600;transition:.15s;
+  }
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .chip .x{opacity:.7;margin-left:4px}
+  /* ---------- Car grid ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:16px}
+  .car{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    overflow:hidden;display:flex;flex-direction:column;transition:.18s;position:relative;
+    box-shadow:0 2px 0 var(--shadow);
+  }
+  .car:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+  .car .ph{aspect-ratio:16/10;background:var(--card2);position:relative;overflow:hidden}
+  .car .ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .car .ph .noimg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint);font-size:32px}
+  .car .rankbadge{
+    position:absolute;top:8px;left:8px;background:var(--accent2);color:#1a1a1a;
+    font-family:var(--display);font-size:18px;padding:1px 9px;border-radius:8px;letter-spacing:1px;
+  }
+  .car .avgbadge{
+    position:absolute;top:8px;right:8px;background:#000a;color:#fff;backdrop-filter:blur(4px);
+    border-radius:8px;padding:3px 8px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:4px;
+  }
+  .car .body{padding:12px 13px 13px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .car .nm{font-family:var(--display);font-size:21px;letter-spacing:.6px;line-height:.95}
+  .car .meta{color:var(--ink-faint);font-size:12px;display:flex;gap:8px;flex-wrap:wrap;margin-top:-3px}
+  .car .meta b{color:var(--accent2);font-weight:600}
+  .car .tags{display:flex;gap:5px;flex-wrap:wrap}
+  .tag{font-size:10.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;
+       border:1px solid var(--line);border-radius:6px;padding:2px 7px;color:var(--ink-dim);background:var(--card2)}
+  .car .bars{display:flex;flex-direction:column;gap:4px;margin-top:2px}
+  .barrow{display:flex;align-items:center;gap:7px;font-size:10.5px;color:var(--ink-dim)}
+  .barrow .lab{width:62px;text-transform:capitalize;flex-shrink:0}
+  .barrow .track{flex:1;height:8px;background:var(--card2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+  .barrow .fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;min-width:3px}
+  .barrow .v{width:18px;text-align:right;color:var(--ink);font-weight:700}
+  .car .acts{display:flex;gap:6px;margin-top:auto;padding-top:4px}
+  .car .acts .btn.sm{flex:1;justify-content:center}
+  /* ---------- Empty state ---------- */
+  .empty{text-align:center;padding:70px 20px;color:var(--ink-faint)}
+  .empty .big{font-size:46px;margin-bottom:6px}
+  .empty h2{font-family:var(--display);font-size:30px;color:var(--ink);letter-spacing:1px;margin:6px 0}
+  /* ---------- Modal ---------- */
+  .scrim{position:fixed;inset:0;background:#000b;backdrop-filter:blur(3px);z-index:60;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+  .scrim.show{display:flex}
+  .modal{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;width:100%;max-width:560px;
+    box-shadow:0 30px 80px var(--shadow);overflow:hidden;animation:pop .18s ease;
+  }
+  .modal.wide{max-width:840px}
+  @keyframes pop{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+  .modal .mh{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .modal .mh h3{margin:0;font-family:var(--display);font-size:24px;letter-spacing:.8px}
+  .modal .mb{padding:18px 20px;display:flex;flex-direction:column;gap:14px;max-height:70vh;overflow:auto}
+  .modal .mf{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+  .iconbtn{background:none;border:none;color:var(--ink-faint);font-size:22px;line-height:1;padding:4px}
+  .iconbtn:hover{color:var(--ink)}
+  .field label{display:block;font-size:12px;color:var(--ink-dim);margin-bottom:5px;font-weight:600;letter-spacing:.3px}
+  .field input,.field select,.field textarea{
+    width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--ink);
+    border-radius:10px;padding:10px 12px;font-size:14px;
+  }
+  .field textarea{resize:vertical;min-height:64px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .three{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:12px}
+  .ratings{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .rate label{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-dim);margin-bottom:4px;text-transform:capitalize;font-weight:600}
+  .rate label .num{color:var(--accent2);font-family:var(--display);font-size:18px}
+  .rate input[type=range]{width:100%;accent-color:var(--accent)}
+  .dropimg{
+    border:1.5px dashed var(--line);border-radius:12px;padding:18px;text-align:center;
+    color:var(--ink-faint);font-size:13px;cursor:pointer;background:var(--bg2);
+  }
+  .dropimg:hover{border-color:var(--accent)}
+  .preview{width:100%;max-height:170px;object-fit:cover;border-radius:10px;margin-top:8px;display:none}
+  /* tag editor inside modal */
+  .tagpick{display:flex;gap:6px;flex-wrap:wrap}
+  .tagpick .tg{
+    border:1px solid var(--line);background:var(--bg2);color:var(--ink-dim);
+    border-radius:999px;padding:5px 11px;font-size:12px;font-weight:600;
+  }
+  .tagpick .tg.on{background:var(--accent2);border-color:var(--accent2);color:#1a1a1a}
+  /* specs editor */
+  .specsec{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--bg2);display:flex;flex-direction:column;gap:10px}
+  .specthumbs{display:flex;gap:6px;flex-wrap:wrap}
+  .specthumbs img{width:54px;height:54px;object-fit:cover;border-radius:7px;border:1px solid var(--line)}
+  /* ---------- Detail view ---------- */
+  .detailhead{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px}
+  .detailhead .big{font-family:var(--display);font-size:52px;letter-spacing:1px;line-height:.9}
+  .detailgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+  .gallery img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+  /* ============================================================
+     ACTIVITIES
+     ============================================================ */
+  .actnav{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 22px}
+  .actnav button{
+    border:1px solid var(--line);background:var(--card);color:var(--ink-dim);
+    border-radius:12px;padding:14px 18px;font-weight:700;font-size:14px;letter-spacing:.3px;
+    display:flex;flex-direction:column;gap:2px;align-items:flex-start;min-width:150px;transition:.15s;
+  }
+  .actnav button .ic{font-size:22px}
+  .actnav button small{font-weight:500;color:var(--ink-faint);font-size:11px;text-transform:uppercase;letter-spacing:1px}
+  .actnav button.on{border-color:var(--accent);color:var(--ink);transform:translateY(-2px)}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .panel h3{font-family:var(--display);font-size:26px;letter-spacing:.8px;margin:0 0 4px}
+  .panel .lead{color:var(--ink-dim);font-size:13px;margin:0 0 16px}
+  /* five-car */
+  .fivewrap{display:grid;grid-template-columns:1.3fr 1fr;gap:18px}
+  .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+  .slot{
+    aspect-ratio:1;border:1.5px dashed var(--line);border-radius:12px;background:var(--bg2);
+    display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;color:var(--ink-faint);
+  }
+  .slot.full{border-style:solid;cursor:pointer}
+  .slot img{width:100%;height:100%;object-fit:cover}
+  .slot .cap{position:absolute;left:0;right:0;bottom:0;background:#000a;color:#fff;font-size:11px;padding:4px 6px;font-weight:600}
+  .slot .rm{position:absolute;top:4px;right:4px;background:#000a;color:#fff;border:none;border-radius:6px;width:22px;height:22px;font-size:14px}
+  .slot .n{font-family:var(--display);font-size:30px;opacity:.5}
+  .picker{max-height:430px;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--bg2)}
+  .pickrow{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer}
+  .pickrow:hover{background:var(--card2)}
+  .pickrow img,.pickrow .pn{width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--card2);display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .pickrow .info{flex:1;min-width:0}
+  .pickrow .info .t{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pickrow .info .s{font-size:11px;color:var(--ink-faint)}
+  .pickrow.dis{opacity:.4;pointer-events:none}
+  .budgetbar{display:flex;align-items:center;gap:10px;margin:12px 0;flex-wrap:wrap}
+  .budgetbar .meter{flex:1;min-width:140px;height:8px;background:var(--card2);border-radius:99px;overflow:hidden}
+  .budgetbar .meter .f{height:100%;background:linear-gradient(90deg,var(--good),var(--accent2));border-radius:99px}
+  .budgetbar .meter .f.over{background:var(--accent)}
+  .combolist{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  .comboitem{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg2)}
+  .comboitem .t{flex:1;font-weight:600;font-size:13px}
+  .comboitem .mini{display:flex;gap:3px}
+  .comboitem .mini img,.comboitem .mini span{width:26px;height:26px;border-radius:5px;object-fit:cover;background:var(--card2)}
+  /* top100 */
+  .t100{display:flex;flex-direction:column;gap:6px}
+  .t100row{
+    display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--line);
+    border-radius:10px;padding:8px 12px;
+  }
+  .t100row .pos{font-family:var(--display);font-size:26px;width:48px;text-align:center;color:var(--accent2);flex-shrink:0}
+  .t100row .pos input{width:46px;background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:4px;text-align:center;font-family:var(--display);font-size:18px}
+  .t100row img,.t100row .pn{width:46px;height:46px;border-radius:8px;object-fit:cover;background:var(--card2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+  .t100row .info{flex:1;min-width:0}
+  .t100row .info .t{font-weight:700;font-size:14px}
+  .t100row .info .s{font-size:11px;color:var(--ink-faint)}
+  .t100row .medal{font-size:22px}
+  .unranked{margin-top:18px}
+  .unranked h4{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-faint);margin:0 0 8px}
+  .pool{display:flex;gap:8px;flex-wrap:wrap}
+  .poolcar{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 6px;background:var(--bg2);font-size:12px;font-weight:600;cursor:pointer}
+  .poolcar:hover{border-color:var(--accent2)}
+  .poolcar img,.poolcar .pn{width:26px;height:26px;border-radius:50%;object-fit:cover;background:var(--card2)}
+  .poolcar.sel{outline:2px solid var(--accent2);border-color:var(--accent2)}
+  .tierrow{display:flex;gap:10px;align-items:stretch;margin-bottom:8px}
+  .tierlabel{width:54px;flex-shrink:0;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:26px;color:#1a1a1a;cursor:pointer}
+  .tierdrop{flex:1;min-height:54px;border:1px dashed var(--line);border-radius:10px;background:var(--bg2);display:flex;gap:6px;flex-wrap:wrap;padding:7px;align-content:flex-start}
+  .tierdrop.dragover{border-color:var(--accent2);background:color-mix(in srgb,var(--accent2) 14%,var(--bg2))}
+  .poolcar[draggable]{cursor:grab}
+  /* bracket display */
+  .bracket{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px}
+  .bcol{min-width:188px;display:flex;flex-direction:column;gap:10px}
+  .bcol-h{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-faint);text-align:center}
+  .bmatch{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--bg2)}
+  .bm-row{display:flex;align-items:center;gap:7px;padding:6px 8px;font-size:12px;border-bottom:1px solid var(--line)}
+  .bm-row:last-child{border-bottom:none}
+  .bm-row img,.bm-row .pn{width:30px;height:24px;border-radius:4px;object-fit:cover;background:var(--card2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px}
+  .bm-row .bm-nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bm-row.win{background:color-mix(in srgb,var(--good) 22%,transparent);font-weight:700}
+  .bm-row.lose{opacity:.5;text-decoration:line-through}
+  .bm-row.bye{justify-content:center;color:var(--ink-faint);font-style:italic}
+  .bm-ck{color:var(--good);font-weight:800}
+  /* carousel */
+  .carousel{position:relative;border-radius:12px;overflow:hidden;background:var(--card2)}
+  .carousel>img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block}
+  .cnav{position:absolute;top:50%;transform:translateY(-50%);background:#000a;color:#fff;border:none;width:42px;height:56px;font-size:26px;cursor:pointer;z-index:2}
+  .cnav.prev{left:0;border-radius:0 10px 10px 0}
+  .cnav.next{right:0;border-radius:10px 0 0 10px}
+  .cnav:hover{background:#000d}
+  .cdots{position:absolute;bottom:8px;left:0;right:0;display:flex;gap:5px;justify-content:center;z-index:2}
+  .cdots span{width:8px;height:8px;border-radius:50%;background:#fff7;cursor:pointer}
+  .cdots span.on{background:#fff}
+  /* tournament */
+  .vs{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;margin:10px 0 18px}
+  .vscard{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--bg2);cursor:pointer;transition:.15s}
+  .vscard:hover{border-color:var(--accent);transform:translateY(-3px)}
+  .vscard .ph{aspect-ratio:16/10;background:var(--card2);position:relative}
+  .vscard .ph img{width:100%;height:100%;object-fit:cover}
+  .vscard .ph .noimg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--ink-faint)}
+  .vscard .cap{padding:10px 12px}
+  .vscard .cap .t{font-family:var(--display);font-size:20px;letter-spacing:.5px}
+  .vscard .cap .s{font-size:11px;color:var(--ink-faint)}
+  .vsmid{font-family:var(--display);font-size:30px;color:var(--accent)}
+  .tourbar{height:8px;background:var(--card2);border-radius:99px;overflow:hidden;margin-bottom:6px}
+  .tourbar .f{height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:99px;font-weight:600;font-size:13px;
+    opacity:0;pointer-events:none;transition:.25s;z-index:90;box-shadow:0 10px 30px var(--shadow)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .count{color:var(--ink-faint);font-size:13px;font-weight:600}
+  /* cloud / auth */
+  .authArea{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .authArea .authuser{font-size:12px;font-weight:700;color:var(--accent2);padding:0 4px}
+  body.viewing #addBtn,body.viewing #importBtn,body.viewing #exportBtn,body.viewing #backupBtn,
+  body.viewing #catBtn,body.viewing #irlAddBtn{display:none}
+  body.viewing .car .acts .btn[onclick^="openEdit"],
+  body.viewing .car .acts .btn[onclick^="openIrlEdit"]{display:none}
+  .stlb{position:fixed;inset:0;background:#000d;display:none;align-items:center;justify-content:center;z-index:80;padding:24px;cursor:zoom-out}
+  .stlb.show{display:flex}
+  .stlb img{max-width:92vw;max-height:90vh;border-radius:10px}
+  .story-actions{display:flex;gap:8px;margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+  .spthumb{position:relative;width:64px;height:64px}
+  .spthumb img{width:64px;height:64px;object-fit:cover;border-radius:7px;border:1px solid var(--line);cursor:pointer;display:block}
+  .spthumb.cover img{border-color:var(--accent2);box-shadow:0 0 0 2px var(--accent2)}
+  .spthumb .cv{position:absolute;bottom:0;left:0;right:0;background:var(--accent2);color:#1a1a1a;font-size:8px;font-weight:700;text-align:center;border-radius:0 0 6px 6px;padding:1px}
+  .spthumb .rm{position:absolute;top:-6px;right:-6px;background:var(--accent);color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:11px;line-height:1}
+  @media(max-width:760px){
+    .fivewrap{grid-template-columns:1fr}
+    .detailgrid{grid-template-columns:1fr}
+    .two,.three,.ratings{grid-template-columns:1fr}
+    .brand .wm{font-size:28px}
+  }
+  /* ---------- móvil ---------- */
+  @media(max-width:600px){
+    .wrap{padding:0 12px 92px}
+    /* header compacto: marca arriba; temas y cuenta en filas que se deslizan */
+    .topbar{padding:10px 12px;gap:8px}
+    .brand{flex:1 1 100%;min-width:0;gap:8px}
+    .brand .wm{font-size:24px}
+    .brand .sub{display:none}
+    .authArea{order:2;flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;-webkit-overflow-scrolling:touch}
+    .themes{order:3;flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .authArea::-webkit-scrollbar,.themes::-webkit-scrollbar,.tabs::-webkit-scrollbar{display:none}
+    .authArea .btn,.authArea .authuser,.themes button{flex:0 0 auto;white-space:nowrap}
+    .themes button{font-size:11px;padding:5px 9px}
+    /* pestañas deslizables horizontalmente */
+    .tabs{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding:0 12px}
+    .tabs button{flex:0 0 auto;white-space:nowrap;padding:11px 13px;font-size:13px}
+    /* barra de herramientas ordenada */
+    .toolbar{gap:8px}
+    .toolbar .grow{flex:1 1 100%}
+    .toolbar #sort,.toolbar .ctrl:not(.grow){flex:1 1 100%}
+    .toolbar .btn{flex:1 1 auto;justify-content:center}
+    /* una columna de coches */
+    .grid{grid-template-columns:1fr}
+    .car .nm{font-size:20px}
+    /* duelos / torneo: tarjetas apiladas */
+    .vs{grid-template-columns:1fr;gap:6px}
+    .vsmid{margin:2px 0}
+    .detailhead .big{font-size:34px}
+    /* modales casi a pantalla completa */
+    .scrim{padding:14px 8px}
+    .modal .mb{padding:14px;max-height:76vh}
+    .modal .mh{padding:14px 16px}
+    .modal .mf{flex-wrap:wrap}
+    .modal .mf .btn{flex:1 1 auto;justify-content:center}
+    /* actividades: nav deslizable */
+    .actnav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .actnav button{flex:0 0 auto;min-width:auto}
+    /* el aviso de instalar no tapa contenido al fondo */
+    #pwaBar{left:8px;right:8px;transform:none;max-width:none;justify-content:center}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body data-theme="retro">
+<header class="top">
+  <div class="topbar">
+    <div class="brand">
+      <div class="wm">MI <b>GARAGE</b></div>
+      <div class="sub">colección personal</div>
+    </div>
+    <div class="themes" id="themes"></div>
+    <button class="btn sm" id="langToggle" title="Language / Idioma" style="white-space:nowrap">🌐 ES</button>
+    <div class="authArea" id="authArea"></div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button data-tab="garage" class="on">Garage</button>
+    <button data-tab="irl">Manejados IRL</button>
+    <button data-tab="activities">Actividades</button>
+    <button data-tab="market">🏪 Marketplace</button>
+    <button data-tab="battle">⚔️ Spec Battle</button>
+    <button data-tab="historia">📖 Historia</button>
+  </div>
+</header>
+<div class="wrap">
+  <!-- ============ GARAGE TAB ============ -->
+  <section id="tab-garage">
+    <div class="toolbar">
+      <input class="ctrl grow" id="search" placeholder="Buscar marca, modelo, año…">
+      <select class="ctrl" id="sort">
+        <option value="avg">Mejor promedio</option>
+        <option value="name">Nombre (A-Z)</option>
+        <option value="estilo">Estilo</option>
+        <option value="diseno">Coleccionable</option>
+        <option value="historia">Importancia histórica</option>
+        <option value="rendimiento">Rendimiento</option>
+        <option value="exclusividad">Exclusividad</option>
+        <option value="deseo">Deseo personal</option>
+        <option value="priceHi">Valor (mayor → menor)</option>
+        <option value="priceLo">Valor (menor → mayor)</option>
+        <option value="recent">Más recientes</option>
+      </select>
+      <button class="btn ghost sm" id="importBtn">⬆ Importar</button>
+      <button class="btn ghost sm" id="exportBtn">⬇ Exportar</button>
+      <button class="btn ghost sm" id="backupBtn" title="Respaldo completo: coches + IRL + combos + Top 100">⬇ Respaldo</button>
+      <button class="btn ghost sm" id="filterBtn">🔖 Filtrar</button>
+      <button class="btn ghost sm" id="catBtn">🏷 Categorías</button>
+      <button class="btn primary" id="addBtn">＋ Añadir coche</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+    <div class="chips" id="tagFilters" style="display:none"></div>
+    <div class="count" id="count"></div>
+    <div id="garageView"></div>
+  </section>
+  <!-- ============ IRL TAB ============ -->
+  <section id="tab-irl" style="display:none">
+    <div class="toolbar">
+      <input class="ctrl grow" id="irlSearch" placeholder="Buscar coche manejado…">
+      <select class="ctrl" id="irlSort">
+        <option value="avg">Mejor promedio</option>
+        <option value="name">Nombre (A-Z)</option>
+        <option value="manejo">Manejo</option>
+        <option value="motor">Motor / sonido</option>
+        <option value="diversion">Diversión</option>
+        <option value="sorpresa">Sorpresa vs expectativa</option>
+        <option value="recent">Más recientes</option>
+      </select>
+      <button class="btn primary" id="irlAddBtn">＋ Registrar manejo</button>
+    </div>
+    <div class="count" id="irlCount"></div>
+    <div id="irlView"></div>
+  </section>
+  <!-- ============ ACTIVITIES TAB ============ -->
+  <section id="tab-activities" style="display:none">
+    <div class="actnav" id="actnav">
+      <button data-act="five" class="on"><span class="ic">🅿️</span> Garaje de ensueño <small>combo con límites</small></button>
+      <button data-act="tier"><span class="ic">📊</span> Tier list <small>S/A/B/C/D</small></button>
+      <button data-act="bracket"><span class="ic">🏆</span> Torneo <small>bracket + podio</small></button>
+      <button data-act="top100"><span class="ic">🥇</span> Top 100 <small>tu ranking</small></button>
+      <button data-act="tourney"><span class="ic">⚔️</span> Duelos <small>esto o aquello</small></button>
+    </div>
+    <div id="actView"></div>
+  </section>
+  <!-- ============ MARKETPLACE TAB ============ -->
+  <section id="tab-market" style="display:none"></section>
+  <!-- ============ SPEC BATTLE TAB ============ -->
+  <section id="tab-battle" style="display:none"></section>
+  <!-- ============ HISTORIA TAB ============ -->
+  <section id="tab-historia" style="display:none"></section>
+</div>
+<!-- DETAIL MODAL -->
+<div class="scrim" id="detailScrim"><div class="modal wide" id="detailModal"></div></div>
+<!-- ADD/EDIT MODAL -->
+<div class="scrim" id="editScrim"><div class="modal wide" id="editModal"></div></div>
+<!-- IRL ADD/EDIT MODAL -->
+<div class="scrim" id="irlScrim"><div class="modal wide" id="irlModal"></div></div>
+<!-- IRL DETAIL MODAL -->
+<div class="scrim" id="irlDetailScrim"><div class="modal wide" id="irlDetailModal"></div></div>
+<!-- CATEGORY MANAGER MODAL -->
+<div class="scrim" id="catScrim"><div class="modal" id="catModal"></div></div>
+<!-- GENERIC PROMPT MODAL -->
+<div class="scrim" id="promptScrim"><div class="modal" id="promptModal"></div></div>
+<!-- shared datalists for brand/model autocomplete -->
+<datalist id="brandList"></datalist>
+<datalist id="modelList"></datalist>
+<div class="stlb" id="stLightbox" onclick="this.classList.remove('show')"><img id="stLightboxImg" src=""></div>
+<div class="toast" id="toast"></div>
+<div id="pwaBar" style="display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:300;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 12px;align-items:center;gap:10px;box-shadow:0 12px 34px var(--shadow);font-size:13px;max-width:92vw"></div>
+<script>
+/* ============================================================
+   i18n — inglés por defecto, con opción de español.
+   No toca el código de la app: traduce la interfaz en vivo
+   (nodos de texto + placeholder/title) español → inglés.
+   ============================================================ */
+(function(){
+  var LANG="en";
+  try{ LANG = localStorage.getItem("mg-lang") || "en"; }catch(e){}
+
+  var DICT = {
+    // header / tabs
+    "MI":"MY","GARAGE":"GARAGE","colección personal":"personal collection",
+    "Garage":"Garage","Manejados IRL":"Driven IRL","Actividades":"Activities",
+    "🏪 Marketplace":"🏪 Marketplace","📖 Historia":"📖 Stories",
+    // sort / toolbar
+    "Mejor promedio":"Best average","Nombre (A-Z)":"Name (A-Z)","Estilo":"Style",
+    "Coleccionable":"Collectible","Historia":"History","Importancia histórica":"Historical importance",
+    "Rendimiento":"Performance","Exclusividad":"Exclusivity","Deseo":"Desire","Deseo personal":"Personal desire",
+    "Valor (mayor → menor)":"Value (high → low)","Valor (menor → mayor)":"Value (low → high)",
+    "Más recientes":"Most recent","⬆ Importar":"⬆ Import","⬇ Exportar":"⬇ Export","⬇ Respaldo":"⬇ Backup",
+    "Respaldo completo: coches + IRL + combos + Top 100":"Full backup: cars + IRL + combos + Top 100",
+    "🔖 Filtrar":"🔖 Filter","🏷 Categorías":"🏷 Categories","＋ Añadir coche":"＋ Add car",
+    "Buscar marca, modelo, año…":"Search brand, model, year…",
+    // IRL toolbar
+    "Buscar coche manejado…":"Search a car you've driven…","Manejo":"Driving","Motor / sonido":"Engine / sound",
+    "Diversión":"Fun","Sorpresa vs expectativa":"Surprise vs expectation","＋ Registrar manejo":"＋ Log a drive",
+    // activities nav
+    "Garaje de ensueño":"Dream garage","combo con límites":"combo with limits","Tier list":"Tier list",
+    "Torneo":"Tournament","bracket + podio":"bracket + podium","Top 100":"Top 100","tu ranking":"your ranking",
+    "Duelos":"Duels","esto o aquello":"this or that",
+    // garage empty / results
+    "Tu garage está vacío":"Your garage is empty",
+    "Importa tu colección o añade tu primer coche favorito.":"Import your collection or add your first favorite car.",
+    "Sin resultados":"No results","Prueba con otra búsqueda o quita filtros.":"Try another search or clear filters.",
+    "Limpiar ✕":"Clear ✕","Limpiar":"Clear",
+    // detail
+    "Coche":"Car","promedio":"average","Valor":"Value","Notas":"Notes","Sin fotos":"No photos",
+    "💲 Precios":"💲 Prices","✎ Editar":"✎ Edit","Eliminar":"Delete","Cerrar":"Close","Versión":"Version",
+    "Ver":"View",
+    // edit modal
+    "Editar coche":"Edit car","Añadir coche":"Add car","Marca":"Brand","Año":"Year",
+    "Modelo / Nombre *":"Model / Name *","Moneda":"Currency","💲 Ver precios de mercado":"💲 See market prices",
+    "Categorías / Tags":"Categories / Tags","Nueva categoría…":"New category…","＋ Crear":"＋ Create",
+    "Versiones, color y fotos — toca una foto para ponerla de ★ portada":"Versions, color and photos — tap a photo to set it as ★ cover",
+    "＋ Añadir otra versión":"＋ Add another version","Calificación (1 – 10)":"Rating (1 – 10)",
+    "Por qué te gusta, recuerdos, specs…":"Why you like it, memories, specs…","Cancelar":"Cancel","Guardar":"Save",
+    "Versión / Edición":"Version / Edition","Color":"Color","Detalles (VIN, motor…)":"Details (VIN, engine…)",
+    "Sin fotos en esta versión":"No photos in this version","📷 Añadir foto(s)":"📷 Add photo(s)",
+    "Quitar versión":"Remove version","Poner de portada":"Set as cover","★ portada":"★ cover","Quitar":"Remove",
+    // categories modal
+    "Categorías":"Categories",
+    "Crea y gestiona las etiquetas que puedes asignar a cada coche.":"Create and manage the tags you can assign to each car.",
+    "Nueva categoría (p.ej. Targa, Le Mans, V12…)":"New category (e.g. Targa, Le Mans, V12…)",
+    "Sin categorías todavía.":"No categories yet.",
+    // import
+    "Importar garage":"Import garage","➕ Añadir a mi garage actual":"➕ Add to my current garage",
+    "conserva los actuales":"keeps the current ones","♻ Reemplazar todo":"♻ Replace everything",
+    "borra los actuales":"deletes the current ones",
+    "Funciona con exportaciones viejas (4 calificaciones, sin tags) y con respaldos completos.":"Works with old exports (4 ratings, no tags) and full backups.",
+    // marketplace
+    "Buscar marca o modelo…":"Search brand or model…",
+    "Coches que la gente ha agregado. Añádelos a tu garage y ponles tus calificaciones.":"Cars people have added. Add them to your garage and give them your ratings.",
+    "Coches que la comunidad ha agregado. Añádelos a tu garage y ponles tus calificaciones.":"Cars the community has added. Add them to your garage and give them your ratings.",
+    "Cargando…":"Loading…","No disponible.":"Not available.",
+    "Sin coches todavía. ¡Agrega el primero!":"No cars yet. Add the first one!",
+    "➕ A mi garage":"➕ To my garage","Error al cargar.":"Error loading.",
+    "🔧 Admin activo":"🔧 Admin active","🔧 Modo admin":"🔧 Admin mode",
+    "Elegir":"Choose","Sin imagen":"No image","Sin color":"No color",
+    "Elige la versión / color que quieres. Si ya tienes este coche, se añade como otra versión.":"Choose the version / color you want. If you already have this car, it's added as another version.",
+    "Este coche aún no tiene fotos; se añadirá sin imagen (puedes ponerle la tuya después).":"This car has no photos yet; it will be added without an image (you can add yours later).",
+    "· Admin: 🗑 quita versiones.":"· Admin: 🗑 removes versions.",
+    "· Admin: puedes borrar coches o versiones.":"· Admin: you can delete cars or versions.",
+    "Quitar versión del marketplace":"Remove version from marketplace","Borrar del marketplace":"Delete from marketplace",
+    "Añadir specs seleccionados":"Add selected specs","Ese coche no tiene specs.":"That car has no specs.",
+    // auth / social
+    "☁ Iniciar sesión":"☁ Sign in","🔎 Descubrir":"🔎 Discover","👥 Amigos":"👥 Friends",
+    "🌐 Público":"🌐 Public","🔒 Privado":"🔒 Private","🔗 Mi enlace":"🔗 My link","Salir":"Sign out",
+    "← Volver a mi garage":"← Back to my garage","✓ Amigo":"✓ Friend","➕ Agregar amigo":"➕ Add friend",
+    "👁 Viendo":"👁 Viewing","Crear cuenta":"Create account","Iniciar sesión":"Sign in","Correo":"Email",
+    "Contraseña":"Password","mínimo 6 caracteres":"minimum 6 characters","Entrar":"Enter","Crea una":"Create one",
+    "Inicia sesión":"Sign in","Elige tu nombre de usuario":"Choose your username","Usuario":"Username",
+    "Mi garage es público (otros pueden verlo)":"My garage is public (others can see it)",
+    "🔎 Descubrir garages":"🔎 Discover garages","Buscar usuario…":"Search user…",
+    "Escribe para buscar usuarios con garage público.":"Type to find users with a public garage.",
+    "Conéctate para buscar.":"Sign in to search.","Escribe al menos 2 letras.":"Type at least 2 letters.",
+    "Sin resultados públicos.":"No public results.","Error al buscar.":"Error searching.","👥 Mis amigos":"👥 My friends",
+    "Aún no agregas amigos. Entra a un garage público (🔎 Descubrir) y pulsa \"➕ Agregar amigo\".":"You haven't added friends yet. Open a public garage (🔎 Discover) and tap \"➕ Add friend\".",
+    "Tus amigos pusieron su garage en privado.":"Your friends set their garage to private.",
+    "tu@correo.com":"you@email.com","tu_usuario":"your_username",
+    // price menu
+    "Valor de mercado y ventas recientes":"Market value and recent sales","Subastas recientes y resultados":"Recent auctions and results",
+    "Subastas modernas / enthusiast":"Modern / enthusiast auctions","Subastas premium / coleccionables":"Premium / collectible auctions",
+    "Clásicos y muscle cars":"Classics and muscle cars","Búsqueda general":"General search","Precio / a la venta":"Price / for sale",
+    "Abre el valor de mercado y subastas recientes en sitios reales:":"Open market value and recent auctions on real sites:",
+    // themes
+    "Garage retro":"Retro garage","Oscuro deportivo":"Sporty dark","Claro minimalista":"Minimal light","Rosso Corsa":"Rosso Corsa",
+    // five / combo
+    "Arma tu combo soñado. Ajusta cuántos coches y activa límites opcionales (modo realista = cada coche aporta una categoría distinta). Guárdalo con nombre.":"Build your dream combo. Adjust how many cars and enable optional limits (realistic mode = each car brings a different category). Save it with a name.",
+    "Modo realista":"Realistic mode","Época":"Era","Presupuesto (opcional):":"Budget (optional):",
+    "⚙ Modo realista — categoría requerida por posición":"⚙ Realistic mode — required category per slot","Cualquiera":"Any",
+    "El selector de coches solo dejará elegir los que cumplan la categoría de la siguiente posición vacía.":"The car picker will only let you choose those matching the category of the next empty slot.",
+    "Nombre del combo (p.ej. 'Fin de semana italiano')":"Combo name (e.g. 'Italian weekend')",
+    "💾 Guardar combo":"💾 Save combo","🔗 Compartir":"🔗 Share","Elige tus coches":"Choose your cars",
+    "No hay coches en tu garage.":"No cars in your garage.","Combos guardados":"Saved combos","Cargar":"Load",
+    "Cualquier época":"Any era","Clásico (pre-1975)":"Classic (pre-1975)","Retro (1975–1999)":"Retro (1975–1999)",
+    "Moderno (2000–2014)":"Modern (2000–2014)","Actual (2015+)":"Current (2015+)","Sin año":"No year",
+    // tier
+    "Añade coches primero.":"Add cars first.","Todos los coches":"All cars","Por categoría":"By category","Por época":"By era",
+    "Toca un coche para seleccionarlo y luego toca un nivel (S, A, B, C, D). Puedes filtrar por categoría o por época.":"Tap a car to select it, then tap a tier (S, A, B, C, D). You can filter by category or era.",
+    "Filtrar:":"Filter:","● seleccionado — toca un nivel":"● selected — tap a tier",
+    "⚡ Autollenar por promedio":"⚡ Auto-fill by average","Vaciar":"Clear",
+    "Sin clasificar — toca uno y luego un nivel (o aquí para quitarlo)":"Unranked — tap one then a tier (or here to remove it)",
+    "Todos clasificados 🎉":"All ranked 🎉",
+    // bracket
+    "Necesitas al menos 2 coches.":"You need at least 2 cars.","Torneo — bracket":"Tournament — bracket",
+    "Eliminatorias por rondas; al final, podio 🥇🥈🥉 con ranking completo.":"Knockout rounds; at the end, a 🥇🥈🥉 podium with full ranking.",
+    "▶ Empezar torneo":"▶ Start tournament","Final":"Final","Semifinal":"Semifinal","Cuartos":"Quarterfinals","Octavos":"Round of 16",
+    "VS":"VS","✕ Reiniciar":"✕ Reset","🏆 Campeón del torneo":"🏆 Tournament champion",
+    "El camino — quién eliminó a quién":"The path — who knocked out whom","↻ Otro torneo":"↻ Another tournament","pasa directo":"bye",
+    // top100
+    "Tu ranking definitivo. Asigna una posición a cada coche (1 = el mejor). Edita el número para reordenar.":"Your definitive ranking. Assign a position to each car (1 = best). Edit the number to reorder.",
+    "Vaciar ranking":"Clear ranking",
+    "Aún no has rankeado ningún coche. Toca uno abajo o usa autollenar.":"You haven't ranked any car yet. Tap one below or use auto-fill.",
+    "Sin posición — toca para añadir al final":"No position — tap to add at the end",
+    // duels
+    "Necesitas al menos 2 coches para jugar.":"You need at least 2 cars to play.","Duelos — rey de la colina":"Duels — king of the hill",
+    "Elige tu preferido entre dos. El ganador se queda y enfrenta al siguiente coche, uno por uno, hasta tu favorito definitivo.":"Pick your favorite between two. The winner stays and faces the next car, one by one, until your ultimate favorite.",
+    "▶ Empezar":"▶ Start","🏆 Tu favorito":"🏆 Your favorite","↻ Jugar otra vez":"↻ Play again","★ Campeón":"★ Champion",
+    // IRL
+    "Aún no registras manejos":"You haven't logged any drives yet",
+    "Apunta los coches que has manejado en la vida real, con su propia calificación de experiencia.":"Note the cars you've driven in real life, with their own experience rating.",
+    "Registrar manejo":"Log a drive","Editar manejo":"Edit drive","Foto (opcional)":"Photo (optional)",
+    "Sube una foto o pega una URL abajo":"Upload a photo or paste a URL below","Experiencia (0.5 – 10)":"Experience (0.5 – 10)",
+    "Bitácora del manejo":"Drive log","Lugar":"Place","Autódromo, carretera, evento…":"Track, road, event…","Fecha":"Date",
+    "¿Cómo se sintió? ¿Qué te sorprendió?":"How did it feel? What surprised you?","Bitácora":"Log","experiencia":"experience",
+    "Sin foto":"No photo","Sin nombre":"No name",
+    // stories
+    "📖 Historias y datos curiosos":"📖 Stories & fun facts","＋ Nueva historia":"＋ New story",
+    "Inicia sesión para publicar":"Sign in to post","Aún no hay historias":"No stories yet",
+    "Sé el primero en compartir la historia o un dato curioso de un coche.":"Be the first to share a story or fun fact about a car.",
+    "Sin título":"Untitled","Nueva historia":"New story","Título":"Title",
+    "La leyenda del Ferrari 250 GTO":"The legend of the Ferrari 250 GTO","Coche relacionado (opcional)":"Related car (optional)",
+    "Historia / dato curioso":"Story / fun fact","Cuenta la historia, el dato curioso, una anécdota…":"Tell the story, the fun fact, an anecdote…",
+    "Imágenes (opcional)":"Images (optional)","📷 Añadir imagen(es)":"📷 Add image(s)","Publicar":"Post",
+    "💬 Comentarios":"💬 Comments","Escribe un comentario…":"Write a comment…","Enviar":"Send",
+    "Inicia sesión para comentar":"Sign in to comment","Sé el primero en comentar.":"Be the first to comment.",
+    "eliminar":"delete","anónimo":"anonymous",
+    // admin
+    "Código de administrador:":"Administrator code:","Modo admin desactivado":"Admin mode off",
+    "🔧 Modo admin activado":"🔧 Admin mode on","Código incorrecto":"Wrong code",
+    // toasts (fixed)
+    "Añadiendo…":"Adding…","Colección exportada":"Collection exported","Respaldo completo guardado":"Full backup saved",
+    "Combo guardado":"Combo saved","Clasificado por promedio":"Ranked by average","Rankeado por promedio":"Ranked by average",
+    "Copiado al portapapeles":"Copied to clipboard","Enlace copiado":"Link copied","Sesión cerrada":"Signed out",
+    "¡Bienvenido!":"Welcome!","¡Perfil creado!":"Profile created!","¡Amigo agregado!":"Friend added!","Amigo quitado":"Friend removed",
+    "Manejo actualizado":"Drive updated","Manejo registrado":"Drive logged","Coche actualizado":"Car updated","Coche añadido":"Car added",
+    "✓ Añadido a tu garage":"✓ Added to your garage","✓ Añadido — ponle tus calificaciones":"✓ Added — set your ratings",
+    "✓ Specs añadidos a tu coche":"✓ Specs added to your car","✓ Borrado del marketplace":"✓ Deleted from marketplace",
+    "✓ Versión quitada":"✓ Version removed","✓ Historia publicada":"✓ Story posted",
+    "Ya tienes esa versión":"You already have that version","Falta el nombre del coche":"Missing the car name",
+    "Añade coches primero":"Add cars first","Arma un combo primero":"Build a combo first",
+    "Escribe marca o modelo primero":"Type a brand or model first","Inicia sesión para guardar coches":"Sign in to save cars",
+    "Error de conexión":"Connection error","Error":"Error","No se pudo":"Couldn't do it","No se pudo cambiar":"Couldn't change it",
+    "Estás viendo otro garage (solo lectura)":"You're viewing another garage (read-only)",
+    "Ese garage no existe o es privado":"That garage doesn't exist or is private","Primero elige tu usuario":"Choose your username first",
+    "Subiendo imagen(es)…":"Uploading image(s)…","Ahora tu garage es público":"Your garage is now public",
+    "Ahora tu garage es privado":"Your garage is now private","Conectando…":"Connecting…","Guardando…":"Saving…","Publicando…":"Posting…",
+    "Mínimo 3 caracteres (letras, números, _).":"Minimum 3 characters (letters, numbers, _).",
+    "Ese usuario ya existe, prueba otro.":"That username already exists, try another.",
+    "Escribe correo y contraseña.":"Enter email and password.",
+    "✓ Cuenta creada. Revisa tu correo, confirma el enlace y luego inicia sesión.":"✓ Account created. Check your email, confirm the link, then sign in.",
+    "Escribe al menos un título o la historia.":"Write at least a title or the story.",
+    "⚠ Error de conexión.":"⚠ Connection error.","⚠ Error.":"⚠ Error.","Archivo no válido":"Invalid file",
+    // confirms (fixed)
+    "¿Vaciar la tier list (de los coches mostrados)?":"Clear the tier list (for the shown cars)?",
+    "¿Vaciar todo el Top 100?":"Clear the entire Top 100?","¿Eliminar este coche de tu garage?":"Delete this car from your garage?",
+    "¿Eliminar este registro?":"Delete this record?","¿Eliminar tu historia?":"Delete your story?",
+    // PWA
+    "Instalar":"Install","otra época":"other era",
+    "Será tu enlace público: …#u/":"This will be your public link: …#u/",
+    // spec battle
+    "Elige dos coches y compara todas sus fotos, versiones y datos, lado a lado.":"Choose two cars and compare all their photos, versions and specs, side by side.",
+    "＋ Elegir coche":"＋ Choose car","Cambiar":"Change","Elegir coche":"Choose car",
+    "Cargando fotos…":"Loading photos…","Sin coches todavía.":"No cars yet."
+  };
+
+  function P(re,fn){ return [re,fn]; }
+  var PAT = [
+    P(/^(\d+) coches · filtrando: (.+)$/, function(m){ return m[1]+" cars · filtering: "+m[2]; }),
+    P(/^(\d+) coche · filtrando: (.+)$/, function(m){ return m[1]+" car · filtering: "+m[2]; }),
+    P(/^(\d+) coche$/, function(m){ return m[1]+" car"; }),
+    P(/^(\d+) coches$/, function(m){ return m[1]+" cars"; }),
+    P(/^(\d+) coche manejado$/, function(m){ return m[1]+" car driven"; }),
+    P(/^(\d+) coches manejados$/, function(m){ return m[1]+" cars driven"; }),
+    P(/^🔖 Filtrar \((\d+)\)$/, function(m){ return "🔖 Filter ("+m[1]+")"; }),
+    P(/^(\d+) fotos · toca los lados para cambiar$/, function(m){ return m[1]+" photos · tap the sides to change"; }),
+    P(/^(\d+) foto\(s\)$/, function(m){ return m[1]+" photo(s)"; }),
+    P(/^(\d+) versión\(es\) · (\d+) foto\(s\)$/, function(m){ return m[1]+" version(s) · "+m[2]+" photo(s)"; }),
+    P(/^✓ (.+) añadido — ponle tus calificaciones$/, function(m){ return "✓ "+m[1]+" added — set your ratings"; }),
+    P(/^Ya tienes (\d+) coches$/, function(m){ return "You already have "+m[1]+" cars"; }),
+    P(/^Ya tienes (.+)$/, function(m){ return "You already have "+m[1]; }),
+    P(/^Versión añadida a tu (.+)$/, function(m){ return "Version added to your "+m[1]; }),
+    P(/^Cargado: (.+)$/, function(m){ return "Loaded: "+m[1]; }),
+    P(/^Migrados (\d+) coches de tu garage anterior$/, function(m){ return "Migrated "+m[1]+" cars from your previous garage"; }),
+    P(/^(\d+) coches importados \(añadidos\)$/, function(m){ return m[1]+" cars imported (added)"; }),
+    P(/^(\d+) coches importados$/, function(m){ return m[1]+" cars imported"; }),
+    P(/^Combo (\d+)$/, function(m){ return "Combo "+m[1]; }),
+    P(/^No se pudo: (.+)$/, function(m){ return "Couldn't: "+m[1]; }),
+    P(/^💲 Precios · (.+)$/, function(m){ return "💲 Prices · "+m[1]; }),
+    P(/^Torneo · (.+)$/, function(m){ return "Tournament · "+translateCore(m[1]); }),
+    P(/^¿Cuál prefieres\? · Duelo (\d+) de (\d+)$/, function(m){ return "Which do you prefer? · Duel "+m[1]+" of "+m[2]; }),
+    P(/^Partido (\d+) de (\d+) · (\d+) coches en esta ronda$/, function(m){ return "Match "+m[1]+" of "+m[2]+" · "+m[3]+" cars in this round"; }),
+    P(/^Ronda de (\d+)$/, function(m){ return "Round of "+m[1]; }),
+    P(/^Ronda (\d+)$/, function(m){ return "Round "+m[1]; }),
+    P(/^Coche (\d+)$/, function(m){ return "Car "+m[1]; }),
+    P(/^necesitas: (.+)$/, function(m){ return "need: "+m[1]; }),
+    P(/^Agregar (.+)$/, function(m){ return "Add "+m[1]; }),
+    P(/^por @/, function(m){ return m.input.replace(/^por @/,"by @"); }),
+    P(/^de @(.+)$/, function(m){ return "from @"+m[1]; }),
+    P(/^Elige qué specs (.*)añadir a tu coche:$/, function(m){ return "Choose which specs "+m[1].replace(/^de @/,"from @")+"to add to your car:"; }),
+    P(/^¿Borrar "(.+)" del marketplace\? \(no afecta los garajes de la gente\)$/, function(m){ return "Delete \""+m[1]+"\" from the marketplace? (doesn't affect people's garages)"; }),
+    P(/^¿Quitar la versión (.+) de (.+) del marketplace\?$/, function(m){ return "Remove version "+m[1]+" from "+m[2]+" in the marketplace?"; }),
+    P(/^¿Quitar la categoría "(.+)"\? Los coches conservarán otras etiquetas\.$/, function(m){ return "Remove the category \""+m[1]+"\"? Cars will keep their other tags."; })
+  ];
+
+  function translateCore(s){
+    if(Object.prototype.hasOwnProperty.call(DICT,s)) return DICT[s];
+    for(var i=0;i<PAT.length;i++){ var r=PAT[i][0].exec(s); if(r) return PAT[i][1](r); }
+    return s;
+  }
+  function tr(raw){
+    if(LANG!=="en"||typeof raw!=="string"||!raw) return raw;
+    var m=raw.match(/^(\s*)([\s\S]*?)(\s*)$/);
+    var core=m[2]; if(!core) return raw;
+    var t=translateCore(core);
+    return t===core?raw:(m[1]+t+m[3]);
+  }
+  window.__i18n={ tr:tr, get lang(){return LANG;} };
+
+  function walk(node){
+    if(node.nodeType===3){ var t=node.nodeValue; if(t&&/\S/.test(t)){ var nt=tr(t); if(nt!==t) node.nodeValue=nt; } return; }
+    if(node.nodeType!==1) return;
+    var tag=node.nodeName;
+    if(tag==="SCRIPT"||tag==="STYLE") return;
+    if(node.getAttribute){
+      var ph=node.getAttribute("placeholder"); if(ph){ var np=tr(ph); if(np!==ph) node.setAttribute("placeholder",np); }
+      var ti=node.getAttribute("title"); if(ti){ var nti=tr(ti); if(nti!==ti) node.setAttribute("title",nti); }
+    }
+    if(tag==="TEXTAREA") return;  // no traducir contenido del usuario
+    for(var c=node.firstChild;c;c=c.nextSibling) walk(c);
+  }
+
+  // override confirm/prompt para traducir sus mensajes
+  var _c=window.confirm.bind(window); window.confirm=function(msg){ return _c(tr(msg)); };
+  var _p=window.prompt.bind(window);  window.prompt =function(msg,d){ return _p(tr(msg),d); };
+
+  function wireLang(){
+    var btn=document.getElementById("langToggle");
+    if(btn){
+      btn.textContent = (LANG==="en") ? "🌐 ES" : "🌐 EN";
+      btn.onclick=function(){ try{ localStorage.setItem("mg-lang", LANG==="en"?"es":"en"); }catch(e){} location.reload(); };
+    }
+  }
+
+  if(LANG==="en"){
+    try{ document.documentElement.lang="en"; }catch(e){}
+    document.title="My Garage — Car Collection";
+    walk(document.body);                 // traduce lo que ya está en el DOM
+    var mo=new MutationObserver(function(muts){
+      for(var i=0;i<muts.length;i++){ var a=muts[i].addedNodes; for(var j=0;j<a.length;j++) walk(a[j]); }
+    });
+    mo.observe(document.body,{childList:true,subtree:true});
+  }
+  wireLang();
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ---- Supabase (nube) ---- */
+const SUPABASE_URL="https://tayybbmbhsqxocugwzji.supabase.co";
+const SUPABASE_KEY="sb_publishable_WQcCQMw9q514W_NYWWJEsw_us7a3uNu";
+let supa=null, session=null, myProfile=null, viewing=null, readOnly=false;
+const ADMIN_CODE="MG-9X4K-Q72B"; let adminUnlocked=false;
+function isAdmin(){ return !!(myProfile && myProfile.is_admin); }
+function adminToggle(){
+  if(adminUnlocked){ adminUnlocked=false; toast("Modo admin desactivado"); renderMarketTab(); return; }
+  const code=prompt("Código de administrador:");
+  if(code===null) return;
+  if(code.trim()===ADMIN_CODE){ adminUnlocked=true; toast("🔧 Modo admin activado"); renderMarketTab(); }
+  else toast("Código incorrecto");
+}
+async function adminDeleteCatalog(i){
+  const e=mkData[i]; if(!e)return;
+  if(!confirm(`¿Borrar "${((e.brand||"")+" "+(e.name||"")).trim()}" del marketplace? (no afecta los garajes de la gente)`))return;
+  try{ const {error}=await supa.from("catalog").delete().eq("key",e.key); if(error){toast("No se pudo: "+error.message);return;} toast("✓ Borrado del marketplace"); loadMarket(document.getElementById("mk-q")?document.getElementById("mk-q").value:""); }
+  catch(err){ toast("Error"); }
+}
+async function adminRemoveVariant(k){
+  const ctx=catPickCtx; if(!ctx)return; const e=ctx.e, v=ctx.variants[k]; if(!v)return;
+  if(!confirm(`¿Quitar la versión ${v.color||"(sin color)"} de ${(e.name||"este coche")} del marketplace?`))return;
+  try{
+    const newVars=ctx.variants.filter((_,idx)=>idx!==k);
+    const {error}=await supa.from("catalog").update({variants:newVars}).eq("key",e.key);
+    if(error){toast("No se pudo: "+error.message);return;}
+    ctx.variants=newVars; mkData=mkData.map(m=>m.key===e.key?{...m,variants:newVars}:m);
+    toast("✓ Versión quitada"); renderCatPicker();
+  }catch(err){ toast("Error"); }
+}
+/* ======================================================================
+   STATE  — stored in-memory + window.storage (persists across sessions)
+   Backward compatible with existing exports (4 ratings, no tags).
+   ====================================================================== */
+const PARAMS = ["estilo","diseno","historia","rendimiento","exclusividad","deseo"];
+const PARAM_LABELS = {estilo:"Estilo",diseno:"Coleccionable",historia:"Historia",rendimiento:"Rendimiento",exclusividad:"Exclusividad",deseo:"Deseo"};
+const IRL_PARAMS = ["manejo","motor","diversion","sorpresa"];
+const IRL_LABELS = {manejo:"Manejo",motor:"Motor / sonido",diversion:"Diversión",sorpresa:"Sorpresa vs expectativa"};
+const DEFAULT_CATS = ["Concept","Modern","Classic","Race","Italian","Coachbuilt","Hypercar","Rally","JDM","American"];
+// remapeo de categorías viejas (español) → inglés, para migrar datos existentes
+const CAT_REMAP = {"Moderno":"Modern","Clásico":"Classic","Carrozado":"Coachbuilt","Italiano":"Italian","Americano":"American"};
+function remapCats(){
+  if(Array.isArray(categories)) categories=[...new Set(categories.map(c=>CAT_REMAP[c]||c))];
+  (cars||[]).forEach(c=>{ if(Array.isArray(c.tags)) c.tags=[...new Set(c.tags.map(t=>CAT_REMAP[t]||t))]; });
+}
+/* ---- categorías globales compartidas (Supabase: tabla shared_categories) ---- */
+async function loadSharedCats(){
+  if(!supa) return;
+  try{
+    const {data}=await supa.from("shared_categories").select("name");
+    if(Array.isArray(data)) data.forEach(r=>{ const n=(r&&r.name||"").trim(); if(n && !categories.includes(n)) categories.push(n); });
+  }catch(e){}
+}
+async function pushSharedCat(name){
+  name=(name||"").trim(); if(!supa||!session||!name) return;
+  try{ await supa.from("shared_categories").insert({name,created_by:session.user.id}); }catch(e){}
+}
+const CURR = {USD:"$",EUR:"€",MXN:"$",GBP:"£",JPY:"¥"};
+
+/* ---- brand → models database (autocompletado; puedes escribir cualquier otro) ---- */
+const MODELS={
+"Ferrari":["125 S","166 MM","250 GT","250 GTO","250 Testa Rossa","250 California","275 GTB","288 GTO","308 GTB","328 GTB","348","F355","360 Modena","365 GTB/4 Daytona","456","458 Italia","458 Speciale","458 Spider","488 GTB","488 Pista","512 BB","550 Maranello","575M Maranello","599 GTB Fiorano","599 GTO","612 Scaglietti","812 Superfast","812 Competizione","California","California T","Enzo","F8 Tributo","F12 Berlinetta","F12tdf","F40","F50","F430","F430 Scuderia","FF","GTC4Lusso","LaFerrari","Mondial","Portofino","Purosangue","Roma","SF90 Stradale","Testarossa","296 GTB","Daytona SP3","12Cilindri"],
+"Lamborghini":["350 GT","400 GT","Miura","Espada","Islero","Jarama","Urraco","Countach","Jalpa","LM002","Diablo","Murciélago","Gallardo","Reventón","Aventador","Aventador SVJ","Huracán","Huracán Performante","Huracán STO","Sián","Centenario","Veneno","Urus","Revuelto","Temerario"],
+"Porsche":["356","911 Carrera","911 Turbo","911 GT3","911 GT3 RS","911 GT2 RS","911 Targa","912","914","924","928","944","968","959","Boxster","Cayman","Cayman GT4","Panamera","Cayenne","Macan","Taycan","Carrera GT","918 Spyder","935","962"],
+"McLaren":["F1","MP4-12C","12C","540C","570S","600LT","620R","650S","675LT","720S","750S","765LT","GT","Artura","Senna","Speedtail","P1","P1 GTR","Elva","Sabre"],
+"Aston Martin":["DB4","DB5","DB6","DB7","DB9","DB11","DB12","DBS","DBS Superleggera","Vantage","V8 Vantage","V12 Vantage","Vanquish","Virage","Rapide","Valkyrie","Valhalla","Vulcan","One-77","DB4 GT Zagato","Lagonda"],
+"Bugatti":["Type 35","Type 41 Royale","Type 57","EB110","Veyron","Veyron Super Sport","Chiron","Chiron Super Sport","Divo","Centodieci","La Voiture Noire","Bolide","Tourbillon","Mistral"],
+"Mercedes-Benz":["300SL Gullwing","300SL Roadster","190SL","280SL Pagoda","SLS AMG","SLR McLaren","AMG GT","AMG GT R","AMG GT Black Series","AMG One","C63 AMG","E63 AMG","G63 AMG","CLK GTR","190E 2.5-16 Evo II","S-Class","SL"],
+"BMW":["2002","2002 Turbo","3.0 CSL","M1","E30 M3","E36 M3","E46 M3","E92 M3","M3 (G80)","M4","M5","M2","507","8 Series","850CSi","i8","Z3 M","Z4 M","M6","3.0 CSi"],
+"Audi":["Ur-Quattro","Sport Quattro S1","RS2","RS3","RS4","RS6","R8","R8 V10","TT","S4","e-tron GT","RS e-tron GT"],
+"Nissan":["Skyline GT-R R32","Skyline GT-R R33","Skyline GT-R R34","GT-R R35","Fairlady 240Z","280ZX","300ZX","350Z","370Z","Z","Silvia S13","Silvia S14","Silvia S15"],
+"Toyota":["2000GT","Supra A70","Supra A80","GR Supra","AE86 Corolla","MR2","Celica","GR86","GR Yaris","GR Corolla","Land Cruiser"],
+"Honda":["NSX (NA1)","NSX (NA2)","NSX (2017)","S2000","Civic Type R","Integra Type R","CRX","Prelude"],
+"Acura":["NSX (1991)","NSX (2017)","Integra Type R","RSX Type S","TLX Type S"],
+"Ford":["GT40","GT (2005)","GT (2017)","Mustang","Mustang Shelby GT350","Mustang Shelby GT500","Mustang Boss 302","Mustang Mach 1","RS200","Focus RS","Sierra Cosworth","Escort RS Cosworth","F-150 Raptor","Bronco"],
+"Shelby":["Cobra 289","Cobra 427","Daytona Coupe","GT350","GT500"],
+"Chevrolet":["Corvette C1","Corvette C2 Sting Ray","Corvette C3","Corvette C4","Corvette C5","Corvette C6","Corvette C7","Corvette C8","Corvette Z06","Corvette ZR1","Camaro","Camaro Z/28","Camaro ZL1","Chevelle SS","Bel Air","Nova","Impala","El Camino"],
+"Dodge":["Viper","Viper ACR","Challenger","Challenger Hellcat","Charger","Charger Hellcat","Demon","Dart","Super Bee","Durango SRT"],
+"Jaguar":["E-Type","XK120","XK140","XK150","XKSS","D-Type","C-Type","XJ220","XKR","F-Type","F-Type R","XJS","Mark 2"],
+"Bentley":["Continental GT","Continental GTC","Flying Spur","Bentayga","Mulsanne","Arnage","Azure","Brooklands","Blower","R-Type Continental"],
+"Rolls-Royce":["Phantom","Ghost","Wraith","Dawn","Spectre","Cullinan","Silver Shadow","Silver Cloud","Corniche","Camargue"],
+"Maserati":["MC12","MC20","GranTurismo","GranCabrio","Ghibli","Quattroporte","Levante","3500 GT","Bora","Merak","Khamsin","Grecale","Shamal"],
+"Alfa Romeo":["4C","8C Competizione","Giulia Quadrifoglio","Stelvio Quadrifoglio","GTV","Spider","33 Stradale","Montreal","Giulietta","Tipo 33","8C 2900B"],
+"Lotus":["Elise","Exige","Evora","Esprit","Elan","Europa","Seven","Emira","Evija","Eleven"],
+"Koenigsegg":["CC8S","CCR","CCX","Agera","Agera R","Agera RS","One:1","Regera","Jesko","Jesko Absolut","Gemera","CC850"],
+"Pagani":["Zonda","Zonda R","Zonda Cinque","Huayra","Huayra BC","Huayra Roadster","Utopia"],
+"Mazda":["RX-7 FB","RX-7 FC","RX-7 FD","RX-8","MX-5 Miata","Cosmo","787B"],
+"Subaru":["Impreza WRX","WRX STI","22B STI","BRZ","Legacy","SVX"],
+"Mitsubishi":["Lancer Evolution","Evo VI Tommi Mäkinen","3000GT","Eclipse","GTO"],
+"Volkswagen":["Golf GTI","Golf R","Beetle","Corrado","Scirocco","Karmann Ghia","Type 2 Bus","W12"],
+"Tesla":["Roadster (2008)","Model S","Model S Plaid","Model 3","Model X","Model Y","Cybertruck","Roadster (2020)"],
+"Rimac":["Concept One","C_Two","Nevera"],
+"Pininfarina":["Battista","Battista Anniversario"],
+"Datsun":["240Z","260Z","510","2000 Roadster"],
+"Lancia":["Stratos","Delta Integrale","037","Fulvia","Aurelia"]
+};
+const ERAS=[
+  {key:"clasico",label:"Clásico (pre-1975)",test:y=>y<1975},
+  {key:"retro",label:"Retro (1975–1999)",test:y=>y>=1975&&y<2000},
+  {key:"moderno",label:"Moderno (2000–2014)",test:y=>y>=2000&&y<2015},
+  {key:"actual",label:"Actual (2015+)",test:y=>y>=2015}
+];
+function eraOf(c){const y=parseInt(c.year,10);if(isNaN(y))return null;const e=ERAS.find(e=>e.test(y));return e?e.key:null;}
+function eraLabel(k){const e=ERAS.find(e=>e.key===k);return e?e.label:"Sin año";}
+
+let cars = [];
+let irlCars = [];         // cars driven in real life — independent ranking
+let categories = [...DEFAULT_CATS];
+let combos = [];          // saved 5-car combos
+let top100 = {};          // {carId: position}
+let theme = "retro";
+let activeTagFilters = new Set();
+let tagPanelOpen = false;
+let currentAct = "five";
+let fivePick = [];        // working slot of car ids
+let fiveBudget = 0;
+let fiveN = 5;            // número de coches del garaje de ensueño
+let fiveReal = false;    // modo realista (categorías distintas)
+let fiveEra = "";        // filtro de época
+let tierMap = {};        // {carId: "S"/"A"/"B"/"C"/"D"}
+let tierFilter = "all";  // filtro de la tier list
+let tierSel = null;      // coche seleccionado en la tier list
+let brk = null;          // estado del torneo (bracket)
+let fiveRoles = [];      // categorías requeridas por posición (modo realista)
+let tierDragId = null;   // arrastre en tier list
+let detailImgs = [];     // carrusel del detalle
+let detailIdx = 0;
+let tourState = null;
+/* ---------- persistence ---------- */
+async function saveAll(){
+  if(readOnly) return;                       // viendo el garage de otro: no guardar
+  const blob = {cars, irlCars, categories, combos, top100, theme, tierMap};
+  try{ localStorage.setItem("garage-data", JSON.stringify(blob)); }catch(e){}
+  if(supa && session){
+    try{ await supa.from("garages").upsert({user_id:session.user.id, data:blob, updated_at:new Date().toISOString()}); }catch(e){}
+  }
+}
+function loadFromBlob(d){
+  d=d||{};
+  cars=(d.cars||[]).map(normalizeCar);
+  irlCars=(d.irlCars||[]).map(normalizeIrl);
+  categories=d.categories?.length?d.categories:[...DEFAULT_CATS];
+  combos=d.combos||[]; top100=d.top100||{}; theme=d.theme||"retro"; tierMap=d.tierMap||{};
+}
+async function loadAll(){                     // garage local (invitado / cache)
+  let raw=null;
+  try{ raw=localStorage.getItem("garage-data"); }catch(e){}
+  if(raw){ try{ loadFromBlob(JSON.parse(raw)); }catch(e){} return; }
+  /* ---- migración automática desde la versión anterior (miGarageCoches_v1) ---- */
+  try{
+    const old=localStorage.getItem("miGarageCoches_v1");
+    if(old){
+      const arr=JSON.parse(old);
+      if(Array.isArray(arr)&&arr.length){
+        cars=arr.map(c=>{
+          const n=normalizeCar(c);
+          if(c.type && !n.tags.includes(c.type)) n.tags.unshift(c.type);
+          return n;
+        });
+        cars.forEach(c=>c.tags.forEach(t=>{if(!categories.includes(t))categories.push(t);}));
+        const oldTheme=localStorage.getItem("miGarageTheme");
+        if(oldTheme && THEMES.some(t=>t.id===oldTheme)) theme=oldTheme;
+        setTimeout(()=>toast(`Migrados ${cars.length} coches de tu garage anterior`),400);
+      }
+    }
+  }catch(e){}
+}
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const uid=()=>Math.random().toString(36).slice(2,13);
+function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+function downscale(file,maxW,cb){
+  const rd=new FileReader();
+  rd.onload=ev=>{const img=new Image();
+    img.onload=()=>{const sc=Math.min(1,maxW/img.width);const cv=document.createElement("canvas");
+      cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
+      cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);cb(cv.toDataURL("image/jpeg",0.82));};
+    img.src=ev.target.result;};
+  rd.readAsDataURL(file);
+}
+function downscaleBlob(file,maxW,cb){
+  const rd=new FileReader();
+  rd.onload=ev=>{const img=new Image();
+    img.onload=()=>{const sc=Math.min(1,maxW/img.width);const cv=document.createElement("canvas");
+      cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
+      cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);cv.toBlob(b=>cb(b),"image/jpeg",0.82);};
+    img.src=ev.target.result;};
+  rd.readAsDataURL(file);
+}
+function blobToDataURL(blob){return new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(blob);});}
+async function uploadImage(blob){
+  if(!supa||!session||!blob)return null;
+  try{
+    const path=session.user.id+"/"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+".jpg";
+    const {error}=await supa.storage.from("images").upload(path,blob,{contentType:"image/jpeg"});
+    if(error)return null;
+    const {data}=supa.storage.from("images").getPublicUrl(path);
+    return data.publicUrl;
+  }catch(e){ return null; }
+}
+// devuelve una URL (almacenamiento en la nube) o un dataURL (invitado / respaldo)
+function processImage(file,maxW){
+  return new Promise(res=>{
+    downscaleBlob(file,maxW||1400,async blob=>{
+      if(!blob){res(null);return;}
+      let url=null;
+      if(supa&&session) url=await uploadImage(blob);
+      if(!url) url=await blobToDataURL(blob);
+      res(url);
+    });
+  });
+}
+/* Backward-compat guard: any older export (4 ratings, no tags, no new params,
+   strings instead of numbers) is coerced into a safe shape without losing data. */
+function normalizeCar(c){
+  c=c||{};
+  c.id=c.id||uid(); c.created=c.created||Date.now();
+  c.tags=Array.isArray(c.tags)?c.tags:[];
+  c.specs=Array.isArray(c.specs)?c.specs:[];
+  c.ratings=c.ratings&&typeof c.ratings==="object"?c.ratings:{};
+  // coerce known params to numbers if present; leave missing ones missing
+  PARAMS.forEach(p=>{ if(c.ratings[p]!=null && c.ratings[p]!=="") c.ratings[p]=Number(c.ratings[p]); });
+  if(c.price==="") c.price=null;
+  if(c.price!=null) c.price=Number(c.price);
+  c.currency=c.currency||"USD";
+  // las imágenes viven en los specs; c.image = portada elegida; cada spec tiene color
+  if(Array.isArray(c.images) && c.images.length && !c.image){ const g=c.images[c.cover||0]||c.images[0]||{}; c.image=g.img||g||""; }
+  c.specs=c.specs.map(s=>({id:s.id||uid(),title:s.title||"",details:s.details||"",color:s.color||"",images:Array.isArray(s.images)?s.images.filter(Boolean):[]}));
+  c.image=c.image||"";
+  c.color=c.color||"";
+  return c;
+}
+function normalizeIrl(c){
+  c=c||{};
+  c.id=c.id||uid(); c.created=c.created||Date.now();
+  c.ratings=c.ratings&&typeof c.ratings==="object"?c.ratings:{};
+  IRL_PARAMS.forEach(p=>{ if(c.ratings[p]!=null && c.ratings[p]!=="") c.ratings[p]=Number(c.ratings[p]); });
+  c.log=c.log&&typeof c.log==="object"?c.log:{place:"",date:"",note:""};
+  c.image=c.image||"";
+  return c;
+}
+function avgOf(c,params){
+  const r=c.ratings||{};
+  const vals=params.map(p=>r[p]).filter(v=>typeof v==="number");
+  if(!vals.length) return 0;
+  return vals.reduce((a,b)=>a+b,0)/vals.length;
+}
+function avg(c){ return avgOf(c,PARAMS); }
+function irlAvg(c){ return avgOf(c,IRL_PARAMS); }
+/* show 7 not 7.0, but 7.5 stays 7.5 */
+function fmt(n){ return Number.isInteger(n)?String(n):n.toFixed(1); }
+function money(c){
+  if(c.price==null||c.price==="") return "—";
+  const sym=CURR[c.currency]||"$";
+  return sym+Number(c.price).toLocaleString("en-US");
+}
+function firstImg(c){
+  if(c.image) return c.image;
+  for(const s of (c.specs||[])) if(s.images?.length) return s.images[0];
+  if(Array.isArray(c.images)&&c.images.length) return (c.images[0].img||c.images[0]);
+  return null;
+}
+function allImgs(c){
+  const out=[]; if(c.image) out.push(c.image);
+  for(const s of (c.specs||[])) for(const im of (s.images||[])) if(!out.includes(im)) out.push(im);
+  if(Array.isArray(c.images)) c.images.forEach(g=>{const im=g&&(g.img||g); if(im&&!out.includes(im))out.push(im);});
+  return out;
+}
+function toast(msg){const t=$("#toast");t.textContent=(window.__i18n?window.__i18n.tr(msg):msg);t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1900);}
+/* ---------- brand / model autocomplete ---------- */
+function fillBrandList(){
+  const bl=document.getElementById("brandList");
+  if(bl) bl.innerHTML=Object.keys(MODELS).sort().map(b=>`<option value="${b}"></option>`).join("");
+}
+function fillModelList(brand){
+  const ml=document.getElementById("modelList"); if(!ml)return;
+  const key=Object.keys(MODELS).find(b=>b.toLowerCase()===(brand||"").trim().toLowerCase());
+  ml.innerHTML=(key?MODELS[key]:[]).map(m=>`<option value="${m}"></option>`).join("");
+}
+/* ---------- precios de mercado ---------- */
+function carQuery(brand,name){
+  brand=(brand||"").trim(); name=(name||"").trim();
+  if(brand && !name.toLowerCase().includes(brand.toLowerCase())) return brand+" "+name;
+  return name||brand;
+}
+function priceSources(query){
+  const q=encodeURIComponent(query);
+  const slug=encodeURIComponent(query.toLowerCase().replace(/\s+/g," ").trim());
+  return [
+    {ic:"📊",name:"classic.com",desc:"Valor de mercado y ventas recientes",url:`https://www.classic.com/search/?q=${q}`},
+    {ic:"🔨",name:"Bring a Trailer",desc:"Subastas recientes y resultados",url:`https://bringatrailer.com/search/?s=${q}`},
+    {ic:"🚘",name:"Cars & Bids",desc:"Subastas modernas / enthusiast",url:`https://carsandbids.com/search/${slug}`},
+    {ic:"🏆",name:"RM Sotheby's",desc:"Subastas premium / coleccionables",url:`https://www.google.com/search?q=site:rmsothebys.com+${q}`},
+    {ic:"🏁",name:"Mecum",desc:"Clásicos y muscle cars",url:`https://www.google.com/search?q=site:mecum.com+${q}`},
+    {ic:"🔎",name:"Búsqueda general",desc:"Precio / a la venta",url:`https://www.google.com/search?q=${q}+price+for+sale`}
+  ];
+}
+function showPriceMenu(query){
+  if(!query){toast("Escribe marca o modelo primero");return;}
+  $("#promptModal").innerHTML=`
+    <div class="mh"><h3>💲 Precios · ${query}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb">
+      <p style="color:var(--ink-dim);font-size:13px;margin:0">Abre el valor de mercado y subastas recientes en sitios reales:</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${priceSources(query).map(s=>`<button class="btn" style="justify-content:flex-start;text-align:left" onclick="window.open('${s.url}','_blank','noopener')">
+          <span style="font-size:18px">${s.ic}</span> <b>${s.name}</b>
+          <span style="color:var(--ink-faint);font-weight:400;margin-left:auto">${s.desc}</span></button>`).join("")}
+      </div>
+    </div>
+    <div class="mf"><button class="btn primary" onclick="closeAll()">Cerrar</button></div>`;
+  $("#promptScrim").classList.add("show");
+}
+function openPriceMenu(id){const c=cars.find(x=>x.id===id);if(!c)return;showPriceMenu(carQuery(c.brand,c.name));}
+function openPriceMenuFromForm(){showPriceMenu(carQuery($("#f-brand").value,$("#f-name").value));}
+/* ======================================================================
+   THEME
+   ====================================================================== */
+const THEMES=[
+  {id:"retro",label:"Garage retro",c:"#c0451f"},
+  {id:"dark",label:"Oscuro deportivo",c:"#37c0ff"},
+  {id:"light",label:"Claro minimalista",c:"#b5341d"},
+  {id:"rosso",label:"Rosso Corsa",c:"#ff2a1a"},
+];
+function renderThemes(){
+  $("#themes").innerHTML=THEMES.map(t=>
+    `<button data-th="${t.id}" class="${t.id===theme?'on':''}">
+       <span class="swatch" style="background:${t.c}"></span>${t.label}</button>`).join("");
+  document.querySelectorAll("#themes button").forEach(b=>b.onclick=()=>{
+    theme=b.dataset.th; document.body.dataset.theme=theme; renderThemes(); saveAll();
+  });
+  document.body.dataset.theme=theme;
+}
+/* ======================================================================
+   GARAGE — filters, sort, render
+   ====================================================================== */
+function renderTagFilters(){
+  const el=$("#tagFilters");
+  const used=new Set(); cars.forEach(c=>(c.tags||[]).forEach(t=>used.add(t)));
+  const list=[...new Set([...categories,...used])];
+  // reflejar filtros activos en el botón
+  const fb=$("#filterBtn");
+  if(fb){ const n=activeTagFilters.size; fb.innerHTML="🔖 Filtrar"+(n?` (${n})`:""); fb.classList.toggle("primary",!!n); fb.classList.toggle("ghost",!n); }
+  if(!list.length){ el.innerHTML=""; el.style.display="none"; tagPanelOpen=false; return; }
+  el.style.display=tagPanelOpen?"flex":"none";
+  if(!tagPanelOpen){ el.innerHTML=""; return; }
+  const clearBtn=activeTagFilters.size?`<button class="chip" data-clear="1" style="opacity:.8">Limpiar ✕</button>`:"";
+  el.innerHTML=list.map(t=>
+    `<button class="chip ${activeTagFilters.has(t)?'on':''}" data-tag="${t}">${t}${activeTagFilters.has(t)?' <span class="x">×</span>':''}</button>`).join("")+clearBtn;
+  el.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{
+    if(c.dataset.clear){ activeTagFilters.clear(); renderGarage(); return; }
+    const t=c.dataset.tag;
+    activeTagFilters.has(t)?activeTagFilters.delete(t):activeTagFilters.add(t);
+    renderGarage();
+  });
+}
+function toggleTagPanel(){ tagPanelOpen=!tagPanelOpen; renderTagFilters(); }
+function getFilteredSorted(){
+  const q=($("#search").value||"").toLowerCase().trim();
+  let list=cars.filter(c=>{
+    const hay=`${c.brand||""} ${c.name||""} ${c.year||""}`.toLowerCase();
+    if(q && !hay.includes(q)) return false;
+    if(activeTagFilters.size){
+      const tags=new Set(c.tags||[]);
+      for(const t of activeTagFilters) if(!tags.has(t)) return false;
+    }
+    return true;
+  });
+  const s=$("#sort").value;
+  const num=v=>v==null||v===""?-Infinity:Number(v);
+  list.sort((a,b)=>{
+    switch(s){
+      case"name":return (a.name||"").localeCompare(b.name||"");
+      case"priceHi":return num(b.price)-num(a.price);
+      case"priceLo":return (a.price==null?Infinity:num(a.price))-(b.price==null?Infinity:num(b.price));
+      case"recent":return (b.created||0)-(a.created||0);
+      case"estilo":case"diseno":case"historia":case"rendimiento":case"exclusividad":case"deseo":
+        return (b.ratings?.[s]||0)-(a.ratings?.[s]||0);
+      default:return avg(b)-avg(a);
+    }
+  });
+  return list;
+}
+function renderGarage(){
+  renderTagFilters();
+  const list=getFilteredSorted();
+  $("#count").textContent=`${list.length} ${list.length===1?'coche':'coches'}`+
+    (activeTagFilters.size?` · filtrando: ${[...activeTagFilters].join(", ")}`:"");
+  const view=$("#garageView");
+  if(!cars.length){
+    view.innerHTML=`<div class="empty"><div class="big">🏁</div>
+      <h2>Tu garage está vacío</h2>
+      <p>Importa tu colección o añade tu primer coche favorito.</p>
+      <button class="btn primary" onclick="openEdit()">＋ Añadir coche</button></div>`;
+    return;
+  }
+  if(!list.length){
+    view.innerHTML=`<div class="empty"><div class="big">🔍</div><h2>Sin resultados</h2>
+      <p>Prueba con otra búsqueda o quita filtros.</p></div>`;
+    return;
+  }
+  view.innerHTML=`<div class="grid">${list.map((c,i)=>carCard(c,i,list)).join("")}</div>`;
+}
+function carCard(c,i,list){
+  const img=firstImg(c);
+  const a=avg(c);
+  const showRank=$("#sort").value!=="name"&&$("#sort").value!=="recent";
+  const bars=PARAMS.filter(p=>c.ratings?.[p]!=null).slice(0,6).map(p=>{
+    const v=c.ratings[p];
+    return `<div class="barrow"><span class="lab">${PARAM_LABELS[p]}</span>
+      <span class="track"><span class="fill" style="width:${v*10}%"></span></span><span class="v">${v}</span></div>`;
+  }).join("");
+  const tags=(c.tags||[]).slice(0,4).map(t=>`<span class="tag">${t}</span>`).join("");
+  return `<article class="car">
+    <div class="ph" onclick="openDetail('${c.id}')">
+      ${img?`<img src="${img}" alt="">`:`<div class="noimg">🚗</div>`}
+      ${showRank?`<div class="rankbadge">#${i+1}</div>`:""}
+      ${a?`<div class="avgbadge">★ ${a.toFixed(1)}</div>`:""}
+    </div>
+    <div class="body">
+      <div class="nm" onclick="openDetail('${c.id}')" style="cursor:pointer">${c.name||"Sin nombre"}</div>
+      <div class="meta"><b>${c.brand||"—"}</b> <span>${c.year||""}</span> <span>${money(c)}</span>${c.color?` <span>· 🎨 ${esc(c.color)}</span>`:''}</div>
+      ${tags?`<div class="tags">${tags}</div>`:""}
+      <div class="bars">${bars}</div>
+      <div class="acts">
+        ${readOnly?`<button class="btn primary sm" onclick="grabFromViewed('${c.id}')">➕ A mi garage</button>`
+                  :`<button class="btn ghost sm" onclick="openEdit('${c.id}')">✎ Editar</button>`}
+        <button class="btn ghost sm" onclick="openPriceMenu('${c.id}')">💲</button>
+        <button class="btn ghost sm" onclick="openDetail('${c.id}')">Ver</button>
+      </div>
+    </div>
+  </article>`;
+}
+/* ======================================================================
+   DETAIL
+   ====================================================================== */
+function openDetail(id){
+  const c=cars.find(x=>x.id===id); if(!c)return;
+  const imgs=allImgs(c);
+  detailImgs=imgs; detailIdx=0;
+  const bars=PARAMS.filter(p=>c.ratings?.[p]!=null).map(p=>{
+    const v=c.ratings[p];
+    return `<div class="barrow" style="font-size:13px"><span class="lab" style="width:100px">${PARAM_LABELS[p]}</span>
+      <span class="track" style="height:8px"><span class="fill" style="width:${v*10}%"></span></span>
+      <span class="v" style="width:24px;font-size:14px">${v}</span></div>`;
+  }).join("");
+  const specs=(c.specs||[]).map(s=>`
+    <div class="specsec">
+      <strong>${esc(s.title||"Versión")}</strong>${s.color?` <span class="tag">🎨 ${esc(s.color)}</span>`:""}
+      ${s.details?`<div style="color:var(--ink-dim);font-size:13px">${esc(s.details)}</div>`:""}
+      ${s.images?.length?`<div class="specthumbs">${s.images.map(im=>`<img src="${im}">`).join("")}</div>`:""}
+    </div>`).join("");
+  $("#detailModal").innerHTML=`
+    <div class="mh"><h3>${c.name||"Coche"}</h3>
+      <button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb">
+      <div class="detailhead">
+        <div class="big">${c.year||""} <span style="color:var(--accent)">${c.brand||""}</span></div>
+        <div style="margin-left:auto;text-align:right">
+          <div style="font-family:var(--display);font-size:40px;line-height:.9">★ ${avg(c).toFixed(1)}</div>
+          <div style="color:var(--ink-faint);font-size:12px">promedio</div>
+        </div>
+      </div>
+      ${(c.tags||[]).length?`<div class="tags" style="margin-bottom:6px">${c.tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>`:""}
+      <div class="detailgrid">
+        <div>
+          ${imgs.length?`<div class="carousel">
+            ${imgs.length>1?`<button class="cnav prev" onclick="detailImg(-1)">‹</button><button class="cnav next" onclick="detailImg(1)">›</button>`:''}
+            <img id="detailMainImg" src="${imgs[0]}">
+            ${imgs.length>1?`<div class="cdots">${imgs.map((_,i)=>`<span class="${i===0?'on':''}" onclick="detailGo(${i})"></span>`).join("")}</div>`:''}
+          </div>${imgs.length>1?`<div style="text-align:center;color:var(--ink-faint);font-size:11px;margin-top:6px">${imgs.length} fotos · toca los lados para cambiar</div>`:''}`:`<div class="dropimg">Sin fotos</div>`}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div><div style="color:var(--ink-faint);font-size:12px;text-transform:uppercase;letter-spacing:1px">Valor</div>
+            <div style="font-family:var(--display);font-size:30px">${money(c)}</div></div>
+          <div class="bars">${bars}</div>
+          ${c.notes?`<div><div style="color:var(--ink-faint);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Notas</div>
+            <div style="font-size:14px;color:var(--ink-dim)">${c.notes}</div></div>`:""}
+          ${specs}
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn ghost" onclick="openPriceMenu('${c.id}')">💲 Precios</button>
+      ${readOnly?'':`<button class="btn ghost" onclick="openEdit('${c.id}')">✎ Editar</button>
+      <button class="btn ghost" onclick="delCar('${c.id}')" style="color:var(--accent)">Eliminar</button>`}
+      <button class="btn primary" onclick="closeAll()">Cerrar</button>
+    </div>`;
+  $("#detailScrim").classList.add("show");
+}
+function detailImg(d){
+  if(detailImgs.length<2)return;
+  detailIdx=(detailIdx+d+detailImgs.length)%detailImgs.length;
+  const im=document.getElementById("detailMainImg"); if(im)im.src=detailImgs[detailIdx];
+  document.querySelectorAll("#detailModal .cdots span").forEach((s,i)=>s.classList.toggle("on",i===detailIdx));
+}
+function detailGo(i){
+  if(i<0||i>=detailImgs.length)return;
+  detailIdx=i; const im=document.getElementById("detailMainImg"); if(im)im.src=detailImgs[detailIdx];
+  document.querySelectorAll("#detailModal .cdots span").forEach((s,j)=>s.classList.toggle("on",j===detailIdx));
+}
+/* ======================================================================
+   ADD / EDIT
+   ====================================================================== */
+let editCoverImg="", editSpecs=[], editTags=new Set();
+function openEdit(id){
+  if(readOnly){toast("Estás viendo otro garage (solo lectura)");return;}
+  const c=id?cars.find(x=>x.id===id):null;
+  editSpecs=c?JSON.parse(JSON.stringify(c.specs||[])):[];
+  editSpecs.forEach(s=>{s.color=s.color||"";s.images=s.images||[];});
+  if(!editSpecs.length) editSpecs=[{id:uid(),title:"",details:"",color:"",images:[]}]; // al crear, pide color/datos
+  editCoverImg=c?.image||"";
+  // si la portada actual no está en ninguna versión, métela para poder gestionarla
+  if(editCoverImg && !editSpecs.some(s=>(s.images||[]).includes(editCoverImg))){ editSpecs[0].images.unshift(editCoverImg); if(!editSpecs[0].color)editSpecs[0].color=c?.color||""; }
+  editTags=new Set(c?.tags||[]);
+  const r=c?.ratings||{};
+  const ratingInputs=PARAMS.map(p=>{
+    const v=r[p]??7;
+    return `<div class="rate">
+      <label>${PARAM_LABELS[p]} <span class="num" id="num-${p}">${fmt(v)}</span></label>
+      <input type="range" min="0.5" max="10" step="0.5" value="${v}" id="r-${p}"
+        oninput="document.getElementById('num-${p}').textContent=(this.value%1?Number(this.value).toFixed(1):this.value)">
+    </div>`;
+  }).join("");
+  const catChips=()=>{
+    const list=[...new Set([...categories,...editTags])];
+    return list.map(t=>`<button type="button" class="tg ${editTags.has(t)?'on':''}" data-tag="${t}"
+      onclick="toggleEditTag('${t.replace(/'/g,"\\'")}')">${t}</button>`).join("");
+  };
+  $("#editModal").innerHTML=`
+    <div class="mh"><h3>${c?'Editar coche':'Añadir coche'}</h3>
+      <button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb">
+      <div class="three">
+        <div class="field"><label>Marca</label><input id="f-brand" list="brandList" autocomplete="off" value="${c?.brand||""}" placeholder="Ferrari"></div>
+        <div class="field"><label>Año</label><input id="f-year" value="${c?.year||""}" placeholder="2014"></div>
+        <div class="field"><label>Valor</label><input id="f-price" type="number" value="${c?.price??""}" placeholder="700000"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>Modelo / Nombre *</label><input id="f-name" list="modelList" autocomplete="off" value="${c?.name||""}" placeholder="458 Speciale"></div>
+        <div class="field"><label>Moneda</label>
+          <select id="f-curr">${Object.keys(CURR).map(k=>`<option value="${k}" ${c?.currency===k?'selected':''}>${k} ${CURR[k]}</option>`).join("")}</select>
+        </div>
+      </div>
+      <button class="btn sm ghost" type="button" onclick="openPriceMenuFromForm()" style="align-self:flex-start">💲 Ver precios de mercado</button>
+      <div class="field"><label>Categorías / Tags</label>
+        <div class="tagpick" id="editTagPick">${catChips()}</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="f-newtag" class="ctrl" style="flex:1" placeholder="Nueva categoría…">
+          <button class="btn sm" type="button" onclick="addNewTagFromEdit()">＋ Crear</button>
+        </div>
+      </div>
+      <div class="field"><label>Versiones, color y fotos — toca una foto para ponerla de ★ portada</label>
+        <div id="specsBox" style="display:flex;flex-direction:column;gap:10px"></div>
+        <button class="btn sm" type="button" onclick="addSpec()" style="margin-top:8px">＋ Añadir otra versión</button>
+      </div>
+      <div class="field"><label>Calificación (1 – 10)</label>
+        <div class="ratings">${ratingInputs}</div>
+      </div>
+      <div class="field"><label>Notas</label><textarea id="f-notes" placeholder="Por qué te gusta, recuerdos, specs…">${c?.notes||""}</textarea></div>
+    </div>
+    <div class="mf">
+      ${c?`<button class="btn ghost" style="color:var(--accent)" onclick="delCar('${c.id}')">Eliminar</button>`:""}
+      <button class="btn ghost" onclick="closeAll()">Cancelar</button>
+      <button class="btn primary" onclick="saveCar('${c?.id||''}')">Guardar</button>
+    </div>`;
+  // wire autocomplete
+  fillBrandList(); fillModelList(c?.brand||"");
+  $("#f-brand").addEventListener("input",e=>fillModelList(e.target.value));
+  renderSpecs();
+  $("#editScrim").classList.add("show");
+}
+function toggleEditTag(t){editTags.has(t)?editTags.delete(t):editTags.add(t);$("#editTagPick").querySelectorAll(".tg").forEach(b=>b.classList.toggle("on",editTags.has(b.dataset.tag)));}
+function addNewTagFromEdit(){
+  const v=$("#f-newtag").value.trim(); if(!v)return;
+  if(!categories.includes(v)) categories.push(v);
+  pushSharedCat(v);   // compartir con todos
+  editTags.add(v); $("#f-newtag").value="";
+  // re-render chip row
+  const list=[...new Set([...categories,...editTags])];
+  $("#editTagPick").innerHTML=list.map(t=>`<button type="button" class="tg ${editTags.has(t)?'on':''}" data-tag="${t}" onclick="toggleEditTag('${t.replace(/'/g,"\\'")}')">${t}</button>`).join("");
+  saveAll();
+}
+function renderSpecs(){
+  const box=$("#specsBox");
+  box.innerHTML=editSpecs.map((s,i)=>`
+    <div class="specsec">
+      <div class="three">
+        <div class="field"><label>Versión / Edición</label><input value="${esc(s.title||'')}" oninput="editSpecs[${i}].title=this.value" placeholder="ej. 458 Speciale"></div>
+        <div class="field"><label>Color</label><input value="${esc(s.color||'')}" oninput="editSpecs[${i}].color=this.value" placeholder="ej. Giallo"></div>
+        <div class="field"><label>Detalles (VIN, motor…)</label><input value="${esc(s.details||'')}" oninput="editSpecs[${i}].details=this.value"></div>
+      </div>
+      <div class="specthumbs">${(s.images||[]).map((im,j)=>`<div class="spthumb ${im===editCoverImg?'cover':''}">
+          <img src="${esc(im)}" title="Poner de portada" onclick="setCoverImg(${i},${j})">
+          ${im===editCoverImg?'<span class="cv">★ portada</span>':''}
+          <button type="button" class="rm" title="Quitar" onclick="removeSpecImg(${i},${j})">×</button>
+        </div>`).join("")||'<span style="color:var(--ink-faint);font-size:12px">Sin fotos en esta versión</span>'}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn sm" type="button" onclick="document.getElementById('specfile-${i}').click()">📷 Añadir foto(s)</button>
+        ${editSpecs.length>1?`<button class="btn sm ghost" type="button" style="color:var(--accent)" onclick="removeSpec(${i})">Quitar versión</button>`:''}
+        <input type="file" id="specfile-${i}" accept="image/*" multiple hidden onchange="addSpecImgs(${i},this.files)">
+      </div>
+    </div>`).join("");
+}
+function addSpec(){editSpecs.push({id:uid(),title:"",details:"",color:"",images:[]});renderSpecs();}
+function removeSpec(i){editSpecs.splice(i,1);renderSpecs();}
+function removeSpecImg(i,j){const im=editSpecs[i].images[j];editSpecs[i].images.splice(j,1);if(im===editCoverImg)editCoverImg="";renderSpecs();}
+function setCoverImg(i,j){const im=editSpecs[i]&&editSpecs[i].images[j];if(im){editCoverImg=im;renderSpecs();}}
+function addSpecImgs(i,files){
+  toast("Subiendo imagen(es)…");
+  [...files].forEach(async f=>{ const url=await processImage(f,1400); if(!url)return; editSpecs[i].images=editSpecs[i].images||[]; editSpecs[i].images.push(url); if(!editCoverImg)editCoverImg=url; renderSpecs(); });
+}
+function saveCar(id){
+  const name=$("#f-name").value.trim();
+  if(!name){toast("Falta el nombre del coche");return;}
+  const ratings={}; PARAMS.forEach(p=>ratings[p]=Number($("#r-"+p).value));
+  const priceVal=$("#f-price").value;
+  // limpia versiones totalmente vacías
+  let specs=editSpecs.filter(s=>(s.title&&s.title.trim())||(s.details&&s.details.trim())||(s.color&&s.color.trim())||(s.images&&s.images.length));
+  // portada: la imagen elegida, o la primera disponible
+  const allImg=[]; specs.forEach(s=>(s.images||[]).forEach(im=>allImg.push(im)));
+  let cover=editCoverImg; if(!cover || !allImg.includes(cover)) cover=allImg[0]||"";
+  // color = el de la versión que tiene la portada (o el de la primera versión con color)
+  let color=""; for(const s of specs){ if((s.images||[]).includes(cover)){ color=s.color||""; break; } }
+  if(!color){ const sc=specs.find(s=>s.color&&s.color.trim()); if(sc)color=sc.color; }
+  const data={
+    name, brand:$("#f-brand").value.trim(), year:$("#f-year").value.trim(),
+    price: priceVal===""?null:Number(priceVal), currency:$("#f-curr").value,
+    image:cover, color,
+    notes:$("#f-notes").value.trim(),
+    ratings, specs, tags:[...editTags]
+  };
+  if(id){const c=cars.find(x=>x.id===id);Object.assign(c,data);}
+  else{cars.push({id:uid(),created:Date.now(),...data});}
+  upsertCatalog(data);
+  saveAll(); closeAll(); renderGarage(); toast(id?"Coche actualizado":"Coche añadido");
+}
+function delCar(id){
+  if(!confirm("¿Eliminar este coche de tu garage?"))return;
+  cars=cars.filter(c=>c.id!==id);
+  delete top100[id]; combos.forEach(cb=>cb.cars=cb.cars.filter(x=>x!==id));
+  saveAll(); closeAll(); renderGarage();
+}
+/* ======================================================================
+   CATEGORY MANAGER
+   ====================================================================== */
+function openCats(){
+  const used={}; cars.forEach(c=>(c.tags||[]).forEach(t=>used[t]=(used[t]||0)+1));
+  $("#catModal").innerHTML=`
+    <div class="mh"><h3>Categorías</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb">
+      <p style="color:var(--ink-dim);font-size:13px;margin:0">Crea y gestiona las etiquetas que puedes asignar a cada coche.</p>
+      <div style="display:flex;gap:8px">
+        <input id="newCat" class="ctrl" style="flex:1" placeholder="Nueva categoría (p.ej. Targa, Le Mans, V12…)">
+        <button class="btn primary" onclick="addCat()">＋ Crear</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px" id="catList">
+        ${categories.map(c=>`
+          <div class="comboitem">
+            <span class="t">${c}</span>
+            <span style="color:var(--ink-faint);font-size:12px">${used[c]||0} coches</span>
+            <button class="btn sm ghost" style="color:var(--accent)" onclick="delCat('${c.replace(/'/g,"\\'")}')">Quitar</button>
+          </div>`).join("")||'<p style="color:var(--ink-faint)">Sin categorías todavía.</p>'}
+      </div>
+    </div>
+    <div class="mf"><button class="btn primary" onclick="closeAll()">Listo</button></div>`;
+  $("#newCat").addEventListener("keydown",e=>{if(e.key==="Enter")addCat();});
+  $("#catScrim").classList.add("show");
+}
+function addCat(){
+  const v=$("#newCat").value.trim(); if(!v)return;
+  if(!categories.includes(v))categories.push(v);
+  pushSharedCat(v);   // compartir con todos
+  saveAll(); openCats(); renderTagFilters();
+}
+function delCat(c){
+  if(!confirm(`¿Quitar la categoría "${c}"? Los coches conservarán otras etiquetas.`))return;
+  categories=categories.filter(x=>x!==c);
+  cars.forEach(car=>{if(car.tags)car.tags=car.tags.filter(t=>t!==c);});
+  activeTagFilters.delete(c);
+  saveAll(); openCats(); renderGarage();
+}
+/* ======================================================================
+   IMPORT / EXPORT  (keeps your existing schema)
+   ====================================================================== */
+function doExport(){
+  const out=cars.map(c=>({
+    id:c.id,created:c.created,specs:c.specs||[],name:c.name,brand:c.brand,year:c.year,
+    image:c.image||"",price:c.price,currency:c.currency,notes:c.notes||"",
+    ratings:c.ratings,tags:c.tags||[]
+  }));
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  const d=new Date().toISOString().slice(0,10);
+  a.href=url; a.download=`mi-garage-coches-${d}.json`; a.click();
+  URL.revokeObjectURL(url); toast("Colección exportada");
+}
+function openImportChoice(){
+  $("#promptModal").innerHTML=`
+    <div class="mh"><h3>Importar garage</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb">
+      <p style="color:var(--ink-dim);font-size:14px;margin:0">Ya tienes ${cars.length} coches. ¿Cómo quieres importar el archivo?</p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="btn" onclick="pickImport('merge')">➕ Añadir a mi garage actual <span style="color:var(--ink-faint);font-weight:400;margin-left:auto">conserva los actuales</span></button>
+        <button class="btn" onclick="pickImport('replace')" style="border-color:var(--accent)">♻ Reemplazar todo <span style="color:var(--ink-faint);font-weight:400;margin-left:auto">borra los actuales</span></button>
+      </div>
+      <p style="color:var(--ink-faint);font-size:12px;margin:0">Funciona con exportaciones viejas (4 calificaciones, sin tags) y con respaldos completos.</p>
+    </div>`;
+  $("#promptScrim").classList.add("show");
+}
+function pickImport(mode){window.__importMode=mode;closeAll();$("#importFile").click();}
+function doBackup(){
+  const blob={cars,irlCars,categories,combos,top100,theme,tierMap,__version:2};
+  const b=new Blob([JSON.stringify(blob,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(b);
+  const a=document.createElement("a");
+  const d=new Date().toISOString().slice(0,10);
+  a.href=url; a.download=`mi-garage-RESPALDO-${d}.json`; a.click();
+  URL.revokeObjectURL(url); toast("Respaldo completo guardado");
+}
+function doImport(file){
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      const parsed=JSON.parse(e.target.result);
+      // Accept three shapes safely:
+      //  A) a bare array of cars  (your original + current export)
+      //  B) {cars:[...]}          (a full backup blob)
+      //  C) {cars:[...], irlCars:[...], categories, combos, top100}
+      let list, blob=null;
+      if(Array.isArray(parsed)) list=parsed;
+      else if(parsed && Array.isArray(parsed.cars)){ list=parsed.cars; blob=parsed; }
+      else throw new Error("shape");
+      const merge = window.__importMode==="merge";
+      const incoming=list.map(normalizeCar);
+      // antiguo "Tipo" → tag
+      incoming.forEach(c=>{ if(c.type && !c.tags.includes(c.type)) c.tags.unshift(c.type); });
+      // pull unknown tags into the category list so chips show up
+      incoming.forEach(c=>c.tags.forEach(t=>{if(!categories.includes(t))categories.push(t);}));
+      if(merge){
+        const seen=new Set(cars.map(c=>c.id));
+        incoming.forEach(c=>{ while(seen.has(c.id))c.id=uid(); seen.add(c.id); cars.push(c); });
+      }else{
+        cars=incoming;
+      }
+      // if it was a full backup, optionally bring the rest along
+      if(blob){
+        if(Array.isArray(blob.irlCars)) irlCars=blob.irlCars.map(normalizeIrl);
+        if(blob.categories?.length) blob.categories.forEach(t=>{if(!categories.includes(t))categories.push(t);});
+        if(Array.isArray(blob.combos)) combos=merge?combos.concat(blob.combos):blob.combos;
+        if(blob.top100&&!merge) top100=blob.top100;
+        if(blob.tierMap&&!merge) tierMap=blob.tierMap;
+      }
+      saveAll(); renderGarage();
+      toast(`${incoming.length} coches importados${merge?" (añadidos)":""}`);
+    }catch(err){ toast("Archivo no válido"); }
+    window.__importMode=null;
+  };
+  rd.readAsText(file);
+}
+/* ======================================================================
+   ACTIVITIES
+   ====================================================================== */
+function renderAct(){
+  document.querySelectorAll("#actnav button").forEach(b=>b.classList.toggle("on",b.dataset.act===currentAct));
+  if(currentAct==="five")renderFive();
+  else if(currentAct==="tier")renderTier();
+  else if(currentAct==="bracket")renderBracket();
+  else if(currentAct==="top100")renderTop100();
+  else renderTourney();
+}
+/* ---------- 5-CAR GARAGE ---------- */
+function renderFive(){
+  const v=$("#actView");
+  const slots=Array.from({length:fiveN},(_,i)=>{
+    const id=fivePick[i];
+    if(!id) return `<div class="slot"><span class="n">${i+1}</span>${fiveReal&&fiveRoles[i]?`<div class="cap" style="background:var(--accent2);color:#1a1a1a">${fiveRoles[i]}</div>`:''}</div>`;
+    const c=cars.find(x=>x.id===id); const img=firstImg(c);
+    return `<div class="slot full">
+      ${img?`<img src="${img}">`:`<div class="noimg" style="display:flex;align-items:center;justify-content:center;height:100%;font-size:28px;color:var(--ink-faint)">🚗</div>`}
+      <button class="rm" onclick="fiveRemove(${i})">×</button>
+      <div class="cap">${c.brand||""} ${c.name||""}</div></div>`;
+  }).join("");
+  const chosen=new Set(fivePick.filter(Boolean));
+  const totalVal=fivePick.filter(Boolean).reduce((s,id)=>{const c=cars.find(x=>x.id===id);return s+(Number(c?.price)||0);},0);
+  const overBudget=fiveBudget>0 && totalVal>fiveBudget;
+  const pct=fiveBudget>0?Math.min(100,totalVal/fiveBudget*100):0;
+  const used=comboTags();
+  const full=fivePick.filter(Boolean).length>=fiveN;
+  const picker=cars.map(c=>{
+    let dis=chosen.has(c.id)||(full&&!chosen.has(c.id));
+    let why="";
+    if(!dis&&fiveEra&&eraOf(c)!==fiveEra){dis=true;why="otra época";}
+    if(!dis&&fiveReal){const nextSlot=fivePick.filter(Boolean).length;const req=fiveRoles[nextSlot];if(req&&!(c.tags||[]).includes(req)){dis=true;why="necesitas: "+req;}}
+    const img=firstImg(c);
+    return `<div class="pickrow ${dis?'dis':''}" onclick="fiveAdd('${c.id}')" title="${why}">
+      ${img?`<img src="${img}">`:`<div class="pn">🚗</div>`}
+      <div class="info"><div class="t">${c.brand||""} ${c.name||""}</div>
+        <div class="s">${c.year||""} · ${money(c)} · ★${avg(c).toFixed(1)}${(c.tags||[]).length?' · '+c.tags.slice(0,2).join(', '):''}</div></div>
+    </div>`;
+  }).join("");
+  const eraOpts=`<option value="">Cualquier época</option>`+ERAS.map(e=>`<option value="${e.key}" ${fiveEra===e.key?'selected':''}>${e.label}</option>`).join("");
+  const fiveAllTags=[...new Set([...categories,...cars.flatMap(c=>c.tags||[])])];
+  v.innerHTML=`<div class="panel">
+    <h3>Garaje de ensueño</h3>
+    <p class="lead">Arma tu combo soñado. Ajusta cuántos coches y activa límites opcionales (modo realista = cada coche aporta una categoría distinta). Guárdalo con nombre.</p>
+    <div class="budgetbar" style="gap:16px">
+      <label style="font-size:13px;color:var(--ink-dim);display:flex;align-items:center;gap:6px">N° coches
+        <input class="ctrl" type="number" min="1" max="6" style="width:64px" value="${fiveN}" onchange="fiveN=Math.max(1,Math.min(6,Number(this.value)||5));fivePick=fivePick.filter(Boolean).slice(0,fiveN);renderFive()"></label>
+      <label style="font-size:13px;color:var(--ink-dim);display:flex;align-items:center;gap:6px">
+        <input type="checkbox" ${fiveReal?'checked':''} onchange="fiveReal=this.checked;renderFive()"> Modo realista</label>
+      <label style="font-size:13px;color:var(--ink-dim);display:flex;align-items:center;gap:6px">Época
+        <select class="ctrl" onchange="fiveEra=this.value;renderFive()">${eraOpts}</select></label>
+    </div>
+    <div class="budgetbar">
+      <span style="font-size:13px;color:var(--ink-dim)">Presupuesto (opcional):</span>
+      <input class="ctrl" type="number" step="any" style="width:170px" placeholder="ej. 5000000" value="${fiveBudget||''}" onchange="fiveBudget=Number(this.value)||0;renderFive()">
+      <div class="meter"><div class="f ${overBudget?'over':''}" style="width:${pct}%"></div></div>
+      <span style="font-size:13px;font-weight:700;color:${overBudget?'var(--accent)':'var(--ink)'}">$${totalVal.toLocaleString("en-US")}${fiveBudget?` / $${fiveBudget.toLocaleString("en-US")}`:''}</span>
+    </div>
+    ${fiveReal?`<div style="background:var(--bg2);border:1px solid var(--accent2);border-radius:10px;padding:12px;margin-bottom:14px">
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--accent2);margin-bottom:8px">⚙ Modo realista — categoría requerida por posición</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        ${Array.from({length:fiveN},(_,i)=>`<label style="font-size:12px;color:var(--ink-dim);display:flex;flex-direction:column;gap:3px">Coche ${i+1}
+          <select class="ctrl" onchange="fiveRoles[${i}]=this.value;renderFive()">
+            <option value="">Cualquiera</option>
+            ${fiveAllTags.map(t=>`<option value="${t}" ${fiveRoles[i]===t?'selected':''}>${t}</option>`).join("")}
+          </select></label>`).join("")}
+      </div>
+      <div style="font-size:11px;color:var(--ink-faint);margin-top:8px">El selector de coches solo dejará elegir los que cumplan la categoría de la siguiente posición vacía.</div>
+    </div>`:""}
+    <div class="fivewrap">
+      <div>
+        <div class="slots">${slots}</div>
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+          <input id="comboName" class="ctrl" style="flex:1;min-width:140px" placeholder="Nombre del combo (p.ej. 'Fin de semana italiano')">
+          <button class="btn primary" onclick="saveCombo()" ${fivePick.filter(Boolean).length<1?'disabled style=opacity:.5':''}>💾 Guardar combo</button>
+          <button class="btn ghost" onclick="shareCombo()">🔗 Compartir</button>
+          <button class="btn ghost sm" onclick="fivePick=[];renderFive()">Limpiar</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-faint);margin-bottom:6px">Elige tus coches</div>
+        <div class="picker">${picker||'<p style="padding:14px;color:var(--ink-faint)">No hay coches en tu garage.</p>'}</div>
+      </div>
+    </div>
+    ${combos.length?`<div class="combolist"><div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-faint)">Combos guardados</div>
+      ${combos.map((cb,i)=>`<div class="comboitem">
+        <div class="mini">${cb.cars.map(id=>{const c=cars.find(x=>x.id===id);const im=c?firstImg(c):null;return im?`<img src="${im}">`:`<span></span>`;}).join("")}</div>
+        <span class="t">${cb.name}</span>
+        <button class="btn sm" onclick="loadCombo(${i})">Cargar</button>
+        <button class="btn sm ghost" style="color:var(--accent)" onclick="delCombo(${i})">×</button>
+      </div>`).join("")}
+    </div>`:""}
+  </div>`;
+}
+function comboTags(){const s=new Set();fivePick.filter(Boolean).forEach(id=>{const c=cars.find(x=>x.id===id);(c?.tags||[]).forEach(t=>s.add(t));});return s;}
+function fiveAdd(id){
+  if(fivePick.filter(Boolean).length>=fiveN){toast(`Ya tienes ${fiveN} coches`);return;}
+  if(fivePick.includes(id))return;
+  fivePick.push(id); renderFive();
+}
+function fiveRemove(i){fivePick[i]=undefined;fivePick=fivePick.filter(Boolean);renderFive();}
+function saveCombo(){
+  const picks=fivePick.filter(Boolean); if(!picks.length){toast("Añade coches primero");return;}
+  const name=($("#comboName").value||"").trim()||`Combo ${combos.length+1}`;
+  combos.push({name,cars:picks}); saveAll(); renderFive(); toast("Combo guardado");
+}
+function loadCombo(i){fivePick=[...combos[i].cars];fiveN=Math.max(fiveN,fivePick.length);renderFive();toast(`Cargado: ${combos[i].name}`);}
+function delCombo(i){combos.splice(i,1);saveAll();renderFive();}
+/* ---------- TIER LIST ---------- */
+const TIER_DEFS=[{k:"S",c:"#e35d6a"},{k:"A",c:"#e8924a"},{k:"B",c:"#e8c84a"},{k:"C",c:"#8bc34a"},{k:"D",c:"#5aa9e6"}];
+function tierFilteredCars(){
+  if(tierFilter==="all")return cars.slice();
+  if(tierFilter.startsWith("tag:"))return cars.filter(c=>(c.tags||[]).includes(tierFilter.slice(4)));
+  if(tierFilter.startsWith("era:"))return cars.filter(c=>eraOf(c)===tierFilter.slice(4));
+  return cars.slice();
+}
+function tierChip(c){
+  const im=firstImg(c);
+  return `<div class="poolcar ${tierSel===c.id?'sel':''}" draggable="true" ondragstart="tierDragId='${c.id}';event.dataTransfer.effectAllowed='move'" onclick="tierTap('${c.id}')">${im?`<img src="${im}">`:`<div class="pn">🚗</div>`}${c.brand||""} ${c.name||""}</div>`;
+}
+function renderTier(){
+  const v=$("#actView");
+  if(!cars.length){v.innerHTML=`<div class="panel"><h3>Tier list</h3><p class="lead">Añade coches primero.</p></div>`;return;}
+  const tags=[...new Set(cars.flatMap(c=>c.tags||[]))].sort();
+  const eras=ERAS.filter(e=>cars.some(c=>eraOf(c)===e.key));
+  const filterSel=`<select class="ctrl" onchange="tierFilter=this.value;tierSel=null;renderTier()">
+    <option value="all" ${tierFilter==="all"?"selected":""}>Todos los coches</option>
+    ${tags.length?`<optgroup label="Por categoría">${tags.map(t=>`<option value="tag:${t}" ${tierFilter==="tag:"+t?"selected":""}>${t}</option>`).join("")}</optgroup>`:""}
+    ${eras.length?`<optgroup label="Por época">${eras.map(e=>`<option value="era:${e.key}" ${tierFilter==="era:"+e.key?"selected":""}>${e.label}</option>`).join("")}</optgroup>`:""}
+  </select>`;
+  const pool=tierFilteredCars();
+  const rows=TIER_DEFS.map(t=>{
+    const chips=pool.filter(c=>tierMap[c.id]===t.k).map(tierChip).join("");
+    return `<div class="tierrow">
+      <div class="tierlabel" style="background:${t.c}" onclick="tierPlace('${t.k}')">${t.k}</div>
+      <div class="tierdrop" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="tierDrop(event,'${t.k}')">${chips||'<span style="color:var(--ink-faint);font-size:12px;align-self:center">—</span>'}</div>
+    </div>`;
+  }).join("");
+  const unranked=pool.filter(c=>!TIER_DEFS.some(t=>t.k===tierMap[c.id]));
+  v.innerHTML=`<div class="panel">
+    <h3>Tier list</h3>
+    <p class="lead">Toca un coche para seleccionarlo y luego toca un nivel (S, A, B, C, D). Puedes filtrar por categoría o por época.</p>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+      <span style="font-size:13px;color:var(--ink-dim)">Filtrar:</span>${filterSel}
+      ${tierSel?`<span style="font-size:12px;color:var(--accent2);font-weight:700">● seleccionado — toca un nivel</span>`:""}
+      <button class="btn sm ghost" style="margin-left:auto" onclick="autoTier()">⚡ Autollenar por promedio</button>
+      <button class="btn sm ghost" style="color:var(--accent)" onclick="clearTier()">Vaciar</button>
+    </div>
+    ${rows}
+    <div class="unranked"><h4>Sin clasificar — toca uno y luego un nivel (o aquí para quitarlo)</h4>
+      <div class="tierdrop" onclick="if(tierSel)tierPlace('')" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="tierDrop(event,'')" style="min-height:54px">${unranked.map(tierChip).join("")||'<span style="color:var(--ink-faint);font-size:12px;align-self:center">Todos clasificados 🎉</span>'}</div>
+    </div>
+  </div>`;
+}
+function tierTap(id){tierSel=tierSel===id?null:id;renderTier();}
+function tierPlace(k){if(!tierSel)return;if(k)tierMap[tierSel]=k;else delete tierMap[tierSel];tierSel=null;saveAll();renderTier();}
+function tierDrop(e,k){e.preventDefault();const id=tierDragId;if(!id)return;if(k)tierMap[id]=k;else delete tierMap[id];tierDragId=null;tierSel=null;saveAll();renderTier();}
+function autoTier(){
+  const pool=tierFilteredCars().slice().sort((a,b)=>avg(b)-avg(a));
+  const n=pool.length||1;
+  pool.forEach((c,i)=>{const q=i/n;tierMap[c.id]=q<0.2?"S":q<0.4?"A":q<0.6?"B":q<0.8?"C":"D";});
+  saveAll();renderTier();toast("Clasificado por promedio");
+}
+function clearTier(){if(confirm("¿Vaciar la tier list (de los coches mostrados)?")){tierFilteredCars().forEach(c=>delete tierMap[c.id]);saveAll();renderTier();}}
+/* ---------- TORNEO (bracket) ---------- */
+function brkStart(){
+  const ids=cars.map(c=>c.id).sort(()=>Math.random()-0.5);
+  brk={round:ids,next:[],match:0,roundNo:1,podium:[],history:[],total:ids.length};
+  renderBracket();
+}
+function renderBracket(){
+  const v=$("#actView");
+  if(cars.length<2){v.innerHTML=`<div class="panel"><h3>Torneo</h3><p class="lead">Necesitas al menos 2 coches.</p></div>`;return;}
+  if(!brk){v.innerHTML=`<div class="panel"><h3>Torneo — bracket</h3><p class="lead">Eliminatorias por rondas; al final, podio 🥇🥈🥉 con ranking completo.</p><button class="btn primary" onclick="brkStart()">▶ Empezar torneo</button></div>`;return;}
+  if(brk.round.length>1 && brk.match+1>=brk.round.length){
+    if(brk.match<brk.round.length){brk.next.push(brk.round[brk.match]);
+      brk.history.push({size:brk.round.length,a:brk.round[brk.match],b:null,winner:brk.round[brk.match],bye:true});}
+    brk.round=brk.next;brk.next=[];brk.match=0;brk.roundNo++;
+  }
+  if(brk.round.length<=1)return brkPodium(v);
+  const a=cars.find(x=>x.id===brk.round[brk.match]);
+  const b=cars.find(x=>x.id===brk.round[brk.match+1]);
+  const totalMatches=Math.floor(brk.round.length/2);
+  const roundName=brk.round.length<=2?"Final":brk.round.length<=4?"Semifinal":brk.round.length<=8?"Cuartos":"Ronda "+brk.roundNo;
+  const card=(c,i)=>{const img=firstImg(c);return `<div class="vscard" onclick="brkPick(${i})"><div class="ph">${img?`<img src="${img}">`:`<div class="noimg">🚗</div>`}</div><div class="cap"><div class="t">${c.brand||""} ${c.name||""}</div><div class="s">${c.year||""} · ★${avg(c).toFixed(1)} · ${money(c)}</div></div></div>`;};
+  v.innerHTML=`<div class="panel"><h3>Torneo · ${roundName}</h3>
+    <p class="lead">Partido ${Math.floor(brk.match/2)+1} de ${totalMatches} · ${brk.round.length} coches en esta ronda</p>
+    <div class="vs">${card(a,0)}<div class="vsmid">VS</div>${card(b,1)}</div>
+    <button class="btn ghost sm" onclick="brk=null;renderBracket()">✕ Reiniciar</button></div>`;
+}
+function brkPick(i){
+  const winner=i===0?brk.round[brk.match]:brk.round[brk.match+1];
+  const loser=i===0?brk.round[brk.match+1]:brk.round[brk.match];
+  brk.history.push({size:brk.round.length,a:brk.round[brk.match],b:brk.round[brk.match+1],winner});
+  brk.podium.push({id:loser,round:brk.round.length});
+  brk.next.push(winner);
+  brk.match+=2;
+  renderBracket();
+}
+function brkPodium(v){
+  const champ=brk.round[0]||brk.next[0];
+  const sizes=[...new Set(brk.history.map(h=>h.size))].sort((a,b)=>b-a);
+  const roundLabel=s=>s<=2?"Final":s<=4?"Semifinal":s<=8?"Cuartos":s<=16?"Octavos":`Ronda de ${s}`;
+  const mini=id=>{const c=cars.find(x=>x.id===id);return {c,im:c?firstImg(c):null};};
+  const row=(m,win)=>m?`<div class="bm-row ${win?'win':'lose'}">${m.im?`<img src="${m.im}">`:`<span class="pn">🚗</span>`}<span class="bm-nm">${m.c?(m.c.brand||"")+" "+(m.c.name||""):""}</span>${win?'<span class="bm-ck">✓</span>':''}</div>`:`<div class="bm-row bye">pasa directo</div>`;
+  const matchCard=h=>{const A=mini(h.a),B=h.b?mini(h.b):null;return `<div class="bmatch">${row(A,h.winner===h.a)}${B?row(B,h.winner===h.b):row(null)}</div>`;};
+  const cols=sizes.map(s=>`<div class="bcol"><div class="bcol-h">${roundLabel(s)}</div>${brk.history.filter(h=>h.size===s).map(matchCard).join("")}</div>`).join("");
+  const cc=cars.find(x=>x.id===champ);const cim=cc?firstImg(cc):null;
+  v.innerHTML=`<div class="panel">
+    <h3 style="text-align:center">🏆 Campeón del torneo</h3>
+    <div style="max-width:320px;margin:12px auto"><div class="vscard" style="cursor:default"><div class="ph">${cim?`<img src="${cim}">`:`<div class="noimg">🚗</div>`}</div><div class="cap"><div class="t">${cc.brand||""} ${cc.name||""}</div><div class="s">${cc.year||""} · ★${avg(cc).toFixed(1)}</div></div></div></div>
+    <h4 style="text-transform:uppercase;letter-spacing:1px;color:var(--ink-faint);font-size:12px;margin:18px 0 10px">El camino — quién eliminó a quién</h4>
+    <div class="bracket">${cols||'<span style="color:var(--ink-faint)">—</span>'}</div>
+    <div style="text-align:center;margin-top:16px"><button class="btn primary" onclick="brkStart()">↻ Otro torneo</button></div>
+  </div>`;
+}
+function shareCombo(){
+  const picks=fivePick.filter(Boolean).map(id=>{const c=cars.find(x=>x.id===id);return `${c.brand||""} ${c.name||""}`.trim();});
+  if(!picks.length){toast("Arma un combo primero");return;}
+  const txt=`🅿️ Mi Garage de 5:\n`+picks.map((p,i)=>`${i+1}. ${p}`).join("\n");
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>toast("Copiado al portapapeles"));}
+  else toast(txt);
+}
+/* ---------- TOP 100 ---------- */
+function renderTop100(){
+  const v=$("#actView");
+  const ranked=cars.filter(c=>top100[c.id]).sort((a,b)=>top100[a.id]-top100[b.id]);
+  const unranked=cars.filter(c=>!top100[c.id]);
+  const medal=p=>p===1?"🥇":p===2?"🥈":p===3?"🥉":"";
+  v.innerHTML=`<div class="panel">
+    <h3>Top 100</h3>
+    <p class="lead">Tu ranking definitivo. Asigna una posición a cada coche (1 = el mejor). Edita el número para reordenar.</p>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn sm" onclick="autoFillTop()">⚡ Autollenar por promedio</button>
+      <button class="btn sm ghost" onclick="clearTop()" style="color:var(--accent)">Vaciar ranking</button>
+    </div>
+    <div class="t100">
+      ${ranked.length?ranked.map(c=>{
+        const p=top100[c.id]; const img=firstImg(c);
+        return `<div class="t100row">
+          <span class="pos"><input type="number" min="1" max="100" value="${p}" onchange="setTop('${c.id}',this.value)"></span>
+          <span class="medal">${medal(p)}</span>
+          ${img?`<img src="${img}">`:`<div class="pn">🚗</div>`}
+          <div class="info"><div class="t">${c.brand||""} ${c.name||""}</div>
+            <div class="s">${c.year||""} · ★${avg(c).toFixed(1)} · ${money(c)}</div></div>
+          <button class="btn sm ghost" style="color:var(--accent)" onclick="setTop('${c.id}','')">Quitar</button>
+        </div>`;
+      }).join(""):'<p style="color:var(--ink-faint)">Aún no has rankeado ningún coche. Toca uno abajo o usa autollenar.</p>'}
+    </div>
+    ${unranked.length?`<div class="unranked"><h4>Sin posición — toca para añadir al final</h4>
+      <div class="pool">${unranked.map(c=>{const im=firstImg(c);return `<div class="poolcar" onclick="addToTop('${c.id}')">
+        ${im?`<img src="${im}">`:`<div class="pn">🚗</div>`}${c.brand||""} ${c.name||""}</div>`;}).join("")}</div></div>`:""}
+  </div>`;
+}
+function setTop(id,val){
+  if(val===""||val==null){delete top100[id];}
+  else top100[id]=Math.max(1,Math.min(100,Number(val)));
+  saveAll(); renderTop100();
+}
+function addToTop(id){
+  const max=Math.max(0,...Object.values(top100));
+  top100[id]=max+1; saveAll(); renderTop100();
+}
+function autoFillTop(){
+  const sorted=[...cars].sort((a,b)=>avg(b)-avg(a));
+  top100={}; sorted.forEach((c,i)=>{if(i<100)top100[c.id]=i+1;});
+  saveAll(); renderTop100(); toast("Rankeado por promedio");
+}
+function clearTop(){if(confirm("¿Vaciar todo el Top 100?")){top100={};saveAll();renderTop100();}}
+/* ---------- DUELOS (tournament) ---------- */
+function renderTourney(){
+  const v=$("#actView");
+  if(cars.length<2){
+    v.innerHTML=`<div class="panel"><h3>Duelos</h3><p class="lead">Necesitas al menos 2 coches para jugar.</p></div>`;
+    return;
+  }
+  if(!tourState){
+    v.innerHTML=`<div class="panel"><h3>Duelos — rey de la colina</h3>
+      <p class="lead">Elige tu preferido entre dos. El ganador se queda y enfrenta al siguiente coche, uno por uno, hasta tu favorito definitivo.</p>
+      <button class="btn primary" onclick="startTour()">▶ Empezar</button></div>`;
+    return;
+  }
+  if(!tourState.queue.length){
+    const winner=cars.find(c=>c.id===tourState.champion);
+    const img=winner?firstImg(winner):null;
+    v.innerHTML=`<div class="panel" style="text-align:center">
+      <h3>🏆 Tu favorito</h3>
+      <div style="max-width:340px;margin:14px auto">
+        <div class="vscard" style="cursor:default">
+          <div class="ph">${img?`<img src="${img}">`:`<div class="noimg">🚗</div>`}</div>
+          <div class="cap"><div class="t">${winner.brand||""} ${winner.name||""}</div>
+            <div class="s">${winner.year||""} · ★${avg(winner).toFixed(1)}</div></div>
+        </div>
+      </div>
+      <button class="btn primary" onclick="startTour()">↻ Jugar otra vez</button></div>`;
+    tourState=null; return;
+  }
+  const a=cars.find(c=>c.id===tourState.champion);
+  const b=cars.find(c=>c.id===tourState.queue[0]);
+  const pct=Math.round(tourState.duel/tourState.total*100);
+  const card=(c,which,champ)=>{const img=firstImg(c);return `<div class="vscard" onclick="tourPick('${which}')" style="position:relative">
+    ${champ?`<div style="position:absolute;top:8px;left:8px;z-index:3;background:var(--good);color:#0a0a0a;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:2px 8px;border-radius:6px">★ Campeón</div>`:''}
+    <div class="ph">${img?`<img src="${img}">`:`<div class="noimg">🚗</div>`}</div>
+    <div class="cap"><div class="t">${c.brand||""} ${c.name||""}</div><div class="s">${c.year||""} · ★${avg(c).toFixed(1)}</div></div></div>`;};
+  v.innerHTML=`<div class="panel"><h3>¿Cuál prefieres? · Duelo ${tourState.duel+1} de ${tourState.total}</h3>
+    <div class="tourbar"><div class="f" style="width:${pct}%"></div></div>
+    <div class="vs">${card(a,'a',true)}<div class="vsmid">VS</div>${card(b,'b',false)}</div></div>`;
+}
+function startTour(){
+  const ids=cars.map(c=>c.id).sort(()=>Math.random()-0.5);
+  tourState={champion:ids[0], queue:ids.slice(1), total:ids.length-1, duel:0};
+  renderTourney();
+}
+function tourPick(which){
+  if(which==='b') tourState.champion=tourState.queue[0];
+  tourState.queue.shift();
+  tourState.duel++;
+  renderTourney();
+}
+/* ======================================================================
+   COCHES MANEJADOS IRL — independent ranking + experience params + log
+   ====================================================================== */
+let irlEditImage=null;
+function renderIrl(){
+  const q=($("#irlSearch").value||"").toLowerCase().trim();
+  let list=irlCars.filter(c=>`${c.brand||""} ${c.name||""} ${c.year||""}`.toLowerCase().includes(q));
+  const s=$("#irlSort").value;
+  list.sort((a,b)=>{
+    switch(s){
+      case"name":return (a.name||"").localeCompare(b.name||"");
+      case"recent":return (b.created||0)-(a.created||0);
+      case"manejo":case"motor":case"diversion":case"sorpresa":
+        return (b.ratings?.[s]||0)-(a.ratings?.[s]||0);
+      default:return irlAvg(b)-irlAvg(a);
+    }
+  });
+  $("#irlCount").textContent=`${list.length} ${list.length===1?'coche manejado':'coches manejados'}`;
+  const view=$("#irlView");
+  if(!irlCars.length){
+    view.innerHTML=`<div class="empty"><div class="big">🚙💨</div>
+      <h2>Aún no registras manejos</h2>
+      <p>Apunta los coches que has manejado en la vida real, con su propia calificación de experiencia.</p>
+      <button class="btn primary" onclick="openIrlEdit()">＋ Registrar manejo</button></div>`;
+    return;
+  }
+  if(!list.length){view.innerHTML=`<div class="empty"><div class="big">🔍</div><h2>Sin resultados</h2></div>`;return;}
+  const showRank=s!=="name"&&s!=="recent";
+  view.innerHTML=`<div class="grid">${list.map((c,i)=>{
+    const img=c.image||null; const a=irlAvg(c);
+    const bars=IRL_PARAMS.filter(p=>c.ratings?.[p]!=null).map(p=>{
+      const v=c.ratings[p];
+      return `<div class="barrow"><span class="lab" style="width:78px">${IRL_LABELS[p].split(' ')[0]}</span>
+        <span class="track"><span class="fill" style="width:${v*10}%"></span></span><span class="v">${fmt(v)}</span></div>`;
+    }).join("");
+    const log=c.log||{};
+    const logline=[log.place,log.date].filter(Boolean).join(" · ");
+    return `<article class="car">
+      <div class="ph" onclick="openIrlDetail('${c.id}')">
+        ${img?`<img src="${img}" alt="">`:`<div class="noimg">🚗</div>`}
+        ${showRank?`<div class="rankbadge">#${i+1}</div>`:""}
+        ${a?`<div class="avgbadge">★ ${a.toFixed(1)}</div>`:""}
+      </div>
+      <div class="body">
+        <div class="nm" style="cursor:pointer" onclick="openIrlDetail('${c.id}')">${c.name||"Sin nombre"}</div>
+        <div class="meta"><b>${c.brand||"—"}</b> <span>${c.year||""}</span></div>
+        ${logline?`<div class="meta" style="color:var(--ink-dim)">📍 ${logline}</div>`:""}
+        <div class="bars">${bars}</div>
+        <div class="acts">
+          <button class="btn ghost sm" onclick="openIrlEdit('${c.id}')">✎ Editar</button>
+          <button class="btn ghost sm" onclick="openIrlDetail('${c.id}')">Ver</button>
+        </div>
+      </div>
+    </article>`;
+  }).join("")}</div>`;
+}
+function openIrlEdit(id){
+  if(readOnly){toast("Estás viendo otro garage (solo lectura)");return;}
+  const c=id?irlCars.find(x=>x.id===id):null;
+  irlEditImage=c?.image||null;
+  const r=c?.ratings||{}; const log=c?.log||{place:"",date:"",note:""};
+  const sliders=IRL_PARAMS.map(p=>{
+    const v=r[p]??7;
+    return `<div class="rate">
+      <label>${IRL_LABELS[p]} <span class="num" id="inum-${p}">${fmt(v)}</span></label>
+      <input type="range" min="0.5" max="10" step="0.5" value="${v}" id="ir-${p}"
+        oninput="document.getElementById('inum-${p}').textContent=(this.value%1?Number(this.value).toFixed(1):this.value)">
+    </div>`;
+  }).join("");
+  $("#irlModal").innerHTML=`
+    <div class="mh"><h3>${c?'Editar manejo':'Registrar manejo'}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb">
+      <div class="three">
+        <div class="field"><label>Marca</label><input id="if-brand" list="brandList" autocomplete="off" value="${c?.brand||""}" placeholder="Porsche"></div>
+        <div class="field"><label>Año</label><input id="if-year" value="${c?.year||""}" placeholder="2008"></div>
+        <div class="field"><label>Modelo / Nombre *</label><input id="if-name" list="modelList" autocomplete="off" value="${c?.name||""}" placeholder="Boxster S 987"></div>
+      </div>
+      <div class="field"><label>Foto (opcional)</label>
+        <div class="dropimg" id="iDropMain">Sube una foto o pega una URL abajo</div>
+        <input id="if-imgurl" class="ctrl" style="width:100%;margin-top:8px" placeholder="https://… (URL)" value="${(c?.image&&!c.image.startsWith('data:'))?c.image:''}">
+        <img class="preview" id="iMainPreview" ${irlEditImage?`src="${irlEditImage}" style="display:block"`:""}>
+        <input type="file" id="iMainFile" accept="image/*" hidden>
+      </div>
+      <div class="field"><label>Experiencia (0.5 – 10)</label>
+        <div class="ratings">${sliders}</div>
+      </div>
+      <div class="field"><label>Bitácora del manejo</label>
+        <div class="two">
+          <div class="field"><label style="font-weight:500;text-transform:none">Lugar</label><input id="if-place" value="${log.place||""}" placeholder="Autódromo, carretera, evento…"></div>
+          <div class="field"><label style="font-weight:500;text-transform:none">Fecha</label><input id="if-date" type="date" value="${log.date||""}"></div>
+        </div>
+        <textarea id="if-note" placeholder="¿Cómo se sintió? ¿Qué te sorprendió?">${log.note||""}</textarea>
+      </div>
+    </div>
+    <div class="mf">
+      ${c?`<button class="btn ghost" style="color:var(--accent)" onclick="delIrl('${c.id}')">Eliminar</button>`:""}
+      <button class="btn ghost" onclick="closeAll()">Cancelar</button>
+      <button class="btn primary" onclick="saveIrl('${c?.id||''}')">Guardar</button>
+    </div>`;
+  $("#iDropMain").onclick=()=>$("#iMainFile").click();
+  $("#iMainFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=ev=>{irlEditImage=ev.target.result;const p=$("#iMainPreview");p.src=irlEditImage;p.style.display="block";};rd.readAsDataURL(f);};
+  $("#if-imgurl").oninput=e=>{const v=e.target.value.trim();if(v){irlEditImage=v;const p=$("#iMainPreview");p.src=v;p.style.display="block";}};
+  fillBrandList(); fillModelList(c?.brand||"");
+  $("#if-brand").addEventListener("input",e=>fillModelList(e.target.value));
+  $("#irlScrim").classList.add("show");
+}
+function saveIrl(id){
+  const name=$("#if-name").value.trim();
+  if(!name){toast("Falta el nombre del coche");return;}
+  const ratings={}; IRL_PARAMS.forEach(p=>ratings[p]=Number($("#ir-"+p).value));
+  const data={
+    name, brand:$("#if-brand").value.trim(), year:$("#if-year").value.trim(),
+    image:irlEditImage||"", ratings,
+    log:{place:$("#if-place").value.trim(),date:$("#if-date").value,note:$("#if-note").value.trim()}
+  };
+  if(id){Object.assign(irlCars.find(x=>x.id===id),data);}
+  else{irlCars.push({id:uid(),created:Date.now(),...data});}
+  saveAll(); closeAll(); renderIrl(); toast(id?"Manejo actualizado":"Manejo registrado");
+}
+function delIrl(id){
+  if(!confirm("¿Eliminar este registro?"))return;
+  irlCars=irlCars.filter(c=>c.id!==id); saveAll(); closeAll(); renderIrl();
+}
+function openIrlDetail(id){
+  const c=irlCars.find(x=>x.id===id); if(!c)return;
+  const bars=IRL_PARAMS.filter(p=>c.ratings?.[p]!=null).map(p=>{
+    const v=c.ratings[p];
+    return `<div class="barrow" style="font-size:13px"><span class="lab" style="width:160px">${IRL_LABELS[p]}</span>
+      <span class="track" style="height:8px"><span class="fill" style="width:${v*10}%"></span></span>
+      <span class="v" style="width:30px;font-size:14px">${fmt(v)}</span></div>`;
+  }).join("");
+  const log=c.log||{};
+  $("#irlDetailModal").innerHTML=`
+    <div class="mh"><h3>${c.name||"Coche"}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb">
+      <div class="detailhead">
+        <div class="big">${c.year||""} <span style="color:var(--accent)">${c.brand||""}</span></div>
+        <div style="margin-left:auto;text-align:right">
+          <div style="font-family:var(--display);font-size:40px;line-height:.9">★ ${irlAvg(c).toFixed(1)}</div>
+          <div style="color:var(--ink-faint);font-size:12px">experiencia</div>
+        </div>
+      </div>
+      <div class="detailgrid">
+        <div>${c.image?`<img src="${c.image}" style="width:100%;border-radius:12px;border:1px solid var(--line)">`:`<div class="dropimg">Sin foto</div>`}</div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="bars">${bars}</div>
+          ${(log.place||log.date)?`<div><div style="color:var(--ink-faint);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Bitácora</div>
+            <div style="font-size:14px">📍 ${[log.place,log.date].filter(Boolean).join(" · ")||"—"}</div></div>`:""}
+          ${log.note?`<div style="font-size:14px;color:var(--ink-dim)">${log.note}</div>`:""}
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn ghost" onclick="openIrlEdit('${c.id}')">✎ Editar</button>
+      <button class="btn primary" onclick="closeAll()">Cerrar</button>
+    </div>`;
+  $("#irlDetailScrim").classList.add("show");
+}
+/* ======================================================================
+   TABS / WIRING
+   ====================================================================== */
+function showTab(t){
+  ["garage","irl","activities","market","battle","historia"].forEach(x=>{const el=$("#tab-"+x); if(el) el.style.display=x===t?"":"none";});
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===t));
+  if(t==="activities")renderAct();
+  else if(t==="irl")renderIrl();
+  else if(t==="market")renderMarketTab();
+  else if(t==="battle")renderBattle();
+  else if(t==="historia")renderHistoria();
+}
+function closeAll(){document.querySelectorAll(".scrim").forEach(s=>s.classList.remove("show"));}
+function wire(){
+  document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+  document.querySelectorAll("#actnav button").forEach(b=>b.onclick=()=>{currentAct=b.dataset.act;tourState=null;renderAct();});
+  $("#search").oninput=renderGarage;
+  $("#sort").onchange=renderGarage;
+  $("#irlSearch").oninput=renderIrl;
+  $("#irlSort").onchange=renderIrl;
+  $("#irlAddBtn").onclick=()=>openIrlEdit();
+  $("#addBtn").onclick=()=>openEdit();
+  $("#catBtn").onclick=openCats;
+  $("#filterBtn").onclick=toggleTagPanel;
+  $("#exportBtn").onclick=doExport;
+  $("#backupBtn").onclick=doBackup;
+  $("#importBtn").onclick=()=>{
+    if(cars.length){
+      openImportChoice();
+    }else{
+      window.__importMode="replace"; $("#importFile").click();
+    }
+  };
+  $("#importFile").onchange=e=>{if(e.target.files[0])doImport(e.target.files[0]);e.target.value="";};
+  document.querySelectorAll(".scrim").forEach(s=>s.onclick=e=>{if(e.target===s)closeAll();});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeAll();});
+}
+/* ======================================================================
+   NUBE (Supabase): auth, sincronización, perfiles, buscador
+   ====================================================================== */
+function initSupabase(){ try{ supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }catch(e){ supa=null; } }
+function applyAfterLoad(){
+  remapCats();   // migra categorías viejas (español) → inglés
+  document.body.classList.toggle("viewing", !!viewing);
+  renderThemes();
+  renderAuthUI();
+  renderGarage();
+  const cur=document.querySelector("#tabs button.on")?.dataset.tab||"garage";
+  if(cur==="irl")renderIrl(); else if(cur==="activities")renderAct();
+}
+function renderAuthUI(){
+  const el=$("#authArea"); if(!el)return;
+  if(viewing){
+    const fb=(session&&viewing.userId&&viewing.userId!==session.user.id)
+      ? `<button class="btn sm" onclick="toggleFriend()">${viewing.isFriend?'✓ Amigo':'➕ Agregar amigo'}</button>` : '';
+    el.innerHTML=`<span class="authuser">👁 Viendo <b>@${viewing.username}</b></span>${fb}
+      <button class="btn sm" onclick="goHome()">← Volver a mi garage</button>`;
+    return;
+  }
+  if(session){
+    const u=myProfile?myProfile.username:"…", pub=myProfile?myProfile.is_public:true;
+    el.innerHTML=`<button class="btn sm" onclick="openFriends()">👥 Amigos</button>
+      <button class="btn sm" onclick="openDiscover()">🔎 Descubrir</button>
+      <span class="authuser">@${u}</span>
+      <button class="btn sm" onclick="togglePublic()">${pub?"🌐 Público":"🔒 Privado"}</button>
+      <button class="btn sm" onclick="copyMyLink()">🔗 Mi enlace</button>
+      <button class="btn sm ghost" onclick="doLogout()">Salir</button>`;
+  } else {
+    el.innerHTML=`<button class="btn sm" onclick="openDiscover()">🔎 Descubrir</button>
+      <button class="btn primary sm" onclick="openAuth('login')">☁ Iniciar sesión</button>`;
+  }
+}
+async function routeAndLoad(){
+  const m=location.hash.match(/^#\/?u\/(.+)$/i);
+  if(m && supa){ return openUserGarage(decodeURIComponent(m[1])); }
+  viewing=null; readOnly=false;
+  if(supa){ try{ const {data}=await supa.auth.getSession(); session=data.session||null; }catch(e){ session=null; } }
+  if(session){ await loadMyGarage(); } else { await loadAll(); }
+  await loadSharedCats();   // trae las categorías que crearon otros usuarios
+  applyAfterLoad();
+  if(session && !myProfile) promptUsername();
+}
+async function loadMyGarage(){
+  myProfile=null;
+  try{ const {data}=await supa.from("profiles").select("*").eq("user_id",session.user.id).maybeSingle(); myProfile=data||null; }catch(e){}
+  let cloud=null;
+  try{ const {data}=await supa.from("garages").select("data").eq("user_id",session.user.id).maybeSingle(); cloud=data?data.data:null; }catch(e){}
+  if(cloud && (cloud.cars||cloud.irlCars)){ loadFromBlob(cloud); }
+  else { await loadAll(); await saveAll(); }   // primera vez: sube tu garage local a la nube
+  seedCatalog();   // publica tus coches en el marketplace
+}
+async function openUserGarage(username){
+  readOnly=true; viewing={username};
+  let prof=null;
+  try{ const {data}=await supa.from("profiles").select("*").ilike("username",username).maybeSingle(); prof=data||null; }catch(e){}
+  if(!prof){ loadFromBlob({}); applyAfterLoad(); toast("Ese garage no existe o es privado"); return; }
+  viewing.username=prof.username; viewing.userId=prof.user_id;
+  if(session && prof.user_id!==session.user.id){ try{ viewing.isFriend=await isFollowing(prof.user_id); }catch(e){} }
+  let cloud=null;
+  try{ const {data}=await supa.from("garages").select("data").eq("user_id",prof.user_id).maybeSingle(); cloud=data?data.data:null; }catch(e){}
+  loadFromBlob(cloud||{});
+  applyAfterLoad();
+  showTab("garage");
+}
+function goHome(){ location.hash=""; viewing=null; readOnly=false; routeAndLoad(); }
+/* ---- auth ---- */
+function openAuth(mode){
+  const signup=mode==="signup";
+  $("#promptModal").innerHTML=`
+    <div class="mh"><h3>${signup?"Crear cuenta":"Iniciar sesión"}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb">
+      <div class="field"><label>Correo</label><input id="au-email" type="email" placeholder="tu@correo.com"></div>
+      <div class="field"><label>Contraseña</label><input id="au-pass" type="password" placeholder="mínimo 6 caracteres"></div>
+      <div id="au-msg" style="font-size:13px;color:var(--ink-dim)"></div>
+      <button class="btn primary" onclick="doAuth(${signup})">${signup?"Crear cuenta":"Entrar"}</button>
+      <div style="text-align:center;font-size:13px;color:var(--ink-faint)">
+        ${signup?`¿Ya tienes cuenta? <a href="#" onclick="openAuth('login');return false">Inicia sesión</a>`
+                :`¿No tienes cuenta? <a href="#" onclick="openAuth('signup');return false">Crea una</a>`}
+      </div>
+    </div>`;
+  $("#promptScrim").classList.add("show");
+}
+async function doAuth(signup){
+  const email=$("#au-email").value.trim(), pass=$("#au-pass").value, msg=$("#au-msg");
+  if(!email||!pass){ msg.textContent="Escribe correo y contraseña."; return; }
+  msg.textContent="Conectando…";
+  try{
+    const res = signup ? await supa.auth.signUp({email,password:pass})
+                       : await supa.auth.signInWithPassword({email,password:pass});
+    if(res.error){ msg.textContent="⚠ "+res.error.message; return; }
+    if(signup && !res.data.session){ msg.innerHTML="✓ Cuenta creada. Revisa tu correo, confirma el enlace y luego inicia sesión."; return; }
+    closeAll(); await routeAndLoad(); toast("¡Bienvenido!");
+  }catch(e){ msg.textContent="⚠ Error de conexión."; }
+}
+async function doLogout(){ try{ await supa.auth.signOut(); }catch(e){} session=null; myProfile=null; await loadAll(); applyAfterLoad(); toast("Sesión cerrada"); }
+/* ---- onboarding: elegir usuario ---- */
+function promptUsername(){
+  $("#promptModal").innerHTML=`
+    <div class="mh"><h3>Elige tu nombre de usuario</h3></div>
+    <div class="mb">
+      <p style="color:var(--ink-dim);font-size:13px;margin:0">Será tu enlace público: …#u/<b id="up-prev">tu_usuario</b></p>
+      <div class="field"><label>Usuario</label><input id="up-name" placeholder="felipe" oninput="document.getElementById('up-prev').textContent=(this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')||'tu_usuario')"></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:14px"><input type="checkbox" id="up-public" checked> Mi garage es público (otros pueden verlo)</label>
+      <div id="up-msg" style="font-size:13px;color:var(--ink-dim)"></div>
+      <button class="btn primary" onclick="saveUsername()">Guardar</button>
+    </div>`;
+  $("#promptScrim").classList.add("show");
+}
+async function saveUsername(){
+  const name=($("#up-name").value||"").trim().toLowerCase().replace(/[^a-z0-9_]/g,""), msg=$("#up-msg");
+  if(name.length<3){ msg.textContent="Mínimo 3 caracteres (letras, números, _)."; return; }
+  msg.textContent="Guardando…";
+  try{
+    const isPub=$("#up-public").checked;
+    const { error } = await supa.from("profiles").insert({user_id:session.user.id, username:name, is_public:isPub});
+    if(error){ msg.textContent=/duplicate|unique/i.test(error.message)?"Ese usuario ya existe, prueba otro.":"⚠ "+error.message; return; }
+    myProfile={user_id:session.user.id, username:name, is_public:isPub};
+    await saveAll();
+    closeAll(); renderAuthUI(); toast("¡Perfil creado!");
+  }catch(e){ msg.textContent="⚠ Error."; }
+}
+async function togglePublic(){
+  if(!myProfile)return;
+  const np=!myProfile.is_public;
+  try{ await supa.from("profiles").update({is_public:np}).eq("user_id",session.user.id); myProfile.is_public=np; renderAuthUI(); toast(np?"Ahora tu garage es público":"Ahora tu garage es privado"); }
+  catch(e){ toast("No se pudo cambiar"); }
+}
+function copyMyLink(){
+  if(!myProfile){ toast("Primero elige tu usuario"); return; }
+  const url=location.origin+location.pathname+"#u/"+myProfile.username;
+  if(navigator.clipboard) navigator.clipboard.writeText(url).then(()=>toast("Enlace copiado")); else toast(url);
+}
+/* ---- descubrir / buscar ---- */
+function openDiscover(){
+  $("#promptModal").innerHTML=`
+    <div class="mh"><h3>🔎 Descubrir garages</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb">
+      <div class="field"><input id="dc-q" placeholder="Buscar usuario…" oninput="searchUsers(this.value)"></div>
+      <div id="dc-res" style="display:flex;flex-direction:column;gap:6px"><p style="color:var(--ink-faint);font-size:13px">Escribe para buscar usuarios con garage público.</p></div>
+    </div>`;
+  $("#promptScrim").classList.add("show");
+  setTimeout(()=>$("#dc-q")&&$("#dc-q").focus(),50);
+}
+let dcTimer=null;
+function searchUsers(q){
+  clearTimeout(dcTimer);
+  dcTimer=setTimeout(async()=>{
+    q=(q||"").trim(); const box=$("#dc-res"); if(!box)return;
+    if(!supa){ box.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Conéctate para buscar.</p>'; return; }
+    if(q.length<2){ box.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Escribe al menos 2 letras.</p>'; return; }
+    try{
+      const { data } = await supa.from("profiles").select("username,is_public").ilike("username","%"+q+"%").eq("is_public",true).limit(20);
+      if(!data||!data.length){ box.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Sin resultados públicos.</p>'; return; }
+      box.innerHTML=data.map(p=>`<button class="btn" style="justify-content:flex-start" onclick="closeAll();location.hash='u/${p.username}'">👤 @${p.username}</button>`).join("");
+    }catch(e){ box.innerHTML='<p style="color:var(--accent);font-size:13px">Error al buscar.</p>'; }
+  },250);
+}
+/* ---- coches sociales: agarrar de otros + fusión de specs ---- */
+function sameCar(a,b){return (a.brand||"").toLowerCase().trim()===(b.brand||"").toLowerCase().trim() && (a.name||"").toLowerCase().trim()===(b.name||"").toLowerCase().trim();}
+function cloneCarBase(src,keepSpecs){
+  return {id:uid(),created:Date.now(),name:src.name||"",brand:src.brand||"",year:src.year||"",
+    image:firstImg(src)||"",color:src.color||"",
+    price:(src.price??null),currency:src.currency||"USD",notes:"",
+    ratings:{},specs:keepSpecs?JSON.parse(JSON.stringify(src.specs||[])):[],tags:[...(src.tags||[])]};
+}
+async function fetchMyGarageBlob(){
+  try{ const {data}=await supa.from("garages").select("data").eq("user_id",session.user.id).maybeSingle();
+    const d=(data&&data.data)||{};
+    return {cars:[],irlCars:[],categories:[...DEFAULT_CATS],combos:[],top100:{},tierMap:{},theme:"retro",...d}; }
+  catch(e){ return null; }
+}
+async function saveMyGarageBlob(b){ try{ await supa.from("garages").upsert({user_id:session.user.id,data:b,updated_at:new Date().toISOString()}); return true; }catch(e){ return false; } }
+let mergeCtx=null;
+async function grabFromViewed(srcId){
+  if(!session){ toast("Inicia sesión para guardar coches"); return openAuth('login'); }
+  const src=cars.find(c=>c.id===srcId); if(!src)return;
+  toast("Añadiendo…");
+  const mine=await fetchMyGarageBlob(); if(!mine){ toast("Error de conexión"); return; }
+  const existing=mine.cars.find(c=>sameCar(c,src));
+  if(existing){
+    if((src.specs||[]).length){ mergeCtx={src,mine,existId:existing.id}; openSpecMerge(src,existing); }
+    else toast("Ya tienes "+(src.name||"ese coche"));
+  } else {
+    mine.cars.push(cloneCarBase(src,true));
+    await saveMyGarageBlob(mine);
+    toast("✓ "+(src.name||"Coche")+" añadido — ponle tus calificaciones");
+  }
+}
+function openSpecMerge(src,existing){
+  const specs=src.specs||[];
+  $("#promptModal").innerHTML=`
+    <div class="mh"><h3>Ya tienes ${existing.brand||""} ${existing.name||""}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb">
+      <p style="color:var(--ink-dim);font-size:13px;margin:0">Elige qué specs ${viewing?("de @"+viewing.username):""} añadir a tu coche:</p>
+      ${specs.length?specs.map((s,i)=>`<label style="display:flex;gap:8px;align-items:center;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:8px"><input type="checkbox" data-i="${i}" checked> <b>${s.title||"Spec"}</b>${(s.images||[]).length?`<span style="color:var(--ink-faint);font-size:12px;margin-left:auto">${s.images.length} foto(s)</span>`:''}</label>`).join("")
+        :'<p style="color:var(--ink-faint)">Ese coche no tiene specs.</p>'}
+      <button class="btn primary" onclick="confirmSpecMerge()">Añadir specs seleccionados</button>
+    </div>`;
+  $("#promptScrim").classList.add("show");
+}
+async function confirmSpecMerge(){
+  if(!mergeCtx)return;
+  const {src,mine,existId}=mergeCtx;
+  const idxs=[...document.querySelectorAll('#promptModal input[type=checkbox]:checked')].map(c=>Number(c.dataset.i));
+  const ex=mine.cars.find(c=>c.id===existId); if(!ex){closeAll();return;}
+  ex.specs=ex.specs||[];
+  idxs.forEach(i=>{ const s=src.specs[i]; if(s) ex.specs.push({id:uid(),title:s.title,details:s.details,images:(s.images||[]).slice()}); });
+  await saveMyGarageBlob(mine);
+  mergeCtx=null; closeAll(); toast("✓ Specs añadidos a tu coche");
+}
+/* ---- marketplace (catálogo de coches) ---- */
+let mkData=[], mkTimer=null;
+async function upsertCatalog(c){
+  if(!supa||!session||readOnly)return;
+  if(!(c.brand||c.name))return;
+  const key=((c.brand||"")+"|"+(c.name||"")+"|"+(c.year||"")).toLowerCase().trim();
+  const cover=firstImg(c)||"";
+  const isData=u=>typeof u==="string"&&u.startsWith("data:");
+  // variantes = cada versión/spec con TODAS sus fotos, color y detalles
+  // (para que el marketplace ofrezca todos los colores y al añadir lleguen todas las fotos)
+  const local=[];
+  (c.specs||[]).forEach(s=>{
+    const imgs=(s.images||[]).filter(im=>im&&!isData(im));   // solo enlaces (no base64)
+    if(imgs.length){ local.push({color:(s.color||""),image:imgs[0],images:imgs.slice(0,12),title:(s.title||""),details:(s.details||"")}); }
+  });
+  if(!local.length && cover && !isData(cover)){ local.push({color:(c.color||""),image:cover,images:[cover],title:"",details:""}); }
+  try{
+    let variants=[];
+    try{ const {data}=await supa.from("catalog").select("variants").eq("key",key).maybeSingle(); if(data&&Array.isArray(data.variants)) variants=data.variants; }catch(e){}
+    // normaliza: nunca base64, y asegura arreglo images en cada variante
+    variants=variants.filter(v=>v&&v.image&&!isData(v.image))
+      .map(v=>({...v, images:(Array.isArray(v.images)&&v.images.length?v.images:[v.image]).filter(im=>im&&!isData(im))}));
+    local.forEach(v=>{
+      const ex=variants.find(x=>x.image===v.image);
+      if(ex){ ex.images=v.images; ex.details=v.details||ex.details||""; ex.title=ex.title||v.title; ex.color=ex.color||v.color; }
+      else variants.push(v);   // versión nueva con todas sus fotos + detalles
+    });
+    variants=variants.slice(0,24);
+    const coverOut=isData(cover)?(variants[0]&&variants[0].image)||"":cover;
+    await supa.from("catalog").upsert({key,brand:c.brand||"",name:c.name||"",year:c.year||"",image:coverOut,variants,added_by:session.user.id},{onConflict:"key"});
+  }catch(e){}
+}
+function seedCatalog(){ cars.forEach(c=>upsertCatalog(c)); }
+function openMarket(){
+  $("#promptModal").innerHTML=`
+    <div class="mh"><h3>🏪 Marketplace</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb">
+      <p style="color:var(--ink-dim);font-size:13px;margin:0">Coches que la gente ha agregado. Añádelos a tu garage y ponles tus calificaciones.</p>
+      <div class="field"><input id="mk-q" placeholder="Buscar marca o modelo…" oninput="loadMarket(this.value)"></div>
+      <div id="mk-res" style="display:flex;flex-direction:column;gap:6px;max-height:52vh;overflow:auto"><p style="color:var(--ink-faint);font-size:13px">Cargando…</p></div>
+    </div>`;
+  $("#promptScrim").classList.add("show");
+  loadMarket("");
+}
+function loadMarket(q){
+  clearTimeout(mkTimer);
+  mkTimer=setTimeout(async()=>{
+    const box=$("#mk-res"); if(!box)return;
+    if(!supa){ box.innerHTML='<p style="color:var(--ink-faint)">No disponible.</p>'; return; }
+    q=(q||"").trim().toLowerCase();
+    try{
+      const cols="key,brand,name,year,image";   // ligero: sin variants/images (se cargan al elegir)
+      let query=supa.from("catalog").select(cols).order("created_at",{ascending:false}).limit(48);
+      if(q) query=supa.from("catalog").select(cols).ilike("key","%"+q+"%").limit(48);
+      const {data}=await query; mkData=data||[];
+      if(!mkData.length){ box.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Sin coches todavía. ¡Agrega el primero!</p>'; return; }
+      box.innerHTML=mkData.map((e,i)=>`<article class="car">
+        <div class="ph">${e.image?`<img src="${esc(e.image)}" loading="lazy">`:`<div class="noimg">🚗</div>`}</div>
+        <div class="body"><div class="nm">${esc(e.name||"")}</div>
+          <div class="meta"><b>${esc(e.brand||"")}</b> <span>${esc(e.year||"")}</span></div>
+          <div class="acts"><button class="btn primary sm" style="flex:1;justify-content:center" onclick="addFromCatalog(${i})">➕ A mi garage</button>
+            ${adminUnlocked?`<button class="btn ghost sm" style="color:var(--accent)" title="Borrar del marketplace" onclick="adminDeleteCatalog(${i})">🗑</button>`:''}</div>
+        </div></article>`).join("");
+    }catch(e){ box.innerHTML='<p style="color:var(--accent);font-size:13px">Error al cargar.</p>'; }
+  },250);
+}
+let catPickCtx=null;
+function catVariants(e){
+  if(Array.isArray(e.variants)&&e.variants.length) return e.variants.map(v=>({
+    color:v.color||"", image:v.image||(Array.isArray(v.images)&&v.images[0])||"",
+    images:(Array.isArray(v.images)&&v.images.length)?v.images:(v.image?[v.image]:[]),
+    title:v.title||"", details:v.details||""
+  }));
+  if(Array.isArray(e.images)&&e.images.length) return e.images.map(im=>({color:"",image:im,images:[im],title:"",details:""}));
+  if(e.image) return [{color:"",image:e.image,images:[e.image],title:"",details:""}];
+  return [];
+}
+async function addFromCatalog(i){
+  const e=mkData[i]; if(!e)return;
+  if(!session){ toast("Inicia sesión para guardar coches"); return openAuth('login'); }
+  let full=e;
+  try{ const {data}=await supa.from("catalog").select("variants,images,image,added_by").eq("key",e.key).maybeSingle(); if(data) full={...e, variants:data.variants, images:data.images, image:data.image||e.image, added_by:data.added_by}; }catch(err){}
+  let variants=catVariants(full);
+  // Traer TODAS las fotos directo del garage de quien lo publicó
+  // (el catálogo pudo haber quedado con solo 1 foto si se publicó con la versión vieja)
+  try{
+    if(full.added_by){
+      const {data:g}=await supa.from("garages").select("data").eq("user_id",full.added_by).maybeSingle();
+      const ownerCars=(g&&g.data&&Array.isArray(g.data.cars))?g.data.cars:null;
+      if(ownerCars){
+        const base={brand:e.brand||"",name:e.name||""};
+        const src=ownerCars.find(c=>sameCar(c,base)&&String(c.year||"")===String(e.year||""))
+               || ownerCars.find(c=>sameCar(c,base));
+        if(src && Array.isArray(src.specs) && src.specs.length){
+          const rich=[];
+          src.specs.forEach(s=>{ const imgs=(s.images||[]).filter(Boolean); if(imgs.length) rich.push({color:s.color||"",image:imgs[0],images:imgs.slice(),title:s.title||"",details:s.details||""}); });
+          if(rich.length) variants=rich;   // usa las fotos completas del dueño
+        }
+      }
+    }
+  }catch(err){}
+  catPickCtx={e:full, variants:variants};
+  renderCatPicker();
+  $("#promptScrim").classList.add("show");
+}
+function renderCatPicker(){
+  if(!catPickCtx)return; const e=catPickCtx.e, variants=catPickCtx.variants;
+  $("#promptModal").innerHTML=`<div class="mh"><h3>Agregar ${esc(e.brand||"")} ${esc(e.name||"")}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb">
+      <p style="color:var(--ink-dim);font-size:13px;margin:0">${variants.length?"Elige la versión / color que quieres. Si ya tienes este coche, se añade como otra versión.":"Este coche aún no tiene fotos; se añadirá sin imagen (puedes ponerle la tuya después)."}${adminUnlocked?' <b style="color:var(--accent2)">· Admin: 🗑 quita versiones.</b>':''}</p>
+      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr))">
+        ${variants.map((v,k)=>`<div class="car">
+          <div class="ph" style="cursor:pointer" onclick="pickCatalog(${k})"><img src="${esc(v.image)}"></div>
+          <div class="body" style="padding:7px 9px">
+            <div class="meta">${v.color?`🎨 <b style="color:var(--accent2)">${esc(v.color)}</b>`:'Sin color'}${v.title?` · ${esc(v.title)}`:''}</div>
+            <div class="acts"><button class="btn primary sm" style="flex:1;justify-content:center" onclick="pickCatalog(${k})">Elegir</button>
+              ${adminUnlocked?`<button class="btn ghost sm" style="color:var(--accent)" title="Quitar versión del marketplace" onclick="adminRemoveVariant(${k})">🗑</button>`:''}</div>
+          </div>
+        </div>`).join("")}
+        <div class="car" style="cursor:pointer" onclick="pickCatalog(-1)"><div class="ph"><div class="noimg" style="flex-direction:column">🚗<span style="font-size:11px">Sin imagen</span></div></div></div>
+      </div>
+    </div>`;
+}
+async function pickCatalog(k){
+  const ctx=catPickCtx; if(!ctx)return;
+  const e=ctx.e, v=(k>=0?ctx.variants[k]:{color:"",image:"",images:[],title:"",details:""});
+  const base={brand:e.brand||"",name:e.name||"",year:e.year||""};
+  const vImgs=(Array.isArray(v.images)&&v.images.length)?v.images.slice():(v.image?[v.image]:[]);  // TODAS las fotos de la versión
+  const spec = vImgs.length? {id:uid(),title:v.title||"",details:v.details||"",color:v.color||"",images:vImgs} : null;
+  const newCar = {id:uid(),created:Date.now(),...base,image:vImgs[0]||"",color:v.color||"",price:null,currency:"USD",notes:"",ratings:{},specs:spec?[spec]:[],tags:[]};
+  const addVariant=(ex)=>{ ex.specs=ex.specs||[]; const key0=vImgs[0]; if(key0 && !ex.specs.some(s=>(s.images||[]).includes(key0))){ ex.specs.push({id:uid(),title:v.title||"",details:v.details||"",color:v.color||"",images:vImgs.slice()}); return true; } return false; };
+  if(readOnly){
+    const mine=await fetchMyGarageBlob(); if(!mine){toast("Error");return;}
+    const ex=mine.cars.find(c=>sameCar(c,base));
+    if(ex){ toast(addVariant(ex)?("Versión añadida a tu "+(e.name||"coche")):"Ya tienes esa versión"); }
+    else { mine.cars.push(newCar); toast("✓ Añadido a tu garage"); }
+    await saveMyGarageBlob(mine);
+  } else {
+    const ex=cars.find(c=>sameCar(c,base));
+    if(ex){ toast(addVariant(ex)?("Versión añadida a tu "+(e.name||"coche")):"Ya tienes esa versión"); }
+    else { cars.push(newCar); toast("✓ Añadido — ponle tus calificaciones"); }
+    saveAll(); renderGarage();
+  }
+  catPickCtx=null; closeAll();
+}
+/* ---- Marketplace como pestaña ---- */
+function renderMarketTab(){
+  const v=$("#tab-market"); if(!v)return;
+  v.innerHTML=`
+    <div class="toolbar"><input class="ctrl grow" id="mk-q" placeholder="Buscar marca o modelo…" oninput="loadMarket(this.value)">
+      ${isAdmin()?`<button class="btn sm ${adminUnlocked?'primary':'ghost'}" onclick="adminToggle()">${adminUnlocked?'🔧 Admin activo':'🔧 Modo admin'}</button>`:''}
+    </div>
+    <p style="color:var(--ink-dim);font-size:13px;margin:0 0 12px">Coches que la comunidad ha agregado. Añádelos a tu garage y ponles tus calificaciones.${adminUnlocked?' <b style="color:var(--accent2)">· Admin: puedes borrar coches o versiones.</b>':''}</p>
+    <div id="mk-res" class="grid"><p style="color:var(--ink-faint)">Cargando…</p></div>`;
+  loadMarket("");
+}
+/* ======================================================================
+   SPEC BATTLE — enfrenta dos coches del Marketplace (todas sus fotos)
+   ====================================================================== */
+let battlePick=[null,null], battleSide=0, btData=[], btTimer=null;
+// carga un coche del catálogo con TODAS sus fotos/versiones (directo del garage del dueño)
+async function battleLoadCar(e){
+  let full={...e};
+  try{ const {data}=await supa.from("catalog").select("variants,image,added_by").eq("key",e.key).maybeSingle(); if(data) full={...full, variants:data.variants, image:data.image||full.image, added_by:data.added_by}; }catch(err){}
+  let versions=(catVariants(full)||[]).map(v=>({color:v.color||"",title:v.title||"",images:(v.images||[]).slice()}));
+  let price=null, currency="USD";
+  try{
+    if(full.added_by){
+      const {data:g}=await supa.from("garages").select("data").eq("user_id",full.added_by).maybeSingle();
+      const cars=(g&&g.data&&Array.isArray(g.data.cars))?g.data.cars:null;
+      if(cars){
+        const norm=s=>(s||"").toLowerCase().trim();
+        const src=cars.find(x=>norm(x.brand)===norm(e.brand)&&norm(x.name)===norm(e.name)&&String(x.year||"")===String(e.year||""))
+               || cars.find(x=>norm(x.brand)===norm(e.brand)&&norm(x.name)===norm(e.name));
+        if(src){
+          price=(src.price??null); currency=src.currency||"USD";
+          if(Array.isArray(src.specs)&&src.specs.length){
+            const rich=src.specs.map(s=>({color:s.color||"",title:s.title||"",images:(s.images||[]).filter(Boolean)})).filter(v=>v.images.length);
+            if(rich.length) versions=rich;
+          }
+        }
+      }
+    }
+  }catch(err){}
+  return {brand:e.brand||"",name:e.name||"",year:e.year||"",price,currency,versions};
+}
+function battleColumn(side){
+  const c=battlePick[side];
+  if(!c) return `<div style="border:1.5px dashed var(--line);border-radius:14px;padding:28px 12px;text-align:center;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+      <div style="font-size:34px">🚗</div>
+      <button class="btn primary" onclick="openBattlePicker(${side})">＋ Elegir coche</button></div>`;
+  const priceStr=(c.price!=null&&c.price!=="")?((CURR[c.currency]||"$")+Number(c.price).toLocaleString("en-US")):"";
+  const totalPhotos=c.versions.reduce((n,v)=>n+v.images.length,0);
+  const versions=c.versions.map((v,vi)=>`
+    <div class="specsec">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <strong>${esc(v.title||"Versión")}</strong>
+        ${v.color?`<span class="tag">🎨 ${esc(v.color)}</span>`:""}
+        <span style="margin-left:auto;color:var(--ink-faint);font-size:12px">${v.images.length} 📷</span>
+      </div>
+      ${v.images.length?`<div class="gallery">${v.images.map((im,idx)=>`<img src="${esc(im)}" style="cursor:pointer" onclick="battleBig(${side},${vi},${idx})">`).join("")}</div>`:`<span style="color:var(--ink-faint);font-size:12px">Sin fotos</span>`}
+    </div>`).join("");
+  return `<div class="battlecar">
+    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px">
+      <div>
+        <div style="font-family:var(--display);font-size:26px;line-height:.95">${esc(c.year||"")} <span style="color:var(--accent)">${esc(c.brand||"")}</span></div>
+        <div style="font-family:var(--display);font-size:20px;color:var(--ink-dim)">${esc(c.name||"")}</div>
+        ${priceStr?`<div style="font-size:14px;color:var(--ink-dim);margin-top:2px">${priceStr}</div>`:""}
+        <div style="font-size:12px;color:var(--ink-faint);margin-top:2px">${c.versions.length} versión(es) · ${totalPhotos} foto(s)</div>
+      </div>
+      <button class="btn ghost sm" style="margin-left:auto" onclick="openBattlePicker(${side})">Cambiar</button>
+    </div>
+    ${versions||'<span style="color:var(--ink-faint)">Sin fotos</span>'}
+  </div>`;
+}
+function renderBattle(){
+  const v=$("#tab-battle"); if(!v)return;
+  v.innerHTML=`<div class="panel">
+    <h3>⚔️ Spec Battle</h3>
+    <p class="lead">Elige dos coches y compara todas sus fotos, versiones y datos, lado a lado.</p>
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start">
+      <div>${battleColumn(0)}</div>
+      <div class="vsmid" style="align-self:center;position:static">VS</div>
+      <div>${battleColumn(1)}</div>
+    </div>
+    ${(battlePick[0]||battlePick[1])?`<div style="text-align:center;margin-top:16px"><button class="btn ghost sm" onclick="battlePick=[null,null];renderBattle()">Limpiar</button></div>`:""}
+  </div>`;
+}
+function battleBig(side,vi,idx){
+  const c=battlePick[side]; if(!c)return;
+  const im=c.versions[vi]&&c.versions[vi].images[idx]; if(!im)return;
+  $("#stLightboxImg").src=im; $("#stLightbox").classList.add("show");
+}
+function openBattlePicker(side){
+  battleSide=side;
+  $("#promptModal").innerHTML=`<div class="mh"><h3>Elegir coche</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb">
+      <div class="field"><input id="bt-q" placeholder="Buscar marca o modelo…" oninput="battleSearch(this.value)"></div>
+      <div id="bt-res" style="display:flex;flex-direction:column;gap:6px;max-height:52vh;overflow:auto"><p style="color:var(--ink-faint);font-size:13px">Cargando…</p></div>
+    </div>`;
+  $("#promptScrim").classList.add("show");
+  battleSearch("");
+  setTimeout(()=>{const q=$("#bt-q"); if(q)q.focus();},50);
+}
+function battleSearch(q){
+  clearTimeout(btTimer);
+  btTimer=setTimeout(async()=>{
+    const box=$("#bt-res"); if(!box)return;
+    if(!supa){ box.innerHTML='<p style="color:var(--ink-faint)">No disponible.</p>'; return; }
+    q=(q||"").trim().toLowerCase();
+    try{
+      const cols="key,brand,name,year,image";
+      let query=supa.from("catalog").select(cols).order("created_at",{ascending:false}).limit(48);
+      if(q) query=supa.from("catalog").select(cols).ilike("key","%"+q+"%").limit(48);
+      const {data}=await query; btData=data||[];
+      if(!btData.length){ box.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Sin coches todavía.</p>'; return; }
+      box.innerHTML=btData.map((e,i)=>`<article class="car" style="cursor:pointer" onclick="pickBattle(${i})">
+        <div class="ph">${e.image?`<img src="${esc(e.image)}" loading="lazy">`:`<div class="noimg">🚗</div>`}</div>
+        <div class="body"><div class="nm">${esc(e.name||"")}</div>
+          <div class="meta"><b>${esc(e.brand||"")}</b> <span>${esc(e.year||"")}</span></div></div>
+      </article>`).join("");
+    }catch(e){ box.innerHTML='<p style="color:var(--accent);font-size:13px">Error al cargar.</p>'; }
+  },250);
+}
+async function pickBattle(i){
+  const e=btData[i]; if(!e)return;
+  toast("Cargando fotos…");
+  const full=await battleLoadCar(e);
+  battlePick[battleSide]=full;
+  closeAll(); renderBattle();
+}
+/* ---- amigos (follows) ---- */
+async function isFollowing(uid){ try{ const {data}=await supa.from("follows").select("following_id").eq("follower_id",session.user.id).eq("following_id",uid).maybeSingle(); return !!data; }catch(e){ return false; } }
+async function toggleFriend(){
+  if(!session||!viewing||!viewing.userId||viewing.userId===session.user.id)return;
+  try{
+    if(viewing.isFriend){ await supa.from("follows").delete().eq("follower_id",session.user.id).eq("following_id",viewing.userId); viewing.isFriend=false; toast("Amigo quitado"); }
+    else { await supa.from("follows").insert({follower_id:session.user.id,following_id:viewing.userId}); viewing.isFriend=true; toast("¡Amigo agregado!"); }
+    renderAuthUI();
+  }catch(e){ toast("No se pudo"); }
+}
+async function openFriends(){
+  $("#promptModal").innerHTML=`<div class="mh"><h3>👥 Mis amigos</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb"><div id="fr-res"><p style="color:var(--ink-faint);font-size:13px">Cargando…</p></div></div>`;
+  $("#promptScrim").classList.add("show");
+  try{
+    const {data:fl}=await supa.from("follows").select("following_id").eq("follower_id",session.user.id);
+    const ids=(fl||[]).map(r=>r.following_id);
+    const box=$("#fr-res"); if(!box)return;
+    if(!ids.length){ box.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Aún no agregas amigos. Entra a un garage público (🔎 Descubrir) y pulsa "➕ Agregar amigo".</p>'; return; }
+    const {data:profs}=await supa.from("profiles").select("user_id,username").in("user_id",ids);
+    box.innerHTML=(profs&&profs.length)?profs.map(p=>`<button class="btn" style="justify-content:flex-start;width:100%;margin-bottom:6px" onclick="closeAll();location.hash='u/${p.username}'">👤 @${esc(p.username)}</button>`).join(""):'<p style="color:var(--ink-faint);font-size:13px">Tus amigos pusieron su garage en privado.</p>';
+  }catch(e){ const box=$("#fr-res"); if(box)box.innerHTML='<p style="color:var(--accent)">Error.</p>'; }
+}
+/* ---- Historia (feed de historias / datos curiosos) ---- */
+let storyImgs=[], storiesCache=[], likeMap={}, myLikes=new Set(), commentCount={};
+async function loadSocial(ids){
+  likeMap={}; myLikes=new Set(); commentCount={};
+  if(!ids.length||!supa)return;
+  try{ const {data}=await supa.from("likes").select("user_id,target_id").eq("target_type","story").in("target_id",ids);
+    (data||[]).forEach(l=>{likeMap[l.target_id]=(likeMap[l.target_id]||0)+1; if(session&&l.user_id===session.user.id)myLikes.add(l.target_id);}); }catch(e){}
+  try{ const {data}=await supa.from("comments").select("target_id").eq("target_type","story").in("target_id",ids);
+    (data||[]).forEach(c=>{commentCount[c.target_id]=(commentCount[c.target_id]||0)+1;}); }catch(e){}
+}
+async function toggleLike(id){
+  if(!session)return openAuth('login');
+  try{
+    if(myLikes.has(id)){ await supa.from("likes").delete().eq("user_id",session.user.id).eq("target_type","story").eq("target_id",id); myLikes.delete(id); likeMap[id]=Math.max(0,(likeMap[id]||1)-1); }
+    else { await supa.from("likes").insert({user_id:session.user.id,target_type:"story",target_id:id}); myLikes.add(id); likeMap[id]=(likeMap[id]||0)+1; }
+    const feed=$("#st-feed"); if(feed) feed.innerHTML=storiesCache.map(storyCard).join("");
+  }catch(e){ toast("No se pudo"); }
+}
+async function openComments(storyId){
+  $("#promptModal").innerHTML=`<div class="mh"><h3>💬 Comentarios</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb"><div id="cm-list" style="max-height:50vh;overflow:auto"><p style="color:var(--ink-faint)">Cargando…</p></div>
+    ${session?`<div style="display:flex;gap:8px;margin-top:8px"><input id="cm-input" class="ctrl" style="flex:1" placeholder="Escribe un comentario…" onkeydown="if(event.key==='Enter')postComment('${storyId}')"><button class="btn primary" onclick="postComment('${storyId}')">Enviar</button></div>`:`<button class="btn primary" onclick="openAuth('login')">Inicia sesión para comentar</button>`}
+    </div>`;
+  $("#promptScrim").classList.add("show");
+  loadComments(storyId);
+}
+async function loadComments(storyId){
+  try{
+    const {data}=await supa.from("comments").select("*").eq("target_type","story").eq("target_id",storyId).order("created_at",{ascending:true});
+    const box=$("#cm-list"); if(!box)return; const list=data||[];
+    box.innerHTML=list.length?list.map(c=>{const mine=session&&c.user_id===session.user.id;
+      return `<div style="border-bottom:1px solid var(--line);padding:8px 0">
+        <div style="font-size:12px;color:var(--ink-faint)">@${esc(c.username||'anónimo')}${mine?` · <a href="#" style="color:var(--accent)" onclick="delComment('${c.id}','${storyId}');return false">eliminar</a>`:''}</div>
+        <div style="font-size:14px;white-space:pre-wrap">${esc(c.body||'')}</div></div>`;}).join(""):'<p style="color:var(--ink-faint);font-size:13px">Sé el primero en comentar.</p>';
+  }catch(e){ const b=$("#cm-list"); if(b)b.innerHTML='<p style="color:var(--accent)">Error.</p>'; }
+}
+async function postComment(storyId){
+  const inp=$("#cm-input"); if(!inp)return; const body=(inp.value||"").trim(); if(!body)return; inp.value="";
+  try{ await supa.from("comments").insert({user_id:session.user.id,username:(myProfile?myProfile.username:""),target_type:"story",target_id:storyId,body});
+    commentCount[storyId]=(commentCount[storyId]||0)+1; loadComments(storyId);
+    const feed=$("#st-feed"); if(feed)feed.innerHTML=storiesCache.map(storyCard).join(""); }catch(e){ toast("No se pudo"); }
+}
+async function delComment(id,storyId){ try{ await supa.from("comments").delete().eq("id",id); commentCount[storyId]=Math.max(0,(commentCount[storyId]||1)-1); loadComments(storyId); }catch(e){} }
+async function renderHistoria(){
+  const v=$("#tab-historia"); if(!v)return;
+  v.innerHTML=`<div class="toolbar" style="justify-content:space-between;align-items:center">
+      <h2 style="font-family:var(--display);font-size:26px;letter-spacing:.8px;margin:0">📖 Historias y datos curiosos</h2>
+      ${session?`<button class="btn primary" onclick="openStoryForm()">＋ Nueva historia</button>`:`<button class="btn primary" onclick="openAuth('login')">Inicia sesión para publicar</button>`}
+    </div>
+    <div id="st-feed"><p style="color:var(--ink-faint)">Cargando…</p></div>`;
+  try{
+    const {data}=await supa.from("stories").select("*").order("created_at",{ascending:false}).limit(60);
+    storiesCache=data||[]; const feed=$("#st-feed");
+    if(!storiesCache.length){ feed.innerHTML=`<div class="empty"><div class="big">📖</div><h2>Aún no hay historias</h2><p>Sé el primero en compartir la historia o un dato curioso de un coche.</p></div>`; return; }
+    await loadSocial(storiesCache.map(s=>s.id));
+    feed.innerHTML=storiesCache.map(storyCard).join("");
+  }catch(e){ const f=$("#st-feed"); if(f)f.innerHTML='<p style="color:var(--accent)">Error al cargar.</p>'; }
+}
+function storyCard(s){
+  const imgs=(s.images||[]).map((im,i)=>`<img src="${im}" style="cursor:pointer" onclick="storyLightbox('${s.id}',${i})">`).join("");
+  const mine=session&&s.user_id===session.user.id;
+  const d=s.created_at?new Date(s.created_at).toLocaleDateString():"";
+  return `<article class="panel" style="margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+      <span style="font-family:var(--display);font-size:22px;letter-spacing:.5px">${esc(s.title||"Sin título")}</span>
+      ${s.car?`<span class="tag">${esc(s.car)}</span>`:''}
+      ${mine?`<button class="btn sm ghost" style="margin-left:auto;color:var(--accent)" onclick="delStory('${s.id}')">Eliminar</button>`:''}
+    </div>
+    <div style="font-size:12px;color:var(--ink-faint);margin-bottom:8px">por @${esc(s.username||"anónimo")} · ${d}</div>
+    ${s.body?`<div style="font-size:14px;color:var(--ink-dim);white-space:pre-wrap;line-height:1.55">${esc(s.body)}</div>`:''}
+    ${imgs?`<div class="gallery" style="margin-top:10px">${imgs}</div>`:''}
+    <div class="story-actions">
+      <button class="btn sm ghost" onclick="toggleLike('${s.id}')">${myLikes.has(s.id)?'❤️':'🤍'} ${likeMap[s.id]||0}</button>
+      <button class="btn sm ghost" onclick="openComments('${s.id}')">💬 ${commentCount[s.id]||0}</button>
+    </div>
+  </article>`;
+}
+function storyLightbox(sid,i){ const s=storiesCache.find(x=>x.id===sid); if(!s)return; const im=(s.images||[])[i]; if(!im)return; $("#stLightboxImg").src=im; $("#stLightbox").classList.add("show"); }
+function openStoryForm(){
+  if(!session)return openAuth('login');
+  storyImgs=[]; fillBrandList();
+  $("#promptModal").innerHTML=`<div class="mh"><h3>Nueva historia</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb">
+      <div class="field"><label>Título</label><input id="sf-title" placeholder="La leyenda del Ferrari 250 GTO"></div>
+      <div class="field"><label>Coche relacionado (opcional)</label><input id="sf-car" list="brandList" placeholder="Ferrari 250 GTO"></div>
+      <div class="field"><label>Historia / dato curioso</label><textarea id="sf-body" style="min-height:130px" placeholder="Cuenta la historia, el dato curioso, una anécdota…"></textarea></div>
+      <div class="field"><label>Imágenes (opcional)</label>
+        <div id="sf-thumbs" class="specthumbs" style="margin-bottom:8px"></div>
+        <button class="btn sm" type="button" onclick="document.getElementById('sf-file').click()">📷 Añadir imagen(es)</button>
+        <input type="file" id="sf-file" accept="image/*" multiple hidden onchange="addStoryImgs(this.files)">
+      </div>
+      <div id="sf-msg" style="font-size:13px;color:var(--ink-dim)"></div>
+      <button class="btn primary" onclick="saveStory()">Publicar</button>
+    </div>`;
+  $("#promptScrim").classList.add("show");
+}
+function addStoryImgs(files){ toast("Subiendo imagen(es)…"); [...files].forEach(async f=>{ const url=await processImage(f,1400); if(url){storyImgs.push(url);renderStoryThumbs();} }); }
+function renderStoryThumbs(){ const b=$("#sf-thumbs"); if(!b)return; b.innerHTML=storyImgs.map((im,i)=>`<span style="position:relative;display:inline-block;margin-right:4px"><img src="${im}" style="width:54px;height:54px;object-fit:cover;border-radius:7px;border:1px solid var(--line)"><button type="button" onclick="storyImgs.splice(${i},1);renderStoryThumbs()" style="position:absolute;top:-6px;right:-6px;background:var(--accent);color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:11px">×</button></span>`).join(""); }
+async function saveStory(){
+  const title=$("#sf-title").value.trim(), body=$("#sf-body").value.trim(), car=$("#sf-car").value.trim(), msg=$("#sf-msg");
+  if(!title&&!body){ msg.textContent="Escribe al menos un título o la historia."; return; }
+  msg.textContent="Publicando…";
+  try{
+    const {error}=await supa.from("stories").insert({user_id:session.user.id, username:(myProfile?myProfile.username:""), title, body, car, images:storyImgs});
+    if(error){ msg.textContent="⚠ "+error.message; return; }
+    storyImgs=[]; closeAll(); toast("✓ Historia publicada"); renderHistoria();
+  }catch(e){ msg.textContent="⚠ Error de conexión."; }
+}
+async function delStory(id){ if(!confirm("¿Eliminar tu historia?"))return; try{ await supa.from("stories").delete().eq("id",id); renderHistoria(); }catch(e){} }
+window.addEventListener("hashchange",routeAndLoad);
+/* ======================================================================
+   BOOT
+   ====================================================================== */
+(async function init(){
+  renderThemes();
+  wire();
+  initSupabase();
+  await routeAndLoad();
+})();
+</script>
+<script>
+/* ---- PWA: service worker + sugerencia de instalación ---- */
+if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{})); }
+let deferredPrompt=null;
+function pwaStandalone(){ return window.matchMedia("(display-mode: standalone)").matches || navigator.standalone; }
+function showInstall(kind){
+  const bar=document.getElementById("pwaBar"); if(!bar) return;
+  if(pwaStandalone()) return;
+  try{ if(localStorage.getItem("pwaHide")) return; }catch(e){}
+  if(kind==="android"){
+    bar.innerHTML='<span>📲 Instala <b>Mi Garage</b> en tu pantalla</span><button class="btn primary sm" id="pwaInstall">Instalar</button><button class="btn sm ghost" id="pwaClose">×</button>';
+  }else{
+    bar.innerHTML='<span>📲 Instálala: toca <b>Compartir</b> y “<b>Agregar a inicio</b>”</span><button class="btn sm ghost" id="pwaClose">×</button>';
+  }
+  bar.style.display="flex";
+  const ib=document.getElementById("pwaInstall");
+  if(ib) ib.onclick=async()=>{ if(deferredPrompt){ deferredPrompt.prompt(); try{await deferredPrompt.userChoice;}catch(e){} deferredPrompt=null; } bar.style.display="none"; };
+  const cb=document.getElementById("pwaClose");
+  if(cb) cb.onclick=()=>{ bar.style.display="none"; try{localStorage.setItem("pwaHide","1");}catch(e){} };
+}
+window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredPrompt=e; showInstall("android"); });
+(function(){ const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent); if(isIOS && !pwaStandalone()){ setTimeout(()=>showInstall("ios"),2500); } })();
+</script>
+</body>
+</html>

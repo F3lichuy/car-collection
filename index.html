@@ -389,6 +389,7 @@
     <button data-tab="market">🏪 Marketplace</button>
     <button data-tab="battle">⚔️ Spec Battle</button>
     <button data-tab="historia">📖 Historia</button>
+    <button data-tab="discover">🔎 Descubrir</button>
   </div>
 </header>
 <div class="wrap">
@@ -456,6 +457,8 @@
   <section id="tab-battle" style="display:none"></section>
   <!-- ============ HISTORIA TAB ============ -->
   <section id="tab-historia" style="display:none"></section>
+  <!-- ============ DISCOVER TAB ============ -->
+  <section id="tab-discover" style="display:none"></section>
 </div>
 <!-- DETAIL MODAL -->
 <div class="scrim" id="detailScrim"><div class="modal wide" id="detailModal"></div></div>
@@ -662,7 +665,11 @@
     "Cargando fotos…":"Loading photos…","Sin coches todavía.":"No cars yet.",
     "Elige dos specs y compara sus fotos lado a lado.":"Choose two specs and compare their photos side by side.",
     "＋ Elegir spec":"＋ Choose spec","Elegir spec":"Choose spec",
-    "Buscar marca, modelo o color…":"Search brand, model or color…","Sin specs todavía.":"No specs yet."
+    "Buscar marca, modelo o color…":"Search brand, model or color…","Sin specs todavía.":"No specs yet.",
+    // discover (pestaña)
+    "🔎 Descubrir":"🔎 Discover","Sin resultados.":"No results.",
+    "Colecciones de la comunidad. Toca una para ver su garage.":"Community collections. Tap one to see its garage.",
+    "Aún no hay colecciones públicas.":"No public collections yet."
   };
 
   function P(re,fn){ return [re,fn]; }
@@ -677,6 +684,8 @@
     P(/^(\d+) fotos · toca los lados para cambiar$/, function(m){ return m[1]+" photos · tap the sides to change"; }),
     P(/^(\d+) foto\(s\)$/, function(m){ return m[1]+" photo(s)"; }),
     P(/^(\d+) versión\(es\) · (\d+) foto\(s\)$/, function(m){ return m[1]+" version(s) · "+m[2]+" photo(s)"; }),
+    P(/^🚗 (\d+) coche\(s\)$/, function(m){ return "🚗 "+m[1]+" car(s)"; }),
+    P(/^★ (.+) promedio$/, function(m){ return "★ "+m[1]+" average"; }),
     P(/^✓ (.+) añadido — ponle tus calificaciones$/, function(m){ return "✓ "+m[1]+" added — set your ratings"; }),
     P(/^Ya tienes (\d+) coches$/, function(m){ return "You already have "+m[1]+" cars"; }),
     P(/^Ya tienes (.+)$/, function(m){ return "You already have "+m[1]; }),
@@ -2000,13 +2009,14 @@ function openIrlDetail(id){
    TABS / WIRING
    ====================================================================== */
 function showTab(t){
-  ["garage","irl","activities","market","battle","historia"].forEach(x=>{const el=$("#tab-"+x); if(el) el.style.display=x===t?"":"none";});
+  ["garage","irl","activities","market","battle","historia","discover"].forEach(x=>{const el=$("#tab-"+x); if(el) el.style.display=x===t?"":"none";});
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===t));
   if(t==="activities")renderAct();
   else if(t==="irl")renderIrl();
   else if(t==="market")renderMarketTab();
   else if(t==="battle")renderBattle();
   else if(t==="historia")renderHistoria();
+  else if(t==="discover")renderDiscover();
 }
 function closeAll(){document.querySelectorAll(".scrim").forEach(s=>s.classList.remove("show"));}
 function wire(){
@@ -2058,14 +2068,12 @@ function renderAuthUI(){
   if(session){
     const u=myProfile?myProfile.username:"…", pub=myProfile?myProfile.is_public:true;
     el.innerHTML=`<button class="btn sm" onclick="openFriends()">👥 Amigos</button>
-      <button class="btn sm" onclick="openDiscover()">🔎 Descubrir</button>
       <span class="authuser">@${u}</span>
       <button class="btn sm" onclick="togglePublic()">${pub?"🌐 Público":"🔒 Privado"}</button>
       <button class="btn sm" onclick="copyMyLink()">🔗 Mi enlace</button>
       <button class="btn sm ghost" onclick="doLogout()">Salir</button>`;
   } else {
-    el.innerHTML=`<button class="btn sm" onclick="openDiscover()">🔎 Descubrir</button>
-      <button class="btn primary sm" onclick="openAuth('login')">☁ Iniciar sesión</button>`;
+    el.innerHTML=`<button class="btn primary sm" onclick="openAuth('login')">☁ Iniciar sesión</button>`;
   }
 }
 async function routeAndLoad(){
@@ -2192,6 +2200,52 @@ function searchUsers(q){
       box.innerHTML=data.map(p=>`<button class="btn" style="justify-content:flex-start" onclick="closeAll();location.hash='u/${p.username}'">👤 @${p.username}</button>`).join("");
     }catch(e){ box.innerHTML='<p style="color:var(--accent);font-size:13px">Error al buscar.</p>'; }
   },250);
+}
+/* ---- DESCUBRIR (pestaña): colecciones de la comunidad con estadísticas ---- */
+let discoverData=[];
+async function renderDiscover(){
+  const v=$("#tab-discover"); if(!v)return;
+  v.innerHTML=`<div class="toolbar"><input class="ctrl grow" id="dc-tab-q" placeholder="Buscar usuario…" oninput="filterDiscover(this.value)"></div>
+    <p style="color:var(--ink-dim);font-size:13px;margin:0 0 12px">Colecciones de la comunidad. Toca una para ver su garage.</p>
+    <div id="dc-tab-res" class="grid"><p style="color:var(--ink-faint)">Cargando…</p></div>`;
+  const box=$("#dc-tab-res");
+  if(!supa){ box.innerHTML='<p style="color:var(--ink-faint)">No disponible.</p>'; return; }
+  try{
+    const {data:profs}=await supa.from("profiles").select("user_id,username,is_public").eq("is_public",true).limit(100);
+    const list=profs||[];
+    if(!list.length){ box.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Aún no hay colecciones públicas.</p>'; return; }
+    const ids=list.map(p=>p.user_id);
+    let garages=[];
+    try{ const {data}=await supa.from("garages").select("user_id,data").in("user_id",ids); garages=data||[]; }catch(e){}
+    const gmap={}; garages.forEach(g=>gmap[g.user_id]=g.data||{});
+    discoverData=list.map(p=>{
+      const cars=(gmap[p.user_id]&&Array.isArray(gmap[p.user_id].cars))?gmap[p.user_id].cars:[];
+      const totalVal=cars.reduce((s,c)=>s+(Number(c.price)||0),0);
+      const rated=cars.map(c=>avg(c)).filter(n=>n>0);
+      const avgRating=rated.length?(rated.reduce((a,b)=>a+b,0)/rated.length):0;
+      return {username:p.username, count:cars.length, totalVal, avgRating, img:(cars.map(firstImg).find(Boolean)||"")};
+    }).sort((a,b)=>b.count-a.count);
+    renderDiscoverCards(discoverData);
+  }catch(e){ box.innerHTML='<p style="color:var(--accent)">Error al cargar.</p>'; }
+}
+function renderDiscoverCards(arr){
+  const box=$("#dc-tab-res"); if(!box)return;
+  if(!arr.length){ box.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Sin resultados.</p>'; return; }
+  box.innerHTML=arr.map(d=>`<article class="car" style="cursor:pointer" onclick="location.hash='u/${d.username}'">
+    <div class="ph">${d.img?`<img src="${esc(d.img)}" loading="lazy">`:`<div class="noimg">👤</div>`}</div>
+    <div class="body">
+      <div class="nm">@${esc(d.username)}</div>
+      <div class="meta" style="display:flex;flex-direction:column;gap:3px;margin-top:6px;font-size:13px">
+        <span>🚗 ${d.count} coche(s)</span>
+        <span>💲 ${d.totalVal?("$"+d.totalVal.toLocaleString("en-US")):"—"}</span>
+        <span>★ ${d.avgRating?d.avgRating.toFixed(1):"—"} promedio</span>
+      </div>
+    </div>
+  </article>`).join("");
+}
+function filterDiscover(q){
+  q=(q||"").trim().toLowerCase();
+  renderDiscoverCards(q?discoverData.filter(d=>d.username.toLowerCase().includes(q)):discoverData);
 }
 /* ---- coches sociales: agarrar de otros + fusión de specs ---- */
 function sameCar(a,b){return (a.brand||"").toLowerCase().trim()===(b.brand||"").toLowerCase().trim() && (a.name||"").toLowerCase().trim()===(b.name||"").toLowerCase().trim();}

@@ -669,7 +669,12 @@
     // discover (pestaña)
     "🔎 Descubrir":"🔎 Discover","Sin resultados.":"No results.",
     "Colecciones de la comunidad. Toca una para ver su garage.":"Community collections. Tap one to see its garage.",
-    "Aún no hay colecciones públicas.":"No public collections yet."
+    "Aún no hay colecciones públicas.":"No public collections yet.",
+    // spec battle — aleatoria / rey de la colina
+    "Elige dos specs (o sortéalos), compara sus fotos y elige al ganador. El campeón se queda y entra un retador nuevo.":"Choose two specs (or shuffle them), compare their photos and pick the winner. The champion stays and a new challenger comes in.",
+    "🎲 Batalla aleatoria":"🎲 Random battle","🏆 Gana A":"🏆 A wins","🏆 Gana B":"🏆 B wins",
+    "No hay specs en el catálogo":"No specs in the catalog","No se pudo sortear":"Couldn't shuffle",
+    "🎲 Sorteando duelo…":"🎲 Shuffling duel…","🎲 Sorteando…":"🎲 Shuffling…"
   };
 
   function P(re,fn){ return [re,fn]; }
@@ -686,6 +691,8 @@
     P(/^(\d+) versión\(es\) · (\d+) foto\(s\)$/, function(m){ return m[1]+" version(s) · "+m[2]+" photo(s)"; }),
     P(/^🚗 (\d+) coche\(s\)$/, function(m){ return "🚗 "+m[1]+" car(s)"; }),
     P(/^★ (.+) promedio$/, function(m){ return "★ "+m[1]+" average"; }),
+    P(/^🏆 (\d+) victoria\(s\)$/, function(m){ return "🏆 "+m[1]+" win(s)"; }),
+    P(/^🏆 Ganó (.+)$/, function(m){ return "🏆 "+m[1]+" won"; }),
     P(/^✓ (.+) añadido — ponle tus calificaciones$/, function(m){ return "✓ "+m[1]+" added — set your ratings"; }),
     P(/^Ya tienes (\d+) coches$/, function(m){ return "You already have "+m[1]+" cars"; }),
     P(/^Ya tienes (.+)$/, function(m){ return "You already have "+m[1]; }),
@@ -2460,6 +2467,8 @@ function renderMarketTab(){
    SPEC BATTLE — enfrenta dos coches del Marketplace (todas sus fotos)
    ====================================================================== */
 let battlePick=[null,null], battleSide=0, btSpecs=[], btAll=null, btTimer=null;
+let battleWins={}, battleBusy=false;
+function specKey(s){ return s?((s.brand||"")+"|"+(s.name||"")+"|"+(s.year||"")+"|"+(s.color||"")+"|"+(s.title||"")).toLowerCase():""; }
 // aplanar TODO el catálogo a specs individuales (uno por versión/color)
 async function battleLoadAllSpecs(){
   if(btAll) return btAll;
@@ -2502,9 +2511,10 @@ async function battleLoadSpec(item){
 }
 function battleColumn(side){
   const s=battlePick[side], tag=side===0?"A":"B";
-  if(!s) return `<div style="border:1.5px dashed var(--line);border-radius:14px;padding:28px 12px;text-align:center;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+  if(!s) return `<div style="border:1.5px dashed var(--line);border-radius:14px;padding:28px 12px;text-align:center;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">
       <div style="font-size:34px">🚗</div>
-      <button class="btn primary" onclick="openBattlePicker(${side})">＋ Elegir spec</button></div>`;
+      <button class="btn primary" onclick="openBattlePicker(${side})">＋ Elegir spec</button>
+      <button class="btn ghost sm" onclick="battleRandomOne(${side})">🎲 Random</button></div>`;
   const priceStr=(s.price!=null&&s.price!=="")?((CURR[s.currency]||"$")+Number(s.price).toLocaleString("en-US")):"";
   return `<div class="battlecar">
     <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px">
@@ -2515,24 +2525,69 @@ function battleColumn(side){
         ${(s.color||s.title)?`<div style="margin-top:5px">${s.color?`<span class="tag">🎨 ${esc(s.color)}</span> `:""}${s.title?`<span class="tag">${esc(s.title)}</span>`:""}</div>`:""}
         ${priceStr?`<div style="font-size:14px;color:var(--ink-dim);margin-top:4px">${priceStr}</div>`:""}
         <div style="font-size:12px;color:var(--ink-faint);margin-top:2px">${s.images.length} foto(s)</div>
+        ${(battleWins[specKey(s)]||0)?`<div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:2px">🏆 ${battleWins[specKey(s)]} victoria(s)</div>`:""}
       </div>
-      <button class="btn ghost sm" style="margin-left:auto" onclick="openBattlePicker(${side})">Cambiar</button>
+      <div style="margin-left:auto;display:flex;gap:6px"><button class="btn ghost sm" title="Random" onclick="battleRandomOne(${side})">🎲</button><button class="btn ghost sm" onclick="openBattlePicker(${side})">Cambiar</button></div>
     </div>
     ${s.images.length?`<div class="gallery">${s.images.map((im,idx)=>`<img src="${esc(im)}" style="cursor:pointer" onclick="battleBig(${side},${idx})">`).join("")}</div>`:'<span style="color:var(--ink-faint)">Sin fotos</span>'}
   </div>`;
 }
 function renderBattle(){
   const v=$("#tab-battle"); if(!v)return;
+  const both=battlePick[0]&&battlePick[1];
   v.innerHTML=`<div class="panel">
     <h3>⚔️ Spec Battle</h3>
-    <p class="lead">Elige dos specs y compara sus fotos lado a lado.</p>
+    <p class="lead">Elige dos specs (o sortéalos), compara sus fotos y elige al ganador. El campeón se queda y entra un retador nuevo.</p>
+    <div style="text-align:center;margin-bottom:14px">
+      <button class="btn primary" onclick="battleRandom()" ${battleBusy?'disabled':''}>🎲 Batalla aleatoria</button>
+    </div>
     <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start">
       <div>${battleColumn(0)}</div>
       <div class="vsmid" style="align-self:center;position:static">VS</div>
       <div>${battleColumn(1)}</div>
     </div>
-    ${(battlePick[0]||battlePick[1])?`<div style="text-align:center;margin-top:16px"><button class="btn ghost sm" onclick="battlePick=[null,null];renderBattle()">Limpiar</button></div>`:""}
+    ${both?`<div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap">
+        <button class="btn primary" onclick="battleWinner(0)">🏆 Gana A</button>
+        <button class="btn primary" onclick="battleWinner(1)">🏆 Gana B</button>
+      </div>`:""}
+    ${(battlePick[0]||battlePick[1])?`<div style="text-align:center;margin-top:12px"><button class="btn ghost sm" onclick="battlePick=[null,null];renderBattle()">Limpiar</button></div>`:""}
   </div>`;
+}
+async function randomSpecItem(exclude){
+  const all=await battleLoadAllSpecs();
+  const pool=all.filter(s=>!(exclude||[]).includes(specKey(s)));
+  return pool.length?pool[Math.floor(Math.random()*pool.length)]:null;
+}
+async function battleRandom(){
+  if(battleBusy)return; battleBusy=true; toast("🎲 Sorteando duelo…"); renderBattle();
+  try{
+    const a=await randomSpecItem([]);
+    if(!a){ toast("No hay specs en el catálogo"); battleBusy=false; renderBattle(); return; }
+    const b=await randomSpecItem([specKey(a)]);
+    battlePick[0]=await battleLoadSpec(a);
+    battlePick[1]=b?await battleLoadSpec(b):null;
+  }catch(e){ toast("No se pudo sortear"); }
+  battleBusy=false; renderBattle();
+}
+async function battleRandomOne(side){
+  if(battleBusy)return;
+  const other=battlePick[side===0?1:0];
+  toast("🎲 Sorteando…");
+  const item=await randomSpecItem(other?[specKey(other)]:[]);
+  if(!item){ toast("No hay specs en el catálogo"); return; }
+  battlePick[side]=await battleLoadSpec(item);
+  renderBattle();
+}
+async function battleWinner(side){
+  const w=battlePick[side]; if(!w)return;
+  battleWins[specKey(w)]=(battleWins[specKey(w)]||0)+1;
+  // rey de la colina: el ganador pasa al lado A y entra un retador nuevo en B
+  battlePick[0]=w; battlePick[1]=null;
+  toast("🏆 Ganó "+(w.brand||"")+" "+(w.name||""));
+  renderBattle();
+  battleBusy=true; renderBattle();
+  try{ const ch=await randomSpecItem([specKey(w)]); if(ch) battlePick[1]=await battleLoadSpec(ch); }catch(e){}
+  battleBusy=false; renderBattle();
 }
 function battleBig(side,idx){
   const s=battlePick[side]; if(!s)return; const im=s.images[idx]; if(!im)return;

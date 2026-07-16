@@ -369,9 +369,117 @@
     #pwaBar{left:8px;right:8px;transform:none;max-width:none;justify-content:center}
   }
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  /* ============================================================
+     HOME (landing estilo galería) + MERCADO + INTRO
+     ============================================================ */
+  /* --- Home hero --- */
+  .home-hero{
+    position:relative;overflow:hidden;border-radius:18px;margin:22px 0 6px;
+    border:1px solid var(--line);
+    background:
+      linear-gradient(105deg, color-mix(in srgb,var(--bg) 78%, transparent) 0%, color-mix(in srgb,var(--bg) 30%, transparent) 55%, transparent 100%),
+      radial-gradient(120% 160% at 12% 0%, color-mix(in srgb,var(--accent) 34%, transparent), transparent 60%),
+      linear-gradient(200deg, var(--card2), var(--card));
+    padding:46px 34px;
+  }
+  .home-hero .kicker{color:var(--accent2);font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px}
+  .home-hero h1{font-family:var(--display);font-size:clamp(38px,6vw,68px);line-height:.92;letter-spacing:1px;margin:0 0 12px;max-width:16ch}
+  .home-hero h1 b{color:var(--accent)}
+  .home-hero p{color:var(--ink-dim);font-size:15px;max-width:56ch;margin:0 0 20px}
+  .home-hero .cta{display:flex;gap:10px;flex-wrap:wrap}
+  /* --- section headers --- */
+  .home-sec{margin:34px 0 0}
+  .home-sechead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 14px;flex-wrap:wrap}
+  .home-sechead h2{font-family:var(--display);font-size:26px;letter-spacing:.8px;margin:0}
+  .home-sechead a,.home-sechead button.link{background:none;border:none;color:var(--accent2);font-size:13px;font-weight:600;cursor:pointer;padding:0}
+  .home-sechead a:hover,.home-sechead button.link:hover{text-decoration:underline}
+  /* --- quick tiles --- */
+  .home-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+  .home-tile{
+    display:flex;flex-direction:column;gap:6px;text-align:left;
+    border:1px solid var(--line);background:var(--card);border-radius:14px;padding:16px 16px;
+    color:var(--ink);transition:.15s;cursor:pointer;
+  }
+  .home-tile:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .home-tile .ic{font-size:26px}
+  .home-tile .t{font-family:var(--display);font-size:20px;letter-spacing:.5px}
+  .home-tile .d{color:var(--ink-faint);font-size:12.5px;line-height:1.4}
+  /* --- story cards (home) --- */
+  .story-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+  .story-tile{
+    border:1px solid var(--line);background:var(--card);border-radius:14px;overflow:hidden;
+    cursor:pointer;transition:.15s;display:flex;flex-direction:column;
+  }
+  .story-tile:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .story-tile .cover{aspect-ratio:16/9;background:var(--card2);position:relative;overflow:hidden}
+  .story-tile .cover img{width:100%;height:100%;object-fit:cover;display:block}
+  .story-tile .cover .noimg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:34px;color:var(--ink-faint)}
+  .story-tile .st-b{padding:13px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .story-tile .st-t{font-family:var(--display);font-size:20px;letter-spacing:.4px;line-height:1}
+  .story-tile .st-x{color:var(--ink-dim);font-size:13px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .story-tile .st-m{color:var(--ink-faint);font-size:11.5px;margin-top:auto}
+  /* --- market cards --- */
+  .mkt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+  .mkt-card{
+    display:flex;flex-direction:column;gap:8px;text-decoration:none;
+    border:1px solid var(--line);background:var(--card);border-radius:14px;padding:16px 16px 15px;
+    color:var(--ink);transition:.15s;
+  }
+  .mkt-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .mkt-card .mk-top{display:flex;align-items:center;gap:10px}
+  .mkt-card .mk-logo{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--card2);border:1px solid var(--line);flex:none}
+  .mkt-card .mk-name{font-family:var(--display);font-size:20px;letter-spacing:.4px;line-height:1}
+  .mkt-card .mk-kind{color:var(--accent2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+  .mkt-card .mk-desc{color:var(--ink-dim);font-size:13px;line-height:1.45;flex:1}
+  .mkt-card .mk-go{color:var(--ink-faint);font-size:12px;font-weight:600}
+  .mkt-card:hover .mk-go{color:var(--accent)}
+  /* --- INTRO overlay --- */
+  #introOverlay{
+    position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(120% 120% at 50% 30%, var(--bg2), var(--bg));
+    animation:introOut .55s ease 1.15s forwards;
+  }
+  #introOverlay .intro-wm{
+    font-family:var(--display);font-size:clamp(46px,11vw,120px);letter-spacing:2px;line-height:.9;
+    text-align:center;position:relative;opacity:0;transform:translateY(14px);
+    animation:introIn .7s cubic-bezier(.2,.7,.2,1) .1s forwards;
+  }
+  #introOverlay .intro-wm b{color:var(--accent)}
+  #introOverlay .intro-sub{
+    display:block;font-family:var(--body);font-size:12px;font-weight:600;letter-spacing:5px;
+    text-transform:uppercase;color:var(--ink-faint);margin-top:14px;opacity:0;
+    animation:introSub .6s ease .5s forwards;
+  }
+  #introOverlay .intro-line{
+    display:block;height:3px;width:0;margin:16px auto 0;border-radius:2px;
+    background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent);
+    animation:introLine .7s ease .35s forwards;
+  }
+  @keyframes introIn{to{opacity:1;transform:translateY(0)}}
+  @keyframes introSub{to{opacity:1}}
+  @keyframes introLine{to{width:min(340px,70vw)}}
+  @keyframes introOut{to{opacity:0;visibility:hidden}}
+  @media(prefers-reduced-motion:reduce){#introOverlay{display:none}}
+  @media(max-width:640px){ .home-hero{padding:34px 20px} }
 </style>
 </head>
 <body data-theme="retro">
+<div id="introOverlay" aria-hidden="true">
+  <div class="intro-wm">MI <b>GARAGE</b><span class="intro-line"></span><span class="intro-sub">colección personal</span></div>
+</div>
+<script>
+/* Intro: se muestra una vez por sesión; se quita al terminar la animación */
+(function(){
+  var ov=document.getElementById("introOverlay"); if(!ov) return;
+  var seen=false; try{ seen=sessionStorage.getItem("mg-intro")==="1"; }catch(e){}
+  var reduce=false; try{ reduce=window.matchMedia("(prefers-reduced-motion:reduce)").matches; }catch(e){}
+  if(seen||reduce){ ov.parentNode&&ov.parentNode.removeChild(ov); return; }
+  try{ sessionStorage.setItem("mg-intro","1"); }catch(e){}
+  var kill=function(){ if(ov&&ov.parentNode){ ov.parentNode.removeChild(ov); ov=null; } };
+  ov.addEventListener("animationend",function(e){ if(e.animationName==="introOut") kill(); });
+  setTimeout(kill,2200); // respaldo por si el evento no dispara
+})();
+</script>
 <header class="top">
   <div class="topbar">
     <div class="brand">
@@ -383,18 +491,22 @@
     <div class="authArea" id="authArea"></div>
   </div>
   <div class="tabs" id="tabs">
-    <button data-tab="garage" class="on">Garage</button>
+    <button data-tab="home" class="on">🏠 Inicio</button>
+    <button data-tab="garage">Garage</button>
     <button data-tab="irl">Manejados IRL</button>
     <button data-tab="activities">Actividades</button>
     <button data-tab="market">🏪 Marketplace</button>
+    <button data-tab="prices">📈 Mercado</button>
     <button data-tab="battle">⚔️ Spec Battle</button>
     <button data-tab="historia">📖 Historia</button>
     <button data-tab="discover">🔎 Descubrir</button>
   </div>
 </header>
 <div class="wrap">
+  <!-- ============ HOME TAB ============ -->
+  <section id="tab-home"></section>
   <!-- ============ GARAGE TAB ============ -->
-  <section id="tab-garage">
+  <section id="tab-garage" style="display:none">
     <div class="toolbar">
       <input class="ctrl grow" id="search" placeholder="Buscar marca, modelo, año…">
       <select class="ctrl" id="sort">
@@ -459,6 +571,8 @@
   <section id="tab-historia" style="display:none"></section>
   <!-- ============ DISCOVER TAB ============ -->
   <section id="tab-discover" style="display:none"></section>
+  <!-- ============ MERCADO (PRICES) TAB ============ -->
+  <section id="tab-prices" style="display:none"></section>
 </div>
 <!-- DETAIL MODAL -->
 <div class="scrim" id="detailScrim"><div class="modal wide" id="detailModal"></div></div>
@@ -626,6 +740,37 @@
     "💬 Comentarios":"💬 Comments","Escribe un comentario…":"Write a comment…","Enviar":"Send",
     "Inicia sesión para comentar":"Sign in to comment","Sé el primero en comentar.":"Be the first to comment.",
     "eliminar":"delete","anónimo":"anonymous",
+    // home / mercado
+    "🏠 Inicio":"🏠 Home","📈 Mercado":"📈 Market","Mercado":"Market","Descubrir":"Discover",
+    "Colección de coches":"Car collection",
+    "Descubre, colecciona y":"Discover, collect and","rankea":"rank","los coches que amas.":"the cars you love.",
+    "Explora lo que la comunidad acaba de publicar, lee historias, arma tu garage y sigue el mercado de clásicos y modernos.":"Explore what the community just published, read stories, build your garage and follow the market for classics and moderns.",
+    "🚗 Mi garage":"🚗 My garage","🏪 Explorar Marketplace":"🏪 Explore Marketplace","📈 Ver mercado":"📈 View market",
+    "Publicados recientemente":"Recently published","Ver todo →":"View all →",
+    "Historias y artículos":"Stories & articles","Explora":"Explore",
+    "Enfrenta dos coches y elige al ganador.":"Pit two cars against each other and pick the winner.",
+    "Valores y subastas en sitios reales.":"Values and auctions on real sites.",
+    "Colecciones de la comunidad.":"Community collections.",
+    "Tier lists, torneos y tu Top 100.":"Tier lists, tournaments and your Top 100.",
+    "Conéctate para ver lo más reciente.":"Sign in to see the latest.",
+    "Aún no hay coches. ¡Sé el primero en publicar!":"No cars yet. Be the first to publish!",
+    "Aún no hay historias. ¡Escribe la primera!":"No stories yet. Write the first one!",
+    "Ver todas las historias →":"See all stories →",
+    "El pulso del mercado de coches.":"The pulse of the car market.",
+    "Estos son los sitios de referencia para precios, valores y resultados de subastas reales. Busca un modelo o abre cualquiera para ver datos en vivo.":"These are the go-to sites for real prices, values and auction results. Search a model or open any of them for live data.",
+    "Busca un modelo (ej. Porsche 911)…":"Search a model (e.g. Porsche 911)…","Buscar en Classic.com":"Search on Classic.com",
+    "Los precios y datos viven en cada sitio (requieren internet). Los enlaces abren en una pestaña nueva.":"Prices and data live on each site (internet required). Links open in a new tab.",
+    "Índices y datos":"Indices & data","Subastas":"Auctions","Abrir sitio ↗":"Open site ↗",
+    "Índices de precios y tendencias por modelo, con historial de ventas real.":"Price indices and trends by model, with real sales history.",
+    "Valores por condición (#1–#4) y tendencias del mercado de clásicos.":"Condition-based values (#1–#4) and classic-market trends.",
+    "Anuncios, precios de venta y guías de valor de coches clásicos.":"Listings, sale prices and value guides for classic cars.",
+    "Resultados de subastas en vivo — el termómetro del mercado moderno.":"Live auction results — the thermometer of the modern market.",
+    "Subastas premium de coches de colección y resultados por lote.":"Premium collector-car auctions and results by lot.",
+    "Casa de subastas de alta gama; resultados históricos.":"High-end auction house; historical results.",
+    "Subastas internacionales de automóviles de colección.":"International collector-car auctions.",
+    "La mayor subasta de coches de EE. UU. por volumen.":"The largest U.S. car auction by volume.",
+    "Subastas de entusiasta enfocadas en coches modernos (1980+).":"Enthusiast auctions focused on modern cars (1980+).",
+    "Subastas globales de coches y motos de colección.":"Global auctions of collector cars and motorcycles.",
     // admin
     "Código de administrador:":"Administrator code:","Modo admin desactivado":"Admin mode off",
     "🔧 Modo admin activado":"🔧 Admin mode on","Código incorrecto":"Wrong code",
@@ -2016,11 +2161,14 @@ function openIrlDetail(id){
    TABS / WIRING
    ====================================================================== */
 function showTab(t){
-  ["garage","irl","activities","market","battle","historia","discover"].forEach(x=>{const el=$("#tab-"+x); if(el) el.style.display=x===t?"":"none";});
+  ["home","garage","irl","activities","market","prices","battle","historia","discover"].forEach(x=>{const el=$("#tab-"+x); if(el) el.style.display=x===t?"":"none";});
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===t));
-  if(t==="activities")renderAct();
+  try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){}
+  if(t==="home")renderHome();
+  else if(t==="activities")renderAct();
   else if(t==="irl")renderIrl();
   else if(t==="market")renderMarketTab();
+  else if(t==="prices")renderPrices();
   else if(t==="battle")renderBattle();
   else if(t==="historia")renderHistoria();
   else if(t==="discover")renderDiscover();
@@ -2060,8 +2208,8 @@ function applyAfterLoad(){
   renderThemes();
   renderAuthUI();
   renderGarage();
-  const cur=document.querySelector("#tabs button.on")?.dataset.tab||"garage";
-  if(cur==="irl")renderIrl(); else if(cur==="activities")renderAct();
+  const cur=document.querySelector("#tabs button.on")?.dataset.tab||"home";
+  if(cur==="home"&&!viewing)renderHome(); else if(cur==="irl")renderIrl(); else if(cur==="activities")renderAct();
 }
 function renderAuthUI(){
   const el=$("#authArea"); if(!el)return;
@@ -2761,6 +2909,130 @@ async function saveStory(){
   }catch(e){ msg.textContent="⚠ Error de conexión."; }
 }
 async function delStory(id){ if(!confirm("¿Eliminar tu historia?"))return; try{ await supa.from("stories").delete().eq("id",id); renderHistoria(); }catch(e){} }
+/* ======================================================================
+   HOME (portada estilo galería) — coches recientes + historias + accesos
+   ====================================================================== */
+let homeCars=[], homeStories=[];
+async function renderHome(){
+  const v=$("#tab-home"); if(!v)return;
+  v.innerHTML=`
+    <div class="home-hero">
+      <div class="kicker">Colección de coches</div>
+      <h1>Descubre, colecciona y <b>rankea</b> los coches que amas.</h1>
+      <p>Explora lo que la comunidad acaba de publicar, lee historias, arma tu garage y sigue el mercado de clásicos y modernos.</p>
+      <div class="cta">
+        <button class="btn primary" onclick="showTab('garage')">🚗 Mi garage</button>
+        <button class="btn" onclick="showTab('market')">🏪 Explorar Marketplace</button>
+        <button class="btn ghost" onclick="showTab('prices')">📈 Ver mercado</button>
+      </div>
+    </div>
+    <div class="home-sec">
+      <div class="home-sechead"><h2>Publicados recientemente</h2><button class="link" onclick="showTab('market')">Ver todo →</button></div>
+      <div id="home-cars" class="grid"><p style="color:var(--ink-faint)">Cargando…</p></div>
+    </div>
+    <div class="home-sec">
+      <div class="home-sechead"><h2>Historias y artículos</h2><button class="link" onclick="showTab('historia')">Ver todo →</button></div>
+      <div id="home-stories" class="story-grid"><p style="color:var(--ink-faint)">Cargando…</p></div>
+    </div>
+    <div class="home-sec">
+      <div class="home-sechead"><h2>Explora</h2></div>
+      <div class="home-tiles">
+        <button class="home-tile" onclick="showTab('battle')"><span class="ic">⚔️</span><span class="t">Spec Battle</span><span class="d">Enfrenta dos coches y elige al ganador.</span></button>
+        <button class="home-tile" onclick="showTab('prices')"><span class="ic">📈</span><span class="t">Mercado</span><span class="d">Valores y subastas en sitios reales.</span></button>
+        <button class="home-tile" onclick="showTab('discover')"><span class="ic">🔎</span><span class="t">Descubrir</span><span class="d">Colecciones de la comunidad.</span></button>
+        <button class="home-tile" onclick="showTab('activities')"><span class="ic">🏆</span><span class="t">Actividades</span><span class="d">Tier lists, torneos y tu Top 100.</span></button>
+      </div>
+    </div>`;
+  if(!supa){ const hc=$("#home-cars"); if(hc)hc.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Conéctate para ver lo más reciente.</p>'; const hs=$("#home-stories"); if(hs)hs.innerHTML=''; return; }
+  // --- coches publicados recientemente (catálogo) ---
+  try{
+    const {data}=await supa.from("catalog").select("key,brand,name,year,image").order("created_at",{ascending:false}).limit(12);
+    homeCars=data||[]; const box=$("#home-cars");
+    if(box) box.innerHTML = homeCars.length ? homeCars.map((e,i)=>`<article class="car" style="cursor:pointer" onclick="openHomeCar(${i})">
+        <div class="ph">${e.image?`<img src="${esc(e.image)}" loading="lazy">`:`<div class="noimg">🚗</div>`}</div>
+        <div class="body"><div class="nm">${esc(e.name||"")}</div>
+          <div class="meta"><b>${esc(e.brand||"")}</b> <span>${esc(e.year||"")}</span></div></div>
+      </article>`).join("") : '<p style="color:var(--ink-faint);font-size:13px">Aún no hay coches. ¡Sé el primero en publicar!</p>';
+  }catch(e){ const box=$("#home-cars"); if(box)box.innerHTML='<p style="color:var(--accent);font-size:13px">Error al cargar.</p>'; }
+  // --- historias recientes ---
+  try{
+    const {data}=await supa.from("stories").select("*").order("created_at",{ascending:false}).limit(6);
+    homeStories=data||[]; const box=$("#home-stories");
+    if(box) box.innerHTML = homeStories.length ? homeStories.map(s=>{
+        const cover=(s.images&&s.images[0])||"", d=s.created_at?new Date(s.created_at).toLocaleDateString():"";
+        return `<article class="story-tile" onclick="openStoryView('${s.id}')">
+          <div class="cover">${cover?`<img src="${esc(cover)}" loading="lazy">`:`<div class="noimg">📖</div>`}</div>
+          <div class="st-b">
+            <div class="st-t">${esc(s.title||"Sin título")}</div>
+            ${s.body?`<div class="st-x">${esc(s.body)}</div>`:""}
+            <div class="st-m">por @${esc(s.username||"anónimo")}${d?` · ${d}`:""}</div>
+          </div></article>`;
+      }).join("") : '<p style="color:var(--ink-faint);font-size:13px">Aún no hay historias. ¡Escribe la primera!</p>';
+  }catch(e){ const box=$("#home-stories"); if(box)box.innerHTML='<p style="color:var(--accent);font-size:13px">Error al cargar.</p>'; }
+}
+function openHomeCar(i){ if(!homeCars[i])return; mkData=homeCars.slice(); addFromCatalog(i); }
+function openStoryView(id){
+  const s=(homeStories||[]).find(x=>String(x.id)===String(id)); if(!s)return;
+  const d=s.created_at?new Date(s.created_at).toLocaleDateString():"";
+  const imgs=(s.images||[]).map(im=>`<img src="${esc(im)}" style="cursor:pointer;width:100%;border-radius:10px;border:1px solid var(--line);margin-top:8px" onclick="stBig('${esc(im)}')">`).join("");
+  $("#promptModal").innerHTML=`<div class="mh"><h3>${esc(s.title||"Sin título")}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb">
+      <div style="font-size:12px;color:var(--ink-faint);margin-bottom:10px">por @${esc(s.username||"anónimo")}${d?` · ${d}`:""}${s.car?` · ${esc(s.car)}`:""}</div>
+      ${s.body?`<div style="font-size:14.5px;color:var(--ink-dim);white-space:pre-wrap;line-height:1.6">${esc(s.body)}</div>`:""}
+      ${imgs}
+      <div style="margin-top:16px"><button class="btn ghost sm" onclick="closeAll();showTab('historia')">Ver todas las historias →</button></div>
+    </div>`;
+  $("#promptScrim").classList.add("show");
+}
+function stBig(src){ const el=$("#stLightboxImg"); if(el){ el.src=src; $("#stLightbox").classList.add("show"); } }
+/* ======================================================================
+   MERCADO (PRICES) — tarjetas curadas que abren sitios reales
+   ====================================================================== */
+const PRICE_SITES=[
+  {kind:"Índices y datos", name:"Classic.com", ic:"📊", url:"https://www.classic.com/markets/", desc:"Índices de precios y tendencias por modelo, con historial de ventas real."},
+  {kind:"Índices y datos", name:"Hagerty Valuation", ic:"📈", url:"https://www.hagerty.com/valuation-tools", desc:"Valores por condición (#1–#4) y tendencias del mercado de clásicos."},
+  {kind:"Índices y datos", name:"Hemmings", ic:"🗞️", url:"https://www.hemmings.com/", desc:"Anuncios, precios de venta y guías de valor de coches clásicos."},
+  {kind:"Subastas", name:"Bring a Trailer", ic:"🔨", url:"https://bringatrailer.com/", desc:"Resultados de subastas en vivo — el termómetro del mercado moderno."},
+  {kind:"Subastas", name:"RM Sotheby's", ic:"🏛️", url:"https://rmsothebys.com/", desc:"Subastas premium de coches de colección y resultados por lote."},
+  {kind:"Subastas", name:"Gooding & Company", ic:"🏆", url:"https://www.goodingco.com/", desc:"Casa de subastas de alta gama; resultados históricos."},
+  {kind:"Subastas", name:"Bonhams | Cars", ic:"🎩", url:"https://cars.bonhams.com/", desc:"Subastas internacionales de automóviles de colección."},
+  {kind:"Subastas", name:"Mecum Auctions", ic:"🇺🇸", url:"https://www.mecum.com/", desc:"La mayor subasta de coches de EE. UU. por volumen."},
+  {kind:"Subastas", name:"Cars & Bids", ic:"⚡", url:"https://carsandbids.com/", desc:"Subastas de entusiasta enfocadas en coches modernos (1980+)."},
+  {kind:"Subastas", name:"Collecting Cars", ic:"🌍", url:"https://collectingcars.com/", desc:"Subastas globales de coches y motos de colección."}
+];
+function renderPrices(){
+  const v=$("#tab-prices"); if(!v)return;
+  const kinds=[]; PRICE_SITES.forEach(s=>{ if(kinds.indexOf(s.kind)<0)kinds.push(s.kind); });
+  const groups=kinds.map(k=>`
+    <div class="home-sec">
+      <div class="home-sechead"><h2>${k}</h2></div>
+      <div class="mkt-grid">
+        ${PRICE_SITES.filter(s=>s.kind===k).map(s=>`
+          <a class="mkt-card" href="${s.url}" target="_blank" rel="noopener noreferrer">
+            <div class="mk-top"><span class="mk-logo">${s.ic}</span><div><div class="mk-kind">${s.kind}</div><div class="mk-name">${s.name}</div></div></div>
+            <div class="mk-desc">${s.desc}</div>
+            <div class="mk-go">Abrir sitio ↗</div>
+          </a>`).join("")}
+      </div>
+    </div>`).join("");
+  v.innerHTML=`
+    <div class="home-hero" style="padding:30px 28px">
+      <div class="kicker">Mercado</div>
+      <h1 style="font-size:clamp(30px,5vw,50px)">El pulso del mercado de coches.</h1>
+      <p>Estos son los sitios de referencia para precios, valores y resultados de subastas reales. Busca un modelo o abre cualquiera para ver datos en vivo.</p>
+      <div class="cta">
+        <input class="ctrl grow" id="pr-q" placeholder="Busca un modelo (ej. Porsche 911)…" style="min-width:240px" onkeydown="if(event.key==='Enter')priceSearch()">
+        <button class="btn primary" onclick="priceSearch()">Buscar en Classic.com</button>
+      </div>
+    </div>
+    <p style="color:var(--ink-faint);font-size:12.5px;margin:14px 2px 0">Los precios y datos viven en cada sitio (requieren internet). Los enlaces abren en una pestaña nueva.</p>
+    ${groups}`;
+}
+function priceSearch(){
+  const el=$("#pr-q"), q=(el?el.value:"").trim();
+  const url = q ? ("https://www.classic.com/search?q="+encodeURIComponent(q)) : "https://www.classic.com/markets/";
+  window.open(url,"_blank","noopener");
+}
 window.addEventListener("hashchange",routeAndLoad);
 /* ======================================================================
    BOOT

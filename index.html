@@ -387,6 +387,15 @@
     linear-gradient(95deg, var(--bg) 4%, color-mix(in srgb,var(--bg) 82%, transparent) 38%, color-mix(in srgb,var(--bg) 30%, transparent) 66%, transparent 92%),
     linear-gradient(0deg, color-mix(in srgb,var(--bg) 55%, transparent), transparent 42%)}
   .hero-inner{position:relative;z-index:2;max-width:640px}
+  .hero-cap{position:absolute;bottom:16px;right:20px;z-index:2;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink);background:color-mix(in srgb,var(--bg) 50%,transparent);border:1px solid var(--line);border-radius:999px;padding:5px 12px;backdrop-filter:blur(4px);opacity:.92;transition:opacity .4s}
+  @media(max-width:640px){ .hero-cap{display:none} }
+  /* skeletons de carga */
+  @keyframes shimmer{0%{background-position:-450px 0}100%{background-position:450px 0}}
+  .skel{background:linear-gradient(90deg,var(--card) 0%,var(--card2) 50%,var(--card) 100%);background-size:900px 100%;animation:shimmer 1.3s infinite linear;border-radius:8px}
+  .skel-card{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .skel-card .ph{aspect-ratio:16/10}
+  .skel-card .b{padding:12px 13px;display:flex;flex-direction:column;gap:9px}
+  .skel-line{height:12px}
   .home-hero .kicker{color:var(--accent2);font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:10px}
   .home-hero h1{font-family:var(--display);font-size:clamp(38px,6vw,68px);line-height:.92;letter-spacing:1px;margin:0 0 12px;max-width:16ch}
   .home-hero h1 b{color:var(--accent)}
@@ -2965,18 +2974,19 @@ async function renderHome(){
   v.innerHTML=`
     <div class="home-hero">
       <div class="hero-bg" id="heroBg">
-        <div class="hero-slide on" style="background-image:url('hero1.jpg?v=2')"></div>
-        <div class="hero-slide" style="background-image:url('hero2.jpg?v=2')"></div>
-        <div class="hero-slide" style="background-image:url('hero3.jpg?v=2')"></div>
-        <div class="hero-slide" style="background-image:url('hero4.jpg?v=2')"></div>
-        <div class="hero-slide" style="background-image:url('hero5.jpg?v=1')"></div>
-        <div class="hero-slide" style="background-image:url('hero6.jpg?v=1')"></div>
-        <div class="hero-slide" style="background-image:url('hero7.jpg?v=1')"></div>
-        <div class="hero-slide" style="background-image:url('hero8.jpg?v=1')"></div>
-        <div class="hero-slide" style="background-image:url('hero9.jpg?v=1')"></div>
-        <div class="hero-slide" style="background-image:url('hero10.jpg?v=1')"></div>
+        <div class="hero-slide on" data-src="hero1.jpg?v=2"></div>
+        <div class="hero-slide" data-src="hero2.jpg?v=2"></div>
+        <div class="hero-slide" data-src="hero3.jpg?v=2"></div>
+        <div class="hero-slide" data-src="hero4.jpg?v=2"></div>
+        <div class="hero-slide" data-src="hero5.jpg?v=1"></div>
+        <div class="hero-slide" data-src="hero6.jpg?v=1"></div>
+        <div class="hero-slide" data-src="hero7.jpg?v=1"></div>
+        <div class="hero-slide" data-src="hero8.jpg?v=1"></div>
+        <div class="hero-slide" data-src="hero9.jpg?v=1"></div>
+        <div class="hero-slide" data-src="hero10.jpg?v=1"></div>
       </div>
       <div class="hero-ov"></div>
+      <div class="hero-cap" id="heroCap"></div>
       <div class="hero-inner">
         <div class="kicker">Colección de coches</div>
         <h1>Descubre, colecciona y <b>rankea</b> los coches que amas.</h1>
@@ -2989,11 +2999,11 @@ async function renderHome(){
     </div>
     <div class="home-sec">
       <div class="home-sechead"><h2>Publicados recientemente</h2><button class="link" onclick="showTab('market')">Ver todo →</button></div>
-      <div id="home-cars" class="grid"><p style="color:var(--ink-faint)">Cargando…</p></div>
+      <div id="home-cars" class="grid">${skelCards(6)}</div>
     </div>
     <div class="home-sec">
       <div class="home-sechead"><h2>Historias y artículos</h2><button class="link" onclick="showTab('historia')">Ver todo →</button></div>
-      <div id="home-stories"><p style="color:var(--ink-faint)">Cargando…</p></div>
+      <div id="home-stories"><div class="skel" style="height:460px;border-radius:16px"></div></div>
     </div>
     <div class="home-sec">
       <div class="home-sechead"><h2>El mercado, en video</h2><a href="https://www.hagerty.com/media/" target="_blank" rel="noopener noreferrer">Más en Hagerty →</a></div>
@@ -3046,18 +3056,26 @@ function stBig(src){ const el=$("#stLightboxImg"); if(el){ el.src=src; $("#stLig
    HERO — rota entre varias fotos con crossfade
    ====================================================================== */
 let heroTimer=null;
+const HERO_LABELS=["Ferrari 599 GTO","Porsche 911 Carrera","Audi R8 V10","BMW M3","Mercedes-AMG E63 · BMW M5","Chevrolet Corvette Z06","Shelby GT350 · Nissan Z","Porsche 911 GT3 RS · McLaren 720S","BMW M4","Night Meet"];
 function stopHeroRotator(){ if(heroTimer){ clearInterval(heroTimer); heroTimer=null; } }
+function loadHeroSlide(el){ if(el && !el.dataset.loaded){ const s=el.getAttribute("data-src"); if(s){ el.style.backgroundImage="url('"+s+"')"; el.dataset.loaded="1"; } } }
+function updateHeroLabel(i){ const c=$("#heroCap"); if(c) c.textContent=HERO_LABELS[i]||""; }
 function startHeroRotator(){
   stopHeroRotator();
   const bg=$("#heroBg"); if(!bg)return;
-  const slides=bg.querySelectorAll(".hero-slide"); if(slides.length<2)return;
+  const slides=Array.prototype.slice.call(bg.querySelectorAll(".hero-slide")); if(!slides.length)return;
   let i=0;
+  loadHeroSlide(slides[0]); slides[0].classList.add("on"); updateHeroLabel(0);  // solo carga la 1ª al abrir
+  loadHeroSlide(slides[1]);                                                     // precarga la 2ª
+  if(slides.length<2)return;
   heroTimer=setInterval(()=>{
-    slides[i].classList.remove("on");
-    i=(i+1)%slides.length;
-    slides[i].classList.add("on");
+    const nx=(i+1)%slides.length;
+    loadHeroSlide(slides[nx]); loadHeroSlide(slides[(nx+1)%slides.length]);      // carga la siguiente + precarga la de después
+    slides[i].classList.remove("on"); slides[nx].classList.add("on");
+    i=nx; updateHeroLabel(i);
   },5000);
 }
+function skelCards(n){ let s=""; for(let k=0;k<n;k++) s+='<article class="skel-card"><div class="ph skel"></div><div class="b"><div class="skel skel-line" style="width:70%"></div><div class="skel skel-line" style="width:45%"></div></div></article>'; return s; }
 /* ======================================================================
    HISTORIAS — slideshow grande en Inicio
    ====================================================================== */

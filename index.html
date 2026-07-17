@@ -515,6 +515,15 @@
   @keyframes introOut{to{opacity:0;visibility:hidden}}
   @media(prefers-reduced-motion:reduce){#introOverlay{display:none}}
   @media(max-width:640px){ .home-hero{padding:34px 20px} }
+  @media(max-width:600px){
+    .battlegrid{grid-template-columns:1fr!important}
+    .battlegrid .vsmid{margin:2px 0;font-size:20px}
+    .home-hero{min-height:360px;padding:30px 18px}
+    .home-hero h1{font-size:34px}
+    .home-sechead h2{font-size:22px}
+    .ss-title{font-size:27px}
+    .mv-list{max-height:none}
+  }
 </style>
 </head>
 <body data-theme="retro">
@@ -2745,7 +2754,7 @@ function renderBattle(){
     <div style="text-align:center;margin-bottom:14px">
       <button class="btn primary" onclick="battleRandom()" ${battleBusy?'disabled':''}>🎲 Batalla aleatoria</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start">
+    <div class="battlegrid" style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start">
       <div>${battleColumn(0)}</div>
       <div class="vsmid" style="align-self:center;position:static">VS</div>
       <div>${battleColumn(1)}</div>

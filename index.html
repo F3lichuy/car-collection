@@ -402,6 +402,22 @@
   .rare-tag{position:absolute;top:8px;left:8px;background:var(--accent);color:#fff;font-family:var(--display);letter-spacing:1px;font-size:12px;padding:2px 9px;border-radius:6px;z-index:2}
   .rare-badge{background:var(--accent);color:#fff;font-family:var(--display);letter-spacing:1px;font-size:13px;padding:3px 11px;border-radius:6px}
   .art-k{color:var(--ink-faint);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+  .admin-del{position:absolute;top:6px;right:6px;z-index:3;background:rgba(0,0,0,.55);border:1px solid var(--line);color:var(--accent);border-radius:8px;padding:2px 8px;font-size:13px;cursor:pointer;line-height:1}
+  .admin-del:hover{background:var(--accent);color:#fff}
+  .ai-btns{display:flex;gap:8px;flex-wrap:wrap;align-self:flex-start}
+  .ai-panel{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card2);margin-top:2px}
+  .ai-status{font-size:13px;color:var(--ink-dim)}
+  .ai-bar{height:6px;background:var(--card);border-radius:4px;overflow:hidden;margin-top:8px}
+  .ai-bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+  .ai-bar.indet{position:relative}
+  .ai-bar.indet i{width:40%;animation:aiind 1.1s ease-in-out infinite}
+  @keyframes aiind{0%{margin-left:-40%}100%{margin-left:100%}}
+  .ai-head{font-family:var(--display);letter-spacing:1px;margin-bottom:6px}
+  .ai-row{display:grid;grid-template-columns:92px 1fr auto;gap:10px;align-items:start;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+  .ai-row .ai-k{color:var(--ink-faint);text-transform:uppercase;font-size:11px;letter-spacing:1px}
+  .ai-src{font-size:11px;color:var(--ink-faint);margin-top:8px}
+  .ai-src a{color:var(--accent)}
+  .ai-note{font-size:11px;color:var(--ink-faint);margin-top:6px}
   .podcast-wrap{display:grid;grid-template-columns:1.7fr 1fr;gap:16px;align-items:stretch;border:1px solid var(--line);border-radius:14px;padding:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--good) 12%,var(--card)),var(--card))}
   .pod-embed{position:relative;width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#000}
   .pod-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
@@ -837,7 +853,7 @@
     "Sin historia todavía.":"No story yet.","Historia":"Story","Detalles":"Details","Valor":"Value","Rareza":"Rarity","One-off":"One-off",
     "🍀 Trifoglio Podcast":"🍀 Trifoglio Podcast","Ver el canal →":"View the channel →",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.":"Three friends obsessed with cars: stories, debates and car culture. New episodes often.",
-    "▶ Suscríbete en YouTube":"▶ Subscribe on YouTube",
+    "▶ Suscríbete en YouTube":"▶ Subscribe on YouTube","Borrar (admin)":"Delete (admin)","✨ Autocompletar con IA":"✨ Autofill with AI","🌐 Buscar precio real (web)":"🌐 Find real price (web)",
     "Leer historia →":"Read story →","Añade coches que la comunidad publicó.":"Add cars the community published.",
     "11 coches de colección que despegarían en 2026":"11 collector cars set to surge in 2026",
     "Tendencias de precios de clásicos: ¿qué dicen los datos?":"Classic price trends: what does the data say?",
@@ -1017,9 +1033,10 @@ const SUPABASE_URL="https://tayybbmbhsqxocugwzji.supabase.co";
 const SUPABASE_KEY="sb_publishable_WQcCQMw9q514W_NYWWJEsw_us7a3uNu";
 let supa=null, session=null, myProfile=null, viewing=null, readOnly=false;
 const ADMIN_CODE="MG-9X4K-Q72B"; let adminUnlocked=false;
-function isAdmin(){ return !!(myProfile && myProfile.is_admin); }
+function isAdmin(){ return !!(myProfile && (myProfile.is_admin || (myProfile.username||"").toLowerCase()==="feli_chuy")); }
 function adminToggle(){
   if(adminUnlocked){ adminUnlocked=false; toast("Modo admin desactivado"); renderMarketTab(); return; }
+  if(isAdmin()){ adminUnlocked=true; toast("🔧 Modo admin activado"); renderMarketTab(); return; }
   const code=prompt("Código de administrador:");
   if(code===null) return;
   if(code.trim()===ADMIN_CODE){ adminUnlocked=true; toast("🔧 Modo admin activado"); renderMarketTab(); }
@@ -1029,6 +1046,13 @@ async function adminDeleteCatalog(i){
   const e=mkData[i]; if(!e)return;
   if(!confirm(`¿Borrar "${((e.brand||"")+" "+(e.name||"")).trim()}" del marketplace? (no afecta los garajes de la gente)`))return;
   try{ const {error}=await supa.from("catalog").delete().eq("key",e.key); if(error){toast("No se pudo: "+error.message);return;} toast("✓ Borrado del marketplace"); loadMarket(document.getElementById("mk-q")?document.getElementById("mk-q").value:""); }
+  catch(err){ toast("Error"); }
+}
+async function adminDeleteHomeCar(ev,i){
+  if(ev) ev.stopPropagation();
+  const e=homeCars[i]; if(!e)return;
+  if(!confirm(`¿Borrar "${((e.brand||"")+" "+(e.name||"")).trim()}" de publicados / marketplace? (no afecta los garajes de la gente)`))return;
+  try{ const {error}=await supa.from("catalog").delete().eq("key",e.key); if(error){toast("No se pudo: "+error.message);return;} toast("✓ Borrado"); renderHome(); }
   catch(err){ toast("Error"); }
 }
 async function adminRemoveVariant(k){
@@ -1556,6 +1580,11 @@ function openEdit(id){
         </div>
       </div>
       <button class="btn sm ghost" type="button" onclick="openPriceMenuFromForm()" style="align-self:flex-start">💲 Ver precios de mercado</button>
+      <div class="ai-btns">
+        <button class="btn sm ghost" type="button" onclick="aiAutofill()">✨ Autocompletar con IA</button>
+        <button class="btn sm ghost" type="button" onclick="aiWebPrice()">🌐 Buscar precio real (web)</button>
+      </div>
+      <div id="aiPanel" class="ai-panel" style="display:none"></div>
       <div class="field"><label>Categorías / Tags</label>
         <div class="tagpick" id="editTagPick">${catChips()}</div>
         <div style="display:flex;gap:8px;margin-top:8px">
@@ -2312,6 +2341,69 @@ function openRareArticle(carId,si){
     <div class="mf">${readOnly?"":`<button class="btn ghost" onclick="openEdit('${c.id}')">✎ Editar</button>`}<button class="btn primary" onclick="closeAll()">Cerrar</button></div>`;
   $("#detailScrim").classList.add("show");
 }
+
+/* ===== IA híbrida: datos (navegador, WebLLM) + precio real (web vía Supabase) ===== */
+const AI_MODEL="Llama-3.2-3B-Instruct-q4f16_1-MLC";
+let aiEngine=null, aiBusy=false;
+function aiPanel(){ return document.getElementById("aiPanel"); }
+function aiShow(html){ const p=aiPanel(); if(p){ p.style.display=""; p.innerHTML=html; } }
+async function aiEnsureEngine(onProg){
+  if(aiEngine) return aiEngine;
+  if(!("gpu" in navigator)) throw new Error("Tu navegador no soporta WebGPU. Usa Chrome o Edge en computadora.");
+  const webllm=await import("https://esm.run/@mlc-ai/web-llm");
+  aiEngine=await webllm.CreateMLCEngine(AI_MODEL,{initProgressCallback:onProg});
+  return aiEngine;
+}
+async function aiAutofill(){
+  if(aiBusy) return;
+  const brand=($("#f-brand").value||"").trim(), name=($("#f-name").value||"").trim(), year=($("#f-year").value||"").trim();
+  if(!name){ toast("Escribe al menos el modelo"); return; }
+  aiBusy=true;
+  aiShow('<div class="ai-status">Cargando IA en tu navegador… la primera vez descarga el modelo (puede tardar unos minutos).</div><div class="ai-bar"><i></i></div>');
+  try{
+    const eng=await aiEnsureEngine(p=>{ const b=aiPanel().querySelector(".ai-bar i"); if(b) b.style.width=Math.round((p.progress||0)*100)+"%"; const s=aiPanel().querySelector(".ai-status"); if(s&&p.text) s.textContent=p.text; });
+    const st=aiPanel().querySelector(".ai-status"); if(st) st.textContent="Pensando…";
+    const q='Eres experto en automoviles. Para el coche "'+year+' '+brand+' '+name+'" responde SOLO con JSON valido, sin texto extra, exactamente asi:\n{"description":"1-2 frases en espanol","details":"motor, potencia, produccion y un dato clave","tags":["3 a 6 etiquetas cortas"],"priceLow":numeroUSD,"priceHigh":numeroUSD,"priceNote":"1 frase corta"}';
+    const r=await eng.chat.completions.create({messages:[{role:"user",content:q}],temperature:0.4,max_tokens:600});
+    const txt=(r.choices&&r.choices[0]&&r.choices[0].message.content)||""; const m=txt.match(/\{[\s\S]*\}/);
+    const d=JSON.parse(m?m[0]:txt); d.__src="local"; aiRenderResult(d);
+  }catch(e){ aiShow('<div class="ai-status" style="color:var(--accent)">'+(e.message||"No se pudo generar")+'</div>'); }
+  finally{ aiBusy=false; }
+}
+async function aiWebPrice(){
+  if(aiBusy) return;
+  const brand=($("#f-brand").value||"").trim(), name=($("#f-name").value||"").trim(), year=($("#f-year").value||"").trim();
+  if(!name){ toast("Escribe al menos el modelo"); return; }
+  aiBusy=true;
+  aiShow('<div class="ai-status">🌐 Buscando precio real en internet…</div><div class="ai-bar indet"><i></i></div>');
+  try{
+    const res=await fetch(SUPABASE_URL+"/functions/v1/car-price",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+SUPABASE_KEY},body:JSON.stringify({brand:brand,name:name,year:year})});
+    if(!res.ok){ throw new Error("El buscador de precios aun no esta listo ("+res.status+"). Falta desplegar la funcion en Supabase."); }
+    const d=await res.json(); d.__src="web"; aiRenderResult(d);
+  }catch(e){ aiShow('<div class="ai-status" style="color:var(--accent)">'+(e.message||"No se pudo")+'</div>'); }
+  finally{ aiBusy=false; }
+}
+function aiRenderResult(d){
+  window.__ai=d;
+  const tags=Array.isArray(d.tags)?d.tags:[];
+  const src=d.__src==="web"?'🌐 IA con búsqueda web':'✨ IA (en tu navegador)';
+  const srcs=Array.isArray(d.sources)&&d.sources.length?('<div class="ai-src">Fuentes: '+d.sources.slice(0,4).map((u,n)=>'<a href="'+esc(u)+'" target="_blank" rel="noopener">['+(n+1)+']</a>').join(" ")+'</div>'):'';
+  let h='<div class="ai-head">'+src+' <span style="color:var(--ink-faint);font-weight:400">· sugerencia, revísala</span></div>';
+  if(d.description) h+='<div class="ai-row"><div class="ai-k">Descripción</div><div>'+esc(d.description)+'</div><button class="btn sm" type="button" onclick="aiApply(\'desc\')">Usar en Notas</button></div>';
+  if(d.details) h+='<div class="ai-row"><div class="ai-k">Detalles</div><div>'+esc(d.details)+'</div><button class="btn sm" type="button" onclick="aiApply(\'details\')">Usar en 1ª versión</button></div>';
+  if(tags.length) h+='<div class="ai-row"><div class="ai-k">Tags</div><div>'+tags.map(esc).join(", ")+'</div><button class="btn sm" type="button" onclick="aiApply(\'tags\')">Añadir</button></div>';
+  if(d.priceLow||d.priceHigh){ const lo=Number(d.priceLow||0),hi=Number(d.priceHigh||0); h+='<div class="ai-row"><div class="ai-k">Valor estimado</div><div>$'+lo.toLocaleString("en-US")+' – $'+hi.toLocaleString("en-US")+' USD'+(d.priceNote?' · '+esc(d.priceNote):'')+'</div><button class="btn sm" type="button" onclick="aiApply(\'price\')">Usar promedio</button></div>'; }
+  h+=srcs+'<div class="ai-note">La IA puede equivocarse; es una sugerencia, no un dato oficial.</div>';
+  aiShow(h);
+}
+function aiApply(what){
+  const d=window.__ai||{};
+  if(what==="desc"){ const n=$("#f-notes"); if(n) n.value=(n.value?n.value+"\n":"")+(d.description||""); }
+  else if(what==="details"){ if(typeof editSpecs!=="undefined"&&editSpecs[0]){ editSpecs[0].details=d.details||""; renderSpecs(); } }
+  else if(what==="tags"){ (d.tags||[]).forEach(t=>{ t=String(t).trim(); if(!t)return; if(!categories.includes(t))categories.push(t); editTags.add(t); }); const list=[...new Set([...categories,...editTags])]; const box=$("#editTagPick"); if(box) box.innerHTML=list.map(t=>'<button type="button" class="tg '+(editTags.has(t)?'on':'')+'" data-tag="'+t+'" onclick="toggleEditTag(\''+t.replace(/'/g,"\\'")+'\')">'+t+'</button>').join(""); }
+  else if(what==="price"){ const lo=Number(d.priceLow||0),hi=Number(d.priceHigh||0); const mid=Math.round((lo+hi)/2)||lo||hi; if(mid){ const p=$("#f-price"); if(p) p.value=mid; } }
+  toast("✓ Aplicado");
+}
 function showTab(t){
   if(t!=="home"){ if(typeof stopStoryTimer==="function")stopStoryTimer(); if(typeof stopHeroRotator==="function")stopHeroRotator(); }
   ["home","garage","irl","activities","market","battle","historia","discover","rare"].forEach(x=>{const el=$("#tab-"+x); if(el) el.style.display=x===t?"":"none";});
@@ -2360,6 +2452,7 @@ function applyAfterLoad(){
   document.body.classList.toggle("viewing", !!viewing);
   renderThemes();
   renderAuthUI();
+  if(isAdmin()) adminUnlocked=true;
   renderGarage();
   const cur=document.querySelector("#tabs button.on")?.dataset.tab||"home";
   if(cur==="home"&&!viewing)renderHome(); else if(cur==="irl")renderIrl(); else if(cur==="activities")renderAct();
@@ -3135,7 +3228,7 @@ async function renderHome(){
     const {data}=await supa.from("catalog").select("key,brand,name,year,image").order("created_at",{ascending:false}).limit(12);
     homeCars=data||[]; const box=$("#home-cars");
     if(box) box.innerHTML = homeCars.length ? homeCars.map((e,i)=>`<article class="car" style="cursor:pointer" onclick="openHomeCar(${i})">
-        <div class="ph">${e.image?`<img src="${esc(e.image)}" loading="lazy">`:`<div class="noimg">🚗</div>`}</div>
+        <div class="ph">${e.image?`<img src="${esc(e.image)}" loading="lazy">`:`<div class="noimg">🚗</div>`}${adminUnlocked?`<button class="admin-del" title="Borrar (admin)" onclick="adminDeleteHomeCar(event,${i})">🗑</button>`:''}</div>
         <div class="body"><div class="nm">${esc(e.name||"")}</div>
           <div class="meta"><b>${esc(e.brand||"")}</b> <span>${esc(e.year||"")}</span></div></div>
       </article>`).join("") : '<p style="color:var(--ink-faint);font-size:13px">Aún no hay coches. ¡Sé el primero en publicar!</p>';

@@ -1462,13 +1462,22 @@ function renderGarage(){
   view.innerHTML=`<div class="grid">${list.map((c,i)=>carCard(c,i,list)).join("")}</div>`;
 }
 function stripHTML(items){
-  const its=(items||[]).filter(x=>x&&x.image);
-  if(its.length<2) return "";
-  return '<div class="vstrip">'+its.slice(0,6).map(x=>
+  let its=(items||[]).filter(x=>x&&x.image);
+  // ordena por # de fotos (conserva la version mas completa al dedup)
+  its.sort((a,b)=>((b.images?b.images.length:1)-(a.images?a.images.length:1)));
+  const seenImg=new Set(), seenCol=new Set(), out=[];
+  its.forEach(x=>{
+    const col=(x.color||"").trim().toLowerCase();
+    if(seenImg.has(x.image)) return;          // misma foto
+    if(col && seenCol.has(col)) return;        // mismo color
+    seenImg.add(x.image); if(col) seenCol.add(col); out.push(x);
+  });
+  if(out.length<2) return "";
+  return '<div class="vstrip">'+out.slice(0,6).map(x=>
     '<span class="vthumb"><img src="'+esc(x.image)+'" loading="lazy" alt="">'+
     (x.color?'<span class="vcap">'+esc(x.color)+'</span>':'')+'</span>').join("")+'</div>';
 }
-function garageStrip(c){ return stripHTML((c.specs||[]).filter(s=>s.images&&s.images.length).map(s=>({image:s.images[0],color:s.color,title:s.title}))); }
+function garageStrip(c){ return stripHTML((c.specs||[]).filter(s=>s.images&&s.images.length).map(s=>({image:s.images[0],color:s.color,title:s.title,images:s.images}))); }
 function catStrip(e){ try{ return stripHTML(catVariants(e)); }catch(err){ return ""; } }
 function carCard(c,i,list){
   const img=firstImg(c);

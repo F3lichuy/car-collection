@@ -404,6 +404,43 @@
   .art-k{color:var(--ink-faint);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
   .admin-del{position:absolute;top:6px;right:6px;z-index:3;background:rgba(0,0,0,.55);border:1px solid var(--line);color:var(--accent);border-radius:8px;padding:2px 8px;font-size:13px;cursor:pointer;line-height:1}
   .admin-del:hover{background:var(--accent);color:#fff}
+  /* hover: tira de versiones (miniaturas + color) */
+  .car .ph{position:relative;overflow:hidden}
+  .vstrip{position:absolute;left:0;right:0;bottom:0;display:flex;gap:6px;padding:8px;background:linear-gradient(to top,rgba(0,0,0,.78),rgba(0,0,0,0));transform:translateY(102%);transition:transform .22s ease;pointer-events:none;z-index:2}
+  .car:hover .vstrip{transform:translateY(0)}
+  @media (hover:none){ .car .vstrip{transform:translateY(0)} }
+  .vthumb{position:relative;width:48px;height:36px;border-radius:6px;overflow:hidden;border:1.5px solid rgba(255,255,255,.7);flex:0 0 auto;background:#222}
+  .vthumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .vthumb .vcap{position:absolute;left:0;right:0;bottom:0;font-size:8px;line-height:1.15;padding:1px 2px;text-align:center;background:rgba(0,0,0,.6);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Rarezas: feed editorial */
+  .rarefeed{display:flex;flex-direction:column;gap:18px}
+  .rare-item{display:grid;grid-template-columns:300px 1fr;gap:22px;background:var(--card2);border:1px solid var(--line);border-radius:18px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s}
+  .rare-item:hover{transform:translateY(-2px);border-color:var(--accent)}
+  .ri-ph{position:relative;min-height:210px;background:#0e0b08}
+  .ri-ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .ri-body{padding:22px 22px 22px 0;display:flex;flex-direction:column;gap:9px;justify-content:center}
+  .ri-title{font-family:var(--display);font-size:27px;line-height:1.05;letter-spacing:.5px;color:var(--ink)}
+  .ri-name{font-size:14px;color:var(--ink-faint)}
+  .ri-teaser{font-size:14px;color:var(--ink-dim);line-height:1.55}
+  .ri-more{color:var(--accent);font-size:13px;font-weight:700;margin-top:2px}
+  /* Rarezas: artículo */
+  .rare-carousel{position:relative;width:100%;border-radius:16px;overflow:hidden;background:#0e0b08;aspect-ratio:16/10}
+  .rare-carousel img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;transition:opacity .17s ease}
+  .rare-badge2{position:absolute;top:12px;left:12px;background:rgba(0,0,0,.62);color:var(--accent2);border:1px solid rgba(255,255,255,.28);padding:4px 11px;border-radius:20px;font-size:12px;letter-spacing:.5px}
+  .rare-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;gap:6px;justify-content:center}
+  .rare-dots span{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.45);transition:transform .2s,background .2s}
+  .rare-dots span.on{background:#fff;transform:scale(1.3)}
+  .rare-headline{margin:18px 2px 4px}
+  .rare-storytitle{font-family:var(--display);font-size:32px;line-height:1.04;letter-spacing:.5px;color:var(--ink)}
+  .rare-name{font-size:15px;color:var(--ink-dim);margin-top:6px}
+  .rare-color{display:inline-block;margin-top:11px;background:var(--accent);color:#fff;font-weight:700;padding:5px 13px;border-radius:20px;font-size:13px}
+  .rare-body{display:grid;grid-template-columns:1fr 250px;gap:26px;margin-top:18px}
+  .rare-storytext{font-size:16px;line-height:1.72;color:var(--ink-dim);white-space:pre-wrap;margin-top:6px}
+  .rare-side{border-left:1px solid var(--line);padding-left:22px}
+  .rare-val{font-family:var(--display);font-size:26px}
+  .rare-details{font-size:14px;color:var(--ink-dim);margin-top:2px;white-space:pre-wrap}
+  @media(max-width:640px){ .rare-item{grid-template-columns:1fr} .ri-ph{aspect-ratio:16/10;min-height:0} .ri-body{padding:0 18px 20px} .ri-title{font-size:23px}
+    .rare-body{grid-template-columns:1fr} .rare-side{border-left:0;border-top:1px solid var(--line);padding-left:0;padding-top:16px} .rare-storytitle{font-size:25px} }
   .podcast-wrap{display:grid;grid-template-columns:1.7fr 1fr;gap:16px;align-items:stretch;border:1px solid var(--line);border-radius:14px;padding:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--good) 12%,var(--card)),var(--card))}
   .pod-embed{position:relative;width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#000}
   .pod-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
@@ -1249,7 +1286,7 @@ function normalizeCar(c){
   c.currency=c.currency||"USD";
   // las imágenes viven en los specs; c.image = portada elegida; cada spec tiene color
   if(Array.isArray(c.images) && c.images.length && !c.image){ const g=c.images[c.cover||0]||c.images[0]||{}; c.image=g.img||g||""; }
-  c.specs=c.specs.map(s=>({id:s.id||uid(),title:s.title||"",details:s.details||"",color:s.color||"",images:Array.isArray(s.images)?s.images.filter(Boolean):[],rare:!!s.rare,story:s.story||""}));
+  c.specs=c.specs.map(s=>({id:s.id||uid(),title:s.title||"",details:s.details||"",color:s.color||"",images:Array.isArray(s.images)?s.images.filter(Boolean):[],rare:!!s.rare,story:s.story||"",storyTitle:s.storyTitle||""}));
   c.image=c.image||"";
   c.color=c.color||"";
   return c;
@@ -1424,6 +1461,15 @@ function renderGarage(){
   }
   view.innerHTML=`<div class="grid">${list.map((c,i)=>carCard(c,i,list)).join("")}</div>`;
 }
+function stripHTML(items){
+  const its=(items||[]).filter(x=>x&&x.image);
+  if(its.length<2) return "";
+  return '<div class="vstrip">'+its.slice(0,6).map(x=>
+    '<span class="vthumb"><img src="'+esc(x.image)+'" loading="lazy" alt="">'+
+    (x.color?'<span class="vcap">'+esc(x.color)+'</span>':'')+'</span>').join("")+'</div>';
+}
+function garageStrip(c){ return stripHTML((c.specs||[]).filter(s=>s.images&&s.images.length).map(s=>({image:s.images[0],color:s.color,title:s.title}))); }
+function catStrip(e){ try{ return stripHTML(catVariants(e)); }catch(err){ return ""; } }
 function carCard(c,i,list){
   const img=firstImg(c);
   const a=avg(c);
@@ -1438,7 +1484,7 @@ function carCard(c,i,list){
     <div class="ph" onclick="openDetail('${c.id}')">
       ${img?`<img src="${img}" alt="">`:`<div class="noimg">🚗</div>`}
       ${showRank?`<div class="rankbadge">#${i+1}</div>`:""}
-      ${a?`<div class="avgbadge">★ ${a.toFixed(1)}</div>`:""}
+      ${a?`<div class="avgbadge">★ ${a.toFixed(1)}</div>`:""}${garageStrip(c)}
     </div>
     <div class="body">
       <div class="nm" onclick="openDetail('${c.id}')" style="cursor:pointer">${c.name||"Sin nombre"}</div>
@@ -1530,7 +1576,7 @@ function openEdit(id){
   if(readOnly){toast("Estás viendo otro garage (solo lectura)");return;}
   const c=id?cars.find(x=>x.id===id):null;
   editSpecs=c?JSON.parse(JSON.stringify(c.specs||[])):[];
-  editSpecs.forEach(s=>{s.color=s.color||"";s.images=s.images||[];s.story=s.story||"";s.rare=!!s.rare;});
+  editSpecs.forEach(s=>{s.color=s.color||"";s.images=s.images||[];s.story=s.story||"";s.storyTitle=s.storyTitle||"";s.rare=!!s.rare;});
   if(!editSpecs.length) editSpecs=[{id:uid(),title:"",details:"",color:"",images:[]}]; // al crear, pide color/datos
   editCoverImg=c?.image||"";
   // si la portada actual no está en ninguna versión, métela para poder gestionarla
@@ -1614,7 +1660,7 @@ function renderSpecs(){
         <div class="field"><label>Detalles (VIN, motor…)</label><input value="${esc(s.details||'')}" oninput="editSpecs[${i}].details=this.value"></div>
       </div>
       <label class="rare-toggle"><input type="checkbox" ${s.rare?'checked':''} onchange="editSpecs[${i}].rare=this.checked;toggleSpecStory(${i},this.checked)"> ⭐ One-off / a medida (pieza especial)</label>
-      <div class="field spec-story" id="specstory-${i}" style="${s.rare?'':'display:none'}"><label>Historia / deep-dive (para Rarezas)</label><textarea oninput="editSpecs[${i}].story=this.value" placeholder="Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…">${esc(s.story||'')}</textarea></div>
+      <div class="field spec-story" id="specstory-${i}" style="${s.rare?'':'display:none'}"><label>Título de la historia (para Rarezas)</label><input value="${esc(s.storyTitle||'')}" oninput="editSpecs[${i}].storyTitle=this.value" placeholder="ej. El único en este color" style="margin-bottom:8px"><label>Historia / deep-dive (para Rarezas)</label><textarea oninput="editSpecs[${i}].story=this.value" placeholder="Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…">${esc(s.story||'')}</textarea></div>
       <div class="specthumbs">${(s.images||[]).map((im,j)=>`<div class="spthumb ${im===editCoverImg?'cover':''}">
           <img src="${esc(im)}" title="Poner de portada" onclick="setCoverImg(${i},${j})">
           ${im===editCoverImg?'<span class="cv">★ portada</span>':''}
@@ -1627,7 +1673,7 @@ function renderSpecs(){
       </div>
     </div>`).join("");
 }
-function addSpec(){editSpecs.push({id:uid(),title:"",details:"",color:"",images:[]});renderSpecs();}
+function addSpec(){editSpecs.push({id:uid(),title:"",details:"",color:"",images:[],story:"",storyTitle:"",rare:false});renderSpecs();}
 function removeSpec(i){editSpecs.splice(i,1);renderSpecs();}
 function removeSpecImg(i,j){const im=editSpecs[i].images[j];editSpecs[i].images.splice(j,1);if(im===editCoverImg)editCoverImg="";renderSpecs();}
 function setCoverImg(i,j){const im=editSpecs[i]&&editSpecs[i].images[j];if(im){editCoverImg=im;renderSpecs();}}
@@ -2279,48 +2325,63 @@ function renderRare(){
       <span style="color:var(--ink-faint);font-size:13px">${items.length} <span>pieza(s)</span></span>
     </div>
     <p style="color:var(--ink-dim);font-size:13px;margin:0 0 16px"><span>Specs especiales: one-of-one y pedidos a medida.</span>${readOnly?"":' <span>Marca una versión como “One-off / a medida” al editar un coche para que aparezca aquí.</span>'}</p>
-    ${items.length?`<div class="grid">${items.map(({c,s,si})=>{
+    ${items.length?`<div class="rarefeed">${items.map(({c,s,si})=>{
       const cover=(s.images&&s.images[0])||c.image||"";
-      return `<article class="car rare-card" style="cursor:pointer" onclick="openRareArticle('${c.id}',${si})">
-        <div class="ph">${cover?`<img src="${esc(cover)}" loading="lazy">`:`<div class="noimg">💎</div>`}<span class="rare-tag">One-off</span></div>
-        <div class="body"><div class="nm">${esc(c.name||"")}</div>
-          <div class="meta"><b>${esc(c.brand||"")}</b> <span>${esc(c.year||"")}</span></div>
-          ${(s.color||s.title)?`<div class="tags">${s.color?`<span class="tag">🎨 ${esc(s.color)}</span>`:""}${s.title?`<span class="tag">${esc(s.title)}</span>`:""}</div>`:""}
+      const stitle=s.storyTitle||s.title||"";
+      const teaser=s.story?(esc(s.story.slice(0,170))+(s.story.length>170?"…":"")):"";
+      return `<article class="rare-item" onclick="openRareArticle('${c.id}',${si})">
+        <div class="ri-ph">${cover?`<img src="${esc(cover)}" loading="lazy" alt="">`:`<div class="noimg">💎</div>`}<span class="rare-tag">One-off</span></div>
+        <div class="ri-body">
+          ${stitle?`<div class="ri-title">${esc(stitle)}</div>`:""}
+          <div class="ri-name">${esc(c.year||"")} <b>${esc(c.brand||"")}</b> ${esc(c.name||"")}</div>
+          ${s.color?`<div class="rare-color">🎨 ${esc(s.color)}</div>`:""}
+          ${teaser?`<div class="ri-teaser">${teaser}</div>`:""}
+          <div class="ri-more"><span>Leer la historia</span> →</div>
         </div></article>`;
     }).join("")}</div>`
     :`<div class="empty"><div class="big">💎</div><h2>Aún no hay rarezas</h2><p>${readOnly?"Esta colección no tiene piezas marcadas como one-off.":"Edita un coche y activa “One-off / a medida” en una versión especial."}</p></div>`}`;
 }
+let rareTimer=null;
 function openRareArticle(carId,si){
+  try{ clearInterval(rareTimer); }catch(e){}
   const c=(cars||[]).find(x=>x.id===carId); if(!c)return; const s=(c.specs||[])[si]; if(!s)return;
-  const imgs=(s.images||[]).filter(Boolean); detailImgs=imgs; detailIdx=0;
-  const bars=PARAMS.filter(p=>c.ratings?.[p]!=null).map(p=>{ const v=c.ratings[p];
-    return `<div class="barrow" style="font-size:13px"><span class="lab" style="width:100px">${PARAM_LABELS[p]}</span>
-      <span class="track" style="height:8px"><span class="fill" style="width:${v*10}%"></span></span>
-      <span class="v" style="width:24px;font-size:14px">${v}</span></div>`;
-  }).join("");
+  let imgs=(s.images||[]).filter(Boolean);
+  if(imgs.length<2){ const all=allImgs(c); if(all.length>imgs.length) imgs=all; }
+  const stitle=s.storyTitle||s.title||"";
   $("#detailModal").innerHTML=`
-    <div class="mh"><h3>💎 ${esc(s.title||s.color||c.name||"Rareza")}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
-    <div class="mb">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-        <span class="rare-badge">One-off / a medida</span>
-        ${s.color?`<span class="tag">🎨 ${esc(s.color)}</span>`:""}${s.title?`<span class="tag">${esc(s.title)}</span>`:""}
+    <div class="mh"><h3>💎 ${esc(c.name||"Rareza")}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb rare-art">
+      ${imgs.length?`<div class="rare-carousel"><img id="rareImg" src="${esc(imgs[0])}" alt="" onclick="stBig(this.src)">
+        <span class="rare-badge2">💎 One-off / a medida</span>
+        ${imgs.length>1?`<div class="rare-dots" id="rareDots">${imgs.map((_,i)=>`<span class="${i===0?'on':''}"></span>`).join("")}</div>`:""}</div>`
+       :`<div class="dropimg" style="height:220px">Sin fotos</div>`}
+      <div class="rare-headline">
+        ${stitle?`<div class="rare-storytitle">${esc(stitle)}</div>`:""}
+        <div class="rare-name">${esc(c.year||"")} <span style="color:var(--accent)">${esc(c.brand||"")}</span> ${esc(c.name||"")}</div>
+        ${s.color?`<div class="rare-color">🎨 ${esc(s.color)}</div>`:""}
       </div>
-      <div class="detailhead"><div class="big">${esc(c.year||"")} <span style="color:var(--accent)">${esc(c.brand||"")}</span> ${esc(c.name||"")}</div>
-        <div style="margin-left:auto;text-align:right"><div style="font-family:var(--display);font-size:40px;line-height:.9">★ ${avg(c).toFixed(1)}</div><div style="color:var(--ink-faint);font-size:12px">promedio</div></div>
-      </div>
-      ${imgs.length?`<div class="carousel">${imgs.length>1?`<button class="cnav prev" onclick="detailImg(-1)">‹</button><button class="cnav next" onclick="detailImg(1)">›</button>`:""}<img id="detailMainImg" src="${esc(imgs[0])}" style="cursor:zoom-in" onclick="stBig(this.src)">${imgs.length>1?`<div class="cdots">${imgs.map((_,i)=>`<span class="${i===0?"on":""}" onclick="detailGo(${i})"></span>`).join("")}</div>`:""}</div>${imgs.length>1?`<div style="text-align:center;color:var(--ink-faint);font-size:11px;margin-top:6px">${imgs.length} fotos</div>`:""}`:`<div class="dropimg">Sin fotos</div>`}
-      <div class="two" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
-        <div><div class="art-k">Valor</div><div style="font-family:var(--display);font-size:26px">${money(c)}</div>
-          ${s.details?`<div class="art-k" style="margin-top:12px">Detalles</div><div style="font-size:14px;color:var(--ink-dim)">${esc(s.details)}</div>`:""}
+      <div class="rare-body">
+        <div class="rare-story">
+          <div class="art-k">La historia</div>
+          ${s.story?`<div class="rare-storytext">${esc(s.story)}</div>`:`<div style="font-size:13px;color:var(--ink-faint)">${readOnly?"Sin historia todavía.":"Edita el coche y llena “Historia / deep-dive” de esta versión."}</div>`}
         </div>
-        <div class="bars">${bars}</div>
-      </div>
-      <div style="margin-top:18px"><div class="art-k">Historia</div>
-        ${s.story?`<div style="font-size:15px;line-height:1.65;color:var(--ink-dim);white-space:pre-wrap">${esc(s.story)}</div>`:`<div style="font-size:13px;color:var(--ink-faint)">${readOnly?"Sin historia todavía.":"Aún no escribes la historia. Edita el coche y llena el campo 'Historia / deep-dive' de esta versión."}</div>`}
+        <aside class="rare-side">
+          <div class="art-k">Valor</div><div class="rare-val">${money(c)}</div>
+          ${s.details?`<div class="art-k" style="margin-top:14px">Detalles</div><div class="rare-details">${esc(s.details)}</div>`:""}
+        </aside>
       </div>
     </div>
     <div class="mf">${readOnly?"":`<button class="btn ghost" onclick="openEdit('${c.id}')">✎ Editar</button>`}<button class="btn primary" onclick="closeAll()">Cerrar</button></div>`;
   $("#detailScrim").classList.add("show");
+  if(imgs.length>1){
+    let idx=0;
+    rareTimer=setInterval(()=>{
+      const im=document.getElementById("rareImg"); if(!im){ try{clearInterval(rareTimer);}catch(e){} return; }
+      idx=(idx+1)%imgs.length; im.style.opacity="0";
+      setTimeout(()=>{ im.src=imgs[idx]; im.style.opacity="1"; },170);
+      document.querySelectorAll("#rareDots span").forEach((d,k)=>d.classList.toggle("on",k===idx));
+    },1900);
+  }
 }
 
 function showTab(t){
@@ -2337,7 +2398,7 @@ function showTab(t){
   else if(t==="discover")renderDiscover();
   else if(t==="rare")renderRare();
 }
-function closeAll(){document.querySelectorAll(".scrim").forEach(s=>s.classList.remove("show"));}
+function closeAll(){try{clearInterval(rareTimer);}catch(e){}document.querySelectorAll(".scrim").forEach(s=>s.classList.remove("show"));}
 function wire(){
   document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
   document.querySelectorAll("#actnav button").forEach(b=>b.onclick=()=>{currentAct=b.dataset.act;tourState=null;renderAct();});
@@ -2671,13 +2732,13 @@ function loadMarket(q){
     if(!supa){ box.innerHTML='<p style="color:var(--ink-faint)">No disponible.</p>'; return; }
     q=(q||"").trim().toLowerCase();
     try{
-      const cols="key,brand,name,year,image";   // ligero: sin variants/images (se cargan al elegir)
+      const cols="key,brand,name,year,image,variants";   // incluye variants para el hover de versiones
       let query=supa.from("catalog").select(cols).order("created_at",{ascending:false}).limit(48);
       if(q) query=supa.from("catalog").select(cols).ilike("key","%"+q+"%").limit(48);
       const {data}=await query; mkData=data||[];
       if(!mkData.length){ box.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Sin coches todavía. ¡Agrega el primero!</p>'; return; }
       box.innerHTML=mkData.map((e,i)=>`<article class="car">
-        <div class="ph">${e.image?`<img src="${esc(e.image)}" loading="lazy">`:`<div class="noimg">🚗</div>`}</div>
+        <div class="ph">${e.image?`<img src="${esc(e.image)}" loading="lazy">`:`<div class="noimg">🚗</div>`}${catStrip(e)}</div>
         <div class="body"><div class="nm">${esc(e.name||"")}</div>
           <div class="meta"><b>${esc(e.brand||"")}</b> <span>${esc(e.year||"")}</span></div>
           <div class="acts"><button class="btn primary sm" style="flex:1;justify-content:center" onclick="addFromCatalog(${i})">➕ A mi garage</button>
@@ -3144,10 +3205,10 @@ async function renderHome(){
   if(!supa){ const hc=$("#home-cars"); if(hc)hc.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Conéctate para ver lo más reciente.</p>'; const hs=$("#home-stories"); if(hs)hs.innerHTML=''; renderMarketVideos(); return; }
   // --- coches publicados recientemente (catálogo) ---
   try{
-    const {data}=await supa.from("catalog").select("key,brand,name,year,image").order("created_at",{ascending:false}).limit(12);
+    const {data}=await supa.from("catalog").select("key,brand,name,year,image,variants").order("created_at",{ascending:false}).limit(12);
     homeCars=data||[]; const box=$("#home-cars");
     if(box) box.innerHTML = homeCars.length ? homeCars.map((e,i)=>`<article class="car" style="cursor:pointer" onclick="openHomeCar(${i})">
-        <div class="ph">${e.image?`<img src="${esc(e.image)}" loading="lazy">`:`<div class="noimg">🚗</div>`}${adminUnlocked?`<button class="admin-del" title="Borrar (admin)" onclick="adminDeleteHomeCar(event,${i})">🗑</button>`:''}</div>
+        <div class="ph">${e.image?`<img src="${esc(e.image)}" loading="lazy">`:`<div class="noimg">🚗</div>`}${adminUnlocked?`<button class="admin-del" title="Borrar (admin)" onclick="adminDeleteHomeCar(event,${i})">🗑</button>`:''}${catStrip(e)}</div>
         <div class="body"><div class="nm">${esc(e.name||"")}</div>
           <div class="meta"><b>${esc(e.brand||"")}</b> <span>${esc(e.year||"")}</span></div></div>
       </article>`).join("") : '<p style="color:var(--ink-faint);font-size:13px">Aún no hay coches. ¡Sé el primero en publicar!</p>';

@@ -1061,6 +1061,28 @@
   .home-tile.has-img:hover{filter:brightness(1.12)}
   .home-tile.has-img .t{color:#f6f2ea}
   .home-tile.has-img .d{color:rgba(246,242,234,.78)}
+
+  /* --- modo galería --- */
+  .gs-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .gal{position:fixed;inset:0;z-index:98;background:#060807;color:#f3efe6}
+  .gal[hidden]{display:none}
+  body.gal-open{overflow:hidden}
+  .gal-stage{position:absolute;inset:0}
+  .gal-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity 1.2s ease}
+  .gal-img.on{opacity:1}
+  @media(prefers-reduced-motion:no-preference){ .gal-img.on{animation:galZoom 7s ease-out both} }
+  @keyframes galZoom{from{transform:scale(1.04)}to{transform:scale(1)}}
+  .gal::after{content:"";position:absolute;inset:auto 0 0 0;height:40%;background:linear-gradient(0deg,rgba(6,8,7,.9),transparent);pointer-events:none}
+  .gal-cap{position:absolute;left:clamp(16px,4vw,56px);bottom:clamp(28px,6vh,64px);z-index:2;max-width:70vw}
+  .gal-n{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:rgba(243,239,230,.7);margin-bottom:12px}
+  .gal-nm{font-family:var(--display);font-style:italic;font-weight:400;font-size:clamp(36px,6vw,92px);line-height:1;letter-spacing:-.02em;margin:0 0 12px}
+  .gal-mt{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:rgba(243,239,230,.75)}
+  .gal-ctl{position:absolute;right:clamp(16px,4vw,56px);bottom:clamp(28px,6vh,64px);z-index:2;display:flex;gap:6px}
+  .gal-ctl button{background:rgba(6,8,7,.55);border:1px solid rgba(243,239,230,.25);color:#f3efe6;min-width:44px;height:44px;padding:0 14px;border-radius:var(--radius);font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+  .gal-ctl button:hover{border-color:#f3efe6}
+  .gal-bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(243,239,230,.12);z-index:2}
+  .gal-bar span{display:block;height:100%;width:0;background:var(--accent)}
+  @media(max-width:700px){ .gal-cap{max-width:none;right:16px;bottom:96px} .gal-ctl{left:16px;right:16px;justify-content:space-between} }
 </style>
 </head>
 <body data-theme="paddock">
@@ -1365,7 +1387,7 @@
     "Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…":"Tell why it’s special: bespoke order, one-of-one, story, unique specs…",
     "Aún no escribes la historia. Edita el coche y llena el campo 'Historia / deep-dive' de esta versión.":"You haven’t written the story yet. Edit the car and fill the “Story / deep-dive” field on this version.",
     "Sin historia todavía.":"No story yet.","Historia":"Story","Detalles":"Details","Valor":"Value","Rareza":"Rarity","One-off":"One-off",
-    "Trifoglio Podcast":"Trifoglio Podcast","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
+    "Trifoglio Podcast":"Trifoglio Podcast","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz.":"Three friends obsessed with cars: stories, debates and car culture.",
     "Nuevos episodios seguido, en YouTube.":"New episodes regularly, on YouTube.","Ver el canal →":"View the channel →",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.":"Three friends obsessed with cars: stories, debates and car culture. New episodes often.",
@@ -1967,6 +1989,46 @@ function renderGarage(){
   setTimeout(revealScan,0);
   view.innerHTML=garageStats()+(mode==="timeline"?garageTimeline(list):`<div class="grid">${list.map((c,i)=>carCard(c,i,list)).join("")}</div>`);
 }
+/* ---------- Garage: modo galería ---------- */
+let gal={list:[],i:0,timer:null,front:"galA",playing:true};
+const GAL_MS=6000;
+function openGallery(){
+  gal.list=getFilteredSorted().filter(c=>firstImg(c));
+  if(!gal.list.length){ toast("No hay fotos para mostrar"); return; }
+  gal.i=0; gal.playing=!matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const el=$("#gal"); el.hidden=false; document.body.classList.add("gal-open");
+  try{ el.requestFullscreen&&el.requestFullscreen().catch(()=>{}); }catch(e){}
+  galShow(); galPlayUI();
+}
+function closeGallery(){
+  const el=$("#gal"); if(!el||el.hidden) return;
+  clearTimeout(gal.timer); el.hidden=true; document.body.classList.remove("gal-open");
+  try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
+}
+function galShow(){
+  const c=gal.list[gal.i]; if(!c) return;
+  const back=gal.front==="galA"?"galB":"galA", img=$("#"+back);
+  img.onload=()=>{ img.classList.add("on"); $("#"+gal.front).classList.remove("on"); gal.front=back; };
+  img.src=firstImg(c); img.alt=((c.brand||"")+" "+(c.name||"")).trim();
+  $("#galN").textContent=String(gal.i+1).padStart(2,"0")+" / "+String(gal.list.length).padStart(2,"0");
+  $("#galNm").textContent=c.name||"Sin nombre";
+  $("#galMt").textContent=[c.brand,c.year,c.color].filter(Boolean).join(" · ");
+  const nx=gal.list[(gal.i+1)%gal.list.length]; if(nx){ const p=new Image(); p.src=firstImg(nx); }   // precarga
+  const bar=$("#galBar"); bar.style.transition="none"; bar.style.width="0";
+  clearTimeout(gal.timer);
+  if(gal.playing){ requestAnimationFrame(()=>{ bar.style.transition="width "+GAL_MS+"ms linear"; bar.style.width="100%"; }); gal.timer=setTimeout(()=>galStep(1),GAL_MS); }
+}
+function galStep(d){ gal.i=(gal.i+d+gal.list.length)%gal.list.length; galShow(); }
+function galToggle(){ gal.playing=!gal.playing; galPlayUI(); galShow(); }
+function galPlayUI(){ const b=$("#galPlay"); if(b){ b.textContent=gal.playing?"Pausa":"Reproducir"; b.setAttribute("aria-label",b.textContent); } }
+document.addEventListener("keydown",e=>{
+  if($("#gal").hidden) return;
+  if(e.key==="Escape"){ e.preventDefault(); closeGallery(); }
+  else if(e.key==="ArrowRight"){ e.preventDefault(); galStep(1); }
+  else if(e.key==="ArrowLeft"){ e.preventDefault(); galStep(-1); }
+  else if(e.key===" "){ e.preventDefault(); galToggle(); }
+});
+document.addEventListener("fullscreenchange",()=>{ if(!document.fullscreenElement&&!$("#gal").hidden&&document.body.classList.contains("gal-open")) closeGallery(); });
 /* ---------- Garage: catálogo imprimible ---------- */
 async function printCatalog(){
   const list=getFilteredSorted(); if(!list.length){ toast("No hay coches para el catálogo"); return; }
@@ -2015,10 +2077,11 @@ function garageStats(){
   const cell=(k,v,sub)=>`<div class="gs-cell"><div class="gs-v">${v}</div><div class="gs-k">${k}</div>${sub?`<div class="gs-s">${sub}</div>`:""}</div>`;
   return `<section class="gstats" aria-label="Tu colección en cifras">
     <div class="gs-head"><h2 class="gs-title">Tu colección en cifras</h2>
+      <div class="gs-actions"><button class="btn sm" onclick="openGallery()">Modo galería</button>
       <div class="gs-toggle" role="group" aria-label="Vista">
         <button class="${mode==="grid"?"on":""}" aria-pressed="${mode==="grid"}" onclick="setGarageMode('grid')">Cuadrícula</button>
         <button class="${mode==="timeline"?"on":""}" aria-pressed="${mode==="timeline"}" onclick="setGarageMode('timeline')">Línea de tiempo</button>
-      </div></div>
+      </div></div></div>
     <div class="gs-row">
       ${cell("Coches",cars.length)}
       ${total?cell("Valor estimado",fmtMoney(total),cur):""}
@@ -4060,6 +4123,17 @@ window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredP
     <div class="qs-list" id="qsList" role="listbox"></div>
     <div class="qs-foot"><span>↑ ↓ para moverte</span><span>Enter para abrir</span><span>Esc para cerrar</span></div>
   </div>
+</div>
+<div class="gal" id="gal" hidden role="dialog" aria-modal="true" aria-label="Modo galería">
+  <div class="gal-stage"><img class="gal-img" id="galA" alt=""><img class="gal-img" id="galB" alt=""></div>
+  <div class="gal-cap"><div class="gal-n" id="galN"></div><h2 class="gal-nm" id="galNm"></h2><div class="gal-mt" id="galMt"></div></div>
+  <div class="gal-ctl">
+    <button onclick="galStep(-1)" aria-label="Anterior">←</button>
+    <button onclick="galToggle()" id="galPlay" aria-label="Pausa">Pausa</button>
+    <button onclick="galStep(1)" aria-label="Siguiente">→</button>
+    <button onclick="closeGallery()" aria-label="Cerrar">Cerrar</button>
+  </div>
+  <div class="gal-bar"><span id="galBar"></span></div>
 </div>
 <button class="totop" id="toTop" aria-label="Volver arriba" onclick="scrollTo({top:0,behavior:'smooth'})">↑</button>
 <footer class="colophon">

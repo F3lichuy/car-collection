@@ -1086,6 +1086,8 @@
   .gal-bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(243,239,230,.12);z-index:2}
   .gal-bar span{display:block;height:100%;width:0;background:var(--accent)}
   @media(max-width:700px){ .gal-cap{max-width:none;right:16px;bottom:96px} .gal-ctl{left:16px;right:16px;justify-content:space-between} }
+  .colo-credit{grid-column:1/-1;margin:0;color:var(--ink-faint);font-size:11px;opacity:.75}
+  .colo-credit a{color:inherit}
 </style>
 </head>
 <body data-theme="paddock">
@@ -3904,7 +3906,6 @@ async function renderHome(){
         <div class="cp-name" id="heroName"></div>
         <div class="cp-row"><span>Motor</span><b id="heroSpec"></b></div>
         <div class="cp-hint">Arrastra para recorrer el estudio</div>
-        <div class="cp-credit" id="heroCredit"></div>
       </aside>
     </section>
     <div class="home-sec">
@@ -3912,14 +3913,6 @@ async function renderHome(){
       <div id="home-cars" class="grid">${skelCards(6)}</div>
     </div>
     <section class="dayc" id="home-day" aria-label="El clásico del día"></section>
-    <div class="home-sec">
-      <div class="home-sechead"><h2>Historias y artículos</h2><button class="link" onclick="showTab('historia')">Ver todo →</button></div>
-      <div id="home-stories"><div class="skel" style="height:460px;border-radius:16px"></div></div>
-    </div>
-    <div class="home-sec">
-      <div class="home-sechead"><h2>El mercado, en video</h2><a href="https://www.hagerty.com/media/" target="_blank" rel="noopener noreferrer">Más en Hagerty →</a></div>
-      <div id="home-market" class="mv-wrap"></div>
-    </div>
     <section class="trif" aria-labelledby="trif-h">
       <div class="trif-in">
         <header class="trif-head">
@@ -3940,6 +3933,14 @@ async function renderHome(){
         </div>
       </div>
     </section>
+    <div class="home-sec">
+      <div class="home-sechead"><h2>Historias y artículos</h2><button class="link" onclick="showTab('historia')">Ver todo →</button></div>
+      <div id="home-stories"><div class="skel" style="height:460px;border-radius:16px"></div></div>
+    </div>
+    <div class="home-sec">
+      <div class="home-sechead"><h2>El mercado, en video</h2><a href="https://www.hagerty.com/media/" target="_blank" rel="noopener noreferrer">Más en Hagerty →</a></div>
+      <div id="home-market" class="mv-wrap"></div>
+    </div>
     <div class="home-sec">
       <div class="home-sechead"><h2>Explora</h2></div>
       <div class="home-tiles">
@@ -4170,6 +4171,7 @@ window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredP
       <button onclick="showTab('discover');scrollTo(0,0)">Descubrir</button>
     </nav>
     <p class="colo-note">Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.</p>
+    <p class="colo-credit" id="footCredit"></p>
   </div>
 </footer>
 <script type="module">
@@ -4186,9 +4188,9 @@ async function init(){
   const veil = document.getElementById("heroLoading");
   document.getElementById("heroName").textContent = car.year + " " + car.name;
   document.getElementById("heroSpec").textContent = car.spec;
-  // crédito requerido por la licencia CC Attribution
-  document.getElementById("heroCredit").innerHTML = 'Modelo 3D: <a href="' + car.credit.url + '" target="_blank" rel="noopener">' + car.credit.title + '</a> por ' + car.credit.author + ', <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>';
-  room = mountShowroom(stage, { exposure: 1.05 });
+  // crédito requerido por la licencia CC Attribution: va en el pie de página
+  const credit = document.getElementById("footCredit"); if(credit) credit.innerHTML = 'Modelo 3D: <a href="' + car.credit.url + '" target="_blank" rel="noopener">' + car.credit.title + '</a> por ' + car.credit.author + ', <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>';
+  room = mountShowroom(stage, { exposure: 0.9 });
   try{ await room.show(car); veil.classList.add("off"); }
   catch(e){ veil.querySelector("span").textContent = "No se pudo cargar el modelo"; }
 }

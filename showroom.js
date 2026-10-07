@@ -26,11 +26,11 @@ function studioEnvironment(renderer) {
     m.rotation.set(...rot);
     env.add(m);
   };
-  panel(16, 5, 9, [0, 12.5, 0], [Math.PI / 2, 0, 0]);                 // softbox cenital
-  panel(1.6, 10, 12, [-11, 5, 2], [0, Math.PI / 2, 0]);                 // tira lateral izquierda
-  panel(1.6, 10, 12, [11, 5, -2], [0, -Math.PI / 2, 0]);                // tira lateral derecha
-  panel(12, 4, 4, [0, 4, -14], [0, 0, 0], 0xffe2b8);                  // fondo cálido
-  panel(8, 3, 6, [4, 3, 14], [0, Math.PI, 0]);                      // relleno frontal
+  panel(16, 5, 4.2, [0, 12.5, 0], [Math.PI / 2, 0, 0]);                 // softbox cenital
+  panel(1.6, 10, 4.6, [-11, 5, 2], [0, Math.PI / 2, 0]);                 // tira lateral izquierda
+  panel(1.6, 10, 4.6, [11, 5, -2], [0, -Math.PI / 2, 0]);                // tira lateral derecha
+  panel(12, 4, 1.8, [0, 4, -14], [0, 0, 0], 0xffe2b8);                  // fondo cálido
+  panel(8, 3, 2.2, [4, 3, 14], [0, Math.PI, 0]);                      // relleno frontal
   const pmrem = new THREE.PMREMGenerator(renderer);
   const tex = pmrem.fromScene(env, 0.02).texture;
   pmrem.dispose();
@@ -60,15 +60,15 @@ function tuneMaterials(root, envMap) {
       const n = (m.name || o.name || "").toLowerCase();
       m.envMap = envMap;
       if (n.includes("body")) {
-        if ("clearcoat" in m) { m.clearcoat = 1; m.clearcoatRoughness = 0.04; }
-        m.roughness = Math.min(Math.max(m.roughness ?? 0.4, 0.28), 0.45);
-        m.envMapIntensity = 1.1;
+        if ("clearcoat" in m) { m.clearcoat = 0.35; m.clearcoatRoughness = 0.24; }
+        m.roughness = Math.min(Math.max(m.roughness ?? 0.5, 0.44), 0.62);   // pintura satinada, no plástico
+        m.envMapIntensity = 0.62;
       } else if (n.includes("chrome")) {
-        m.metalness = 1; m.roughness = 0.08; m.envMapIntensity = 1.4;
+        m.metalness = 1; m.roughness = 0.2; m.envMapIntensity = 0.8;
       } else if (n.includes("tire")) {
         m.roughness = Math.max(m.roughness ?? 0.8, 0.82); m.envMapIntensity = 0.5;
       } else if (n.includes("glass")) {
-        m.envMapIntensity = 1.6;
+        m.envMapIntensity = 0.6;
       } else {
         m.envMapIntensity = 0.9;
       }
@@ -133,7 +133,7 @@ export function mountShowroom(container, opts = {}) {
   floor.receiveShadow = true;
   scene.add(floor);
 
-  const key = new THREE.DirectionalLight(0xfff4e6, 2.6);
+  const key = new THREE.DirectionalLight(0xfff1e0, 1.5);
   key.position.set(-3, 11, 7);
   key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048);
@@ -142,7 +142,7 @@ export function mountShowroom(container, opts = {}) {
   key.shadow.bias = -0.0004;
   Object.assign(key.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 30 });
   scene.add(key);
-  scene.add(new THREE.HemisphereLight(0xdfe8e0, 0x0a0f0c, 0.6));
+  scene.add(new THREE.HemisphereLight(0xdfe8e0, 0x0a0f0c, 0.32));
 
   const camera = new THREE.PerspectiveCamera(26, 1, 0.1, 100);
   const controls = new OrbitControls(camera, renderer.domElement);

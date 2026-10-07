@@ -1088,6 +1088,20 @@
   @media(max-width:700px){ .gal-cap{max-width:none;right:16px;bottom:96px} .gal-ctl{left:16px;right:16px;justify-content:space-between} }
   .colo-credit{grid-column:1/-1;margin:0;color:var(--ink-faint);font-size:11px;opacity:.75}
   .colo-credit a{color:inherit}
+
+  /* --- sugerencias al agregar coche --- */
+  .sug{border:1px solid var(--line);border-radius:var(--radius);background:color-mix(in srgb,var(--accent) 5%,var(--bg2));padding:6px}
+  .sug[hidden]{display:none}
+  .sug-h{display:flex;flex-direction:column;gap:2px;padding:8px 10px 10px;font-family:var(--display);font-size:20px}
+  .sug-h small{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint)}
+  .sug-row{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 10px;border-top:1px solid var(--line)}
+  .sug-ph{width:64px;height:44px;border-radius:var(--radius);overflow:hidden;background:var(--card)}
+  .sug-ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .sug-t{min-width:0;font-size:14px;color:var(--ink-dim)}
+  .sug-t b{font-family:var(--display);font-weight:500;font-size:17px;color:var(--ink)}
+  .sug-t small{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint);margin-top:2px}
+  .sug-a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  @media(max-width:600px){ .sug-row{grid-template-columns:56px minmax(0,1fr)} .sug-a{grid-column:1/-1;justify-content:flex-start} }
 </style>
 </head>
 <body data-theme="paddock">
@@ -1392,7 +1406,7 @@
     "Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…":"Tell why it’s special: bespoke order, one-of-one, story, unique specs…",
     "Aún no escribes la historia. Edita el coche y llena el campo 'Historia / deep-dive' de esta versión.":"You haven’t written the story yet. Edit the car and fill the “Story / deep-dive” field on this version.",
     "Sin historia todavía.":"No story yet.","Historia":"Story","Detalles":"Details","Valor":"Value","Rareza":"Rarity","One-off":"One-off",
-    "Trifoglio Podcast":"Trifoglio Podcast","Solo las cuentas administradoras pueden usar este modo":"Only admin accounts can use this mode","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
+    "Trifoglio Podcast":"Trifoglio Podcast","Este coche ya existe":"This car already exists","¿Es alguno de estos?":"Is it one of these?","Usa el nombre exacto para no crear duplicados":"Use the exact name to avoid duplicates","Usar nombre":"Use name","Agregar con fotos":"Add with photos","Nombre del catálogo aplicado":"Catalog name applied","Solo las cuentas administradoras pueden usar este modo":"Only admin accounts can use this mode","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz.":"Three friends obsessed with cars: stories, debates and car culture.",
     "Nuevos episodios seguido, en YouTube.":"New episodes regularly, on YouTube.","Ver el canal →":"View the channel →",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.":"Three friends obsessed with cars: stories, debates and car culture. New episodes often.",
@@ -1519,6 +1533,8 @@
   ];
 
   PAT.push(
+    P(/^(.*) · ya está en tu garage$/, function(m){ return m[1]+" · already in your garage"; }),
+    P(/^(.*) · en el catálogo$/, function(m){ return m[1]+" · in the catalog"; }),
     P(/^Lote (\d+)$/, function(m){ return "Lot "+m[1]; }),
     P(/^El clásico del día · (.+)$/, function(m){ return "Classic of the day · "+m[1]; }),
     P(/^Comentarios (\d+)$/, function(m){ return "Comments "+m[1]; }),
@@ -2267,6 +2283,7 @@ function openEdit(id){
           <select id="f-curr">${Object.keys(CURR).map(k=>`<option value="${k}" ${c?.currency===k?'selected':''}>${k} ${CURR[k]}</option>`).join("")}</select>
         </div>
       </div>
+      <div class="sug" id="carSug" hidden aria-live="polite"></div>
       <button class="btn sm ghost" type="button" onclick="openPriceMenuFromForm()" style="align-self:flex-start">Ver precios de mercado</button>
       <div class="field"><label>Categorías / Tags</label>
         <div class="tagpick" id="editTagPick">${catChips()}</div>
@@ -2294,6 +2311,7 @@ function openEdit(id){
   $("#f-brand").addEventListener("input",e=>fillModelList(e.target.value));
   renderSpecs();
   $("#editScrim").classList.add("show");
+  initCarSuggest(!!c);
 }
 function toggleEditTag(t){editTags.has(t)?editTags.delete(t):editTags.add(t);$("#editTagPick").querySelectorAll(".tg").forEach(b=>b.classList.toggle("on",editTags.has(b.dataset.tag)));}
 function addNewTagFromEdit(){
@@ -2338,6 +2356,7 @@ function addSpecImgs(i,files){
   [...files].forEach(async f=>{ const url=await processImage(f,1400); if(!url)return; editSpecs[i].images=editSpecs[i].images||[]; editSpecs[i].images.push(url); if(!editCoverImg)editCoverImg=url; renderSpecs(); });
 }
 function saveCar(id){
+  if(!id && !checkDuplicateBeforeSave()) return;
   const name=$("#f-name").value.trim();
   if(!name){toast("Falta el nombre del coche");return;}
   const ratings={}; PARAMS.forEach(p=>ratings[p]=Number($("#r-"+p).value));
@@ -3124,6 +3143,90 @@ document.addEventListener("click",e=>{
   if(!sen||!btn||!("IntersectionObserver" in window)) return;
   new IntersectionObserver(([e])=>btn.classList.toggle("show",!e.isIntersecting)).observe(sen);
 })();
+/* ---------- Catálogo en memoria (lo comparten el buscador y las sugerencias) ---------- */
+let catIndexP=null;
+function loadCatalogIndex(){
+  if(qsCat) return Promise.resolve(qsCat);
+  if(!catIndexP&&typeof supa!=="undefined"&&supa){
+    catIndexP=supa.from("catalog").select("key,brand,name,year,image,variants").limit(2000)
+      .then(({data})=>{ qsCat=data||[]; return qsCat; }).catch(()=>{ catIndexP=null; return []; });
+  }
+  return catIndexP||Promise.resolve([]);
+}
+/* ---------- Comparación tolerante a errores de ortografía ---------- */
+const fzNorm=t=>String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
+function lev(a,b){
+  if(a===b) return 0; if(!a.length) return b.length; if(!b.length) return a.length;
+  let prev=Array.from({length:b.length+1},(_,i)=>i), cur=new Array(b.length+1);
+  for(let i=1;i<=a.length;i++){ cur[0]=i;
+    for(let j=1;j<=b.length;j++) cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+    [prev,cur]=[cur,prev]; }
+  return prev[b.length];
+}
+const ratio=(a,b)=>1-lev(a,b)/Math.max(a.length,b.length,1);
+// 0..1: qué tan parecido es lo escrito (q) a un coche ("marca modelo")
+function carSimilarity(q,brand,name){
+  const target=fzNorm(brand+" "+name), qn=fzNorm(q); if(!qn||!target) return 0;
+  if(target===qn) return 1;
+  const tt=target.split(" "), qt=qn.split(" ");
+  const tok=qt.reduce((acc,w)=>acc+Math.max(...tt.map(t=>t.startsWith(w)?1:(w.length>2?ratio(w,t):0))),0)/qt.length;
+  return Math.max(ratio(qn,target), tok*0.97);
+}
+function findSimilarCars(q,limit){
+  const out=[];
+  (qsCat||[]).forEach(e=>{ const sc=carSimilarity(q,e.brand,e.name); if(sc>=0.6) out.push({src:"cat",e,sc}); });
+  cars.forEach(c=>{ const sc=carSimilarity(q,c.brand,c.name); if(sc>=0.6) out.push({src:"mine",e:c,sc}); });
+  out.sort((a,b)=>b.sc-a.sc||(a.src==="mine"?-1:1));
+  // un resultado por coche (marca+modelo+año)
+  const seen=new Set();
+  return out.filter(r=>{ const k=fzNorm(r.e.brand+" "+r.e.name+" "+(r.e.year||"")); if(seen.has(k)) return false; seen.add(k); return true; }).slice(0,limit||5);
+}
+/* ---------- Agregar coche: sugerencias mientras escribes ---------- */
+let sugTimer=null, sugList=[];
+function initCarSuggest(isEdit){
+  const b=$("#f-brand"), n=$("#f-name"); if(!b||!n) return;
+  loadCatalogIndex().then(()=>{ if(!isEdit) runCarSuggest(); });
+  const on=()=>{ clearTimeout(sugTimer); sugTimer=setTimeout(runCarSuggest,140); };
+  b.addEventListener("input",on); n.addEventListener("input",on);
+}
+function runCarSuggest(){
+  const box=$("#carSug"); if(!box) return;
+  const q=(($("#f-brand")?.value||"")+" "+($("#f-name")?.value||"")).trim();
+  if(q.length<3){ box.hidden=true; return; }
+  sugList=findSimilarCars(q,5);
+  const exact=sugList.find(r=>r.sc===1);
+  if(!sugList.length){ box.hidden=true; return; }
+  box.hidden=false;
+  box.innerHTML=`<div class="sug-h">${exact?"Este coche ya existe":"¿Es alguno de estos?"}<small>Usa el nombre exacto para no crear duplicados</small></div>`+
+    sugList.map((r,i)=>{ const e=r.e, img=r.src==="mine"?firstImg(e):e.image;
+      return `<div class="sug-row">
+        <span class="sug-ph">${img?`<img src="${esc(img)}" alt="" loading="lazy">`:""}</span>
+        <span class="sug-t">${esc(e.brand||"")} <b>${esc(e.name||"")}</b><small>${esc(String(e.year||""))}${r.src==="mine"?" · ya está en tu garage":" · en el catálogo"}</small></span>
+        <span class="sug-a"><button type="button" class="btn sm" onclick="useSuggestion(${i})">Usar nombre</button>
+          ${r.src==="cat"?`<button type="button" class="btn sm primary" onclick="addSuggestion(${i})">Agregar con fotos</button>`:""}</span>
+      </div>`; }).join("");
+}
+function useSuggestion(i){
+  const r=sugList[i]; if(!r) return;
+  $("#f-brand").value=r.e.brand||""; $("#f-name").value=r.e.name||""; if(r.e.year) $("#f-year").value=r.e.year;
+  $("#carSug").hidden=true; toast("Nombre del catálogo aplicado");
+}
+function addSuggestion(i){ const r=sugList[i]; if(!r||r.src!=="cat") return; closeAll(); mkData=[r.e]; addFromCatalog(0); }
+// al guardar: avisa si ya está en tu garage o si el nombre se parece mucho a uno del catálogo
+function checkDuplicateBeforeSave(){
+  const brand=$("#f-brand").value.trim(), name=$("#f-name").value.trim(), year=$("#f-year").value.trim(); if(!name) return true;
+  const q=brand+" "+name;
+  const mine=cars.find(c=>fzNorm(c.brand+" "+c.name)===fzNorm(q)&&String(c.year||"")===year);
+  if(mine&&!confirm(`Ya tienes "${(mine.brand+" "+mine.name).trim()}${mine.year?" "+mine.year:""}" en tu garage. ¿Agregarlo de nuevo?`)) return false;
+  const best=findSimilarCars(q,1)[0];
+  if(best&&best.src==="cat"&&best.sc<1&&best.sc>=0.84){
+    const e=best.e, label=((e.brand||"")+" "+(e.name||"")).trim()+(e.year?" ("+e.year+")":"");
+    if(confirm(`¿Quisiste decir "${label}"?\n\nEse coche ya está en el catálogo. Aceptar usa ese nombre exacto (evita duplicados). Cancelar guarda lo que escribiste.`)){
+      $("#f-brand").value=e.brand||""; $("#f-name").value=e.name||""; if(e.year&&!year) $("#f-year").value=e.year;
+    }
+  }
+  return true;
+}
 /* ---------- Buscador rápido ---------- */
 let qsCat=null, qsSel=0, qsItems=[];
 const QS_TABS=[["home","Inicio"],["garage","Garage"],["irl","Manejados IRL"],["activities","Actividades"],["market","Marketplace"],["battle","Spec Battle"],["rare","Rarezas"],["historia","Historia"],["discover","Descubrir"]];
@@ -3132,15 +3235,12 @@ function openQS(){
   const q=$("#qs"); if(!q) return;
   q.hidden=false; document.body.classList.add("qs-open");
   const inp=$("#qsIn"); inp.value=""; qsRender(""); setTimeout(()=>inp.focus(),0);
-  if(!qsCat&&typeof supa!=="undefined"&&supa){
-    supa.from("catalog").select("key,brand,name,year,image,variants").limit(800)
-      .then(({data})=>{ qsCat=data||[]; if(!$("#qs").hidden) qsRender(inp.value); }).catch(()=>{});
-  }
+  if(!qsCat) loadCatalogIndex().then(()=>{ if(!$("#qs").hidden) qsRender(inp.value); });
 }
 function closeQS(){ const q=$("#qs"); if(q&&!q.hidden){ q.hidden=true; document.body.classList.remove("qs-open"); } }
 function qsRender(q){
   const words=qsNorm(q).trim().split(/\s+/).filter(Boolean);
-  const match=t=>words.every(w=>qsNorm(t).includes(w));
+  const match=t=>words.every(w=>qsNorm(t).includes(w))||(words.length&&carSimilarity(words.join(" "),"",t)>=0.78);
   const out=[];
   QS_TABS.forEach(([id,label])=>{ if(!words.length||match(label)) out.push({kind:"Sección",title:label,sub:"",img:null,run:()=>{showTab(id);scrollTo(0,0);}}); });
   if(words.length){

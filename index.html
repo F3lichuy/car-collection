@@ -994,6 +994,25 @@
   .skip:focus{top:12px}
   :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
   #main:focus{outline:none}
+
+  /* --- buscador rápido --- */
+  .qs-btn kbd{font-family:var(--mono);font-size:10px;border:1px solid var(--line);border-radius:var(--radius);padding:0 5px;margin-left:4px;color:var(--ink-faint)}
+  .qs{position:fixed;inset:0;z-index:85;background:rgba(var(--shade),.8);backdrop-filter:blur(6px);display:flex;justify-content:center;align-items:flex-start;padding:12vh 16px 16px}
+  .qs[hidden]{display:none}
+  .qs-box{width:100%;max-width:640px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 40px 120px rgba(0,0,0,.5);overflow:hidden}
+  .qs-box input{width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font-family:var(--display);font-size:24px;padding:20px 22px;outline:none}
+  .qs-box input::placeholder{color:var(--ink-faint)}
+  .qs-list{max-height:min(56vh,480px);overflow:auto;padding:6px}
+  .qs-row{display:grid;grid-template-columns:56px 1fr auto;gap:14px;align-items:center;width:100%;text-align:left;background:none;border:0;color:var(--ink);padding:8px 10px;border-radius:var(--radius);cursor:pointer}
+  .qs-row[aria-selected="true"]{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+  .qs-ph{width:56px;height:40px;border-radius:var(--radius);overflow:hidden;background:var(--card)}
+  .qs-ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .qs-t{font-family:var(--display);font-size:17px;line-height:1.15;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qs-t small{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);margin-top:3px}
+  .qs-k{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent)}
+  .qs-empty{padding:28px 16px;text-align:center;color:var(--ink-faint);font-size:14px}
+  .qs-foot{display:flex;gap:18px;justify-content:flex-end;padding:10px 16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint)}
+  @media(max-width:600px){ .qs{padding-top:12px} .qs-foot{display:none} .qs-btn kbd{display:none} .qs-box input{font-size:20px} }
 </style>
 </head>
 <body data-theme="paddock">
@@ -1022,6 +1041,7 @@
       <div class="sub">colección personal</div>
     </div>
     <div class="themes" id="themes"></div>
+    <button class="btn sm qs-btn" onclick="openQS()" title="Buscar (Ctrl+K)">Buscar <kbd>/</kbd></button>
     <button class="btn sm" id="langToggle" title="Language / Idioma" style="white-space:nowrap">ES</button>
     <div class="authArea" id="authArea"></div>
   </div>
@@ -1296,7 +1316,7 @@
     "Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…":"Tell why it’s special: bespoke order, one-of-one, story, unique specs…",
     "Aún no escribes la historia. Edita el coche y llena el campo 'Historia / deep-dive' de esta versión.":"You haven’t written the story yet. Edit the car and fill the “Story / deep-dive” field on this version.",
     "Sin historia todavía.":"No story yet.","Historia":"Story","Detalles":"Details","Valor":"Value","Rareza":"Rarity","One-off":"One-off",
-    "Trifoglio Podcast":"Trifoglio Podcast","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
+    "Trifoglio Podcast":"Trifoglio Podcast","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz.":"Three friends obsessed with cars: stories, debates and car culture.",
     "Nuevos episodios seguido, en YouTube.":"New episodes regularly, on YouTube.","Ver el canal →":"View the channel →",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.":"Three friends obsessed with cars: stories, debates and car culture. New episodes often.",
@@ -2935,6 +2955,51 @@ document.addEventListener("click",e=>{
   if(!sen||!btn||!("IntersectionObserver" in window)) return;
   new IntersectionObserver(([e])=>btn.classList.toggle("show",!e.isIntersecting)).observe(sen);
 })();
+/* ---------- Buscador rápido ---------- */
+let qsCat=null, qsSel=0, qsItems=[];
+const QS_TABS=[["home","Inicio"],["garage","Garage"],["irl","Manejados IRL"],["activities","Actividades"],["market","Marketplace"],["battle","Spec Battle"],["rare","Rarezas"],["historia","Historia"],["discover","Descubrir"]];
+const qsNorm=t=>String(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+function openQS(){
+  const q=$("#qs"); if(!q) return;
+  q.hidden=false; document.body.classList.add("qs-open");
+  const inp=$("#qsIn"); inp.value=""; qsRender(""); setTimeout(()=>inp.focus(),0);
+  if(!qsCat&&typeof supa!=="undefined"&&supa){
+    supa.from("catalog").select("key,brand,name,year,image,variants").limit(800)
+      .then(({data})=>{ qsCat=data||[]; if(!$("#qs").hidden) qsRender(inp.value); }).catch(()=>{});
+  }
+}
+function closeQS(){ const q=$("#qs"); if(q&&!q.hidden){ q.hidden=true; document.body.classList.remove("qs-open"); } }
+function qsRender(q){
+  const words=qsNorm(q).trim().split(/\s+/).filter(Boolean);
+  const match=t=>words.every(w=>qsNorm(t).includes(w));
+  const out=[];
+  QS_TABS.forEach(([id,label])=>{ if(!words.length||match(label)) out.push({kind:"Sección",title:label,sub:"",img:null,run:()=>{showTab(id);scrollTo(0,0);}}); });
+  if(words.length){
+    cars.filter(c=>match(`${c.brand} ${c.name} ${c.year} ${(c.tags||[]).join(" ")}`)).slice(0,8)
+      .forEach(c=>out.push({kind:"Tu garage",title:c.name||"Sin nombre",sub:`${c.brand||""} ${c.year||""}`,img:firstImg(c),run:()=>openDetail(c.id)}));
+    (qsCat||[]).filter(e=>match(`${e.brand} ${e.name} ${e.year}`)).slice(0,10)
+      .forEach(e=>out.push({kind:"Catálogo",title:e.name||"",sub:`${e.brand||""} ${e.year||""}`,img:e.image,run:()=>{mkData=[e];addFromCatalog(0);}}));
+  }
+  qsItems=out.slice(0,22); qsSel=0;
+  const list=$("#qsList");
+  list.innerHTML=qsItems.length?qsItems.map((it,i)=>`<button class="qs-row" role="option" data-i="${i}" aria-selected="${i===0}" onclick="qsRun(${i})" onmouseenter="qsMark(${i})">
+      <span class="qs-ph">${it.img?`<img src="${esc(it.img)}" alt="" loading="lazy">`:""}</span>
+      <span class="qs-t">${esc(it.title)}${it.sub?`<small>${esc(it.sub)}</small>`:""}</span>
+      <span class="qs-k">${it.kind}</span></button>`).join("")
+    :`<div class="qs-empty">${qsCat?"Sin resultados":"Buscando en el catálogo…"}</div>`;
+}
+function qsMark(i){ qsSel=i; document.querySelectorAll("#qsList .qs-row").forEach((b,k)=>b.setAttribute("aria-selected",String(k===i))); }
+function qsRun(i){ const it=qsItems[i]; if(!it) return; closeQS(); it.run(); }
+document.addEventListener("keydown",e=>{
+  const open=!$("#qs").hidden, typing=/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||"")||document.activeElement?.isContentEditable;
+  if((e.key==="k"&&(e.ctrlKey||e.metaKey))||(e.key==="/"&&!typing&&!open)){ e.preventDefault(); open?closeQS():openQS(); return; }
+  if(!open) return;
+  if(e.key==="Escape"){ e.preventDefault(); closeQS(); }
+  else if(e.key==="ArrowDown"){ e.preventDefault(); qsMark(Math.min(qsItems.length-1,qsSel+1)); document.querySelector(`#qsList [data-i="${qsSel}"]`)?.scrollIntoView({block:"nearest"}); }
+  else if(e.key==="ArrowUp"){ e.preventDefault(); qsMark(Math.max(0,qsSel-1)); document.querySelector(`#qsList [data-i="${qsSel}"]`)?.scrollIntoView({block:"nearest"}); }
+  else if(e.key==="Enter"&&document.activeElement?.id==="qsIn"){ e.preventDefault(); qsRun(qsSel); }
+});
+document.addEventListener("input",e=>{ if(e.target&&e.target.id==="qsIn") qsRender(e.target.value); });
 function renderAuthUI(){
   const el=$("#authArea"); if(!el)return;
   if(viewing){
@@ -3890,6 +3955,13 @@ function showInstall(kind){
 window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredPrompt=e; showInstall("android"); });
 (function(){ const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent); if(isIOS && !pwaStandalone()){ setTimeout(()=>showInstall("ios"),2500); } })();
 </script>
+<div class="qs" id="qs" hidden role="dialog" aria-modal="true" aria-label="Buscar" onclick="if(event.target===this)closeQS()">
+  <div class="qs-box">
+    <input id="qsIn" type="search" placeholder="Busca un coche, una marca o una sección" autocomplete="off" aria-controls="qsList">
+    <div class="qs-list" id="qsList" role="listbox"></div>
+    <div class="qs-foot"><span>↑ ↓ para moverte</span><span>Enter para abrir</span><span>Esc para cerrar</span></div>
+  </div>
+</div>
 <button class="totop" id="toTop" aria-label="Volver arriba" onclick="scrollTo({top:0,behavior:'smooth'})">↑</button>
 <footer class="colophon">
   <div class="colo-in">

@@ -1153,6 +1153,24 @@
   .gal-credit{font-size:11px;color:rgba(243,239,230,.55);margin-top:10px}
   .gal-credit a{color:inherit}
   .detailgrid > div{min-width:0}
+
+  /* --- admin: completar fotos --- */
+  .enr-lead{color:var(--ink-dim);font-size:14px;margin:0}
+  .enr-status{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+  .enr-list{display:flex;flex-direction:column}
+  .enr-row{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+  .enr-row.saved{opacity:.6}
+  .enr-car{display:flex;gap:10px;align-items:center;min-width:0}
+  .enr-car b{display:block;font-family:var(--display);font-weight:500;font-size:16px;line-height:1.15}
+  .enr-car small{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint)}
+  .enr-ph{width:64px;height:46px;flex:0 0 auto;border-radius:var(--radius);overflow:hidden;background:var(--card)}
+  .enr-ph img,.enr-c img{width:100%;height:100%;object-fit:cover;display:block}
+  .enr-cands{display:flex;gap:6px;flex-wrap:wrap}
+  .enr-c{flex:0 0 auto;width:86px;height:62px;padding:0;border:0;border-radius:var(--radius);overflow:hidden;background:var(--card);opacity:.45;cursor:pointer;transition:opacity .2s}
+  .enr-c[aria-pressed="true"]{opacity:1;outline:2px solid var(--accent);outline-offset:1px}
+  .enr-none{font-size:12px;color:var(--ink-faint)}
+  .enr-ok{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--good)}
+  @media(max-width:700px){ .enr-row{grid-template-columns:1fr} }
 </style>
 </head>
 <body data-theme="paddock">
@@ -1281,6 +1299,7 @@
 <div class="scrim" id="catScrim"><div class="modal" id="catModal"></div></div>
 <!-- GENERIC PROMPT MODAL -->
 <div class="scrim" id="promptScrim"><div class="modal" id="promptModal"></div></div>
+<div class="scrim" id="enrichScrim"><div class="modal wide" id="enrichModal"></div></div>
 <!-- shared datalists for brand/model autocomplete -->
 <datalist id="brandList"></datalist>
 <datalist id="modelList"></datalist>
@@ -1457,7 +1476,7 @@
     "Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…":"Tell why it’s special: bespoke order, one-of-one, story, unique specs…",
     "Aún no escribes la historia. Edita el coche y llena el campo 'Historia / deep-dive' de esta versión.":"You haven’t written the story yet. Edit the car and fill the “Story / deep-dive” field on this version.",
     "Sin historia todavía.":"No story yet.","Historia":"Story","Detalles":"Details","Valor":"Value","Rareza":"Rarity","One-off":"One-off",
-    "Trifoglio Podcast":"Trifoglio Podcast","Investigar":"Research","Fotos":"Photos","Historia":"Story","Buscar más fotos":"Find more photos","Buscar fotos":"Find photos","Agregar fotos":"Add photos","Fotos e historia sin salir de la página":"Photos and history without leaving the page","Marca, modelo, año…":"Make, model, year…","Escribe un coche para buscar fotos e historia.":"Type a car to search photos and history.","No encontramos fotos libres con esa búsqueda. Prueba solo con marca y modelo.":"No free photos found. Try just make and model.","No se pudo conectar con Wikimedia Commons.":"Couldn't reach Wikimedia Commons.","Sin artículo en Wikipedia para esta búsqueda.":"No Wikipedia article for this search.","Leer en Wikipedia ↗":"Read on Wikipedia ↗","Otros artículos":"Other articles","Fotos con licencia libre de Wikimedia Commons; el crédito de cada una se muestra junto a la foto.":"Freely licensed photos from Wikimedia Commons; each photo shows its credit.","Este coche ya existe":"This car already exists","¿Es alguno de estos?":"Is it one of these?","Usa el nombre exacto para no crear duplicados":"Use the exact name to avoid duplicates","Usar nombre":"Use name","Agregar con fotos":"Add with photos","Nombre del catálogo aplicado":"Catalog name applied","Solo las cuentas administradoras pueden usar este modo":"Only admin accounts can use this mode","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
+    "Trifoglio Podcast":"Trifoglio Podcast","Completar fotos":"Fill in photos","Completar fotos del catálogo":"Fill in catalog photos","Detener búsqueda":"Stop search","Guardar todos los seleccionados":"Save all selected","Cargando el catálogo…":"Loading the catalog…","Sin resultados en Commons":"No results on Commons","Guardado":"Saved","Búsqueda detenida.":"Search stopped.","Todos los coches del catálogo tienen más de una foto.":"Every catalog car has more than one photo.","Elige al menos una foto":"Pick at least one photo","Nada nuevo que guardar":"Nothing new to save","Investigar":"Research","Fotos":"Photos","Historia":"Story","Buscar más fotos":"Find more photos","Buscar fotos":"Find photos","Agregar fotos":"Add photos","Fotos e historia sin salir de la página":"Photos and history without leaving the page","Marca, modelo, año…":"Make, model, year…","Escribe un coche para buscar fotos e historia.":"Type a car to search photos and history.","No encontramos fotos libres con esa búsqueda. Prueba solo con marca y modelo.":"No free photos found. Try just make and model.","No se pudo conectar con Wikimedia Commons.":"Couldn't reach Wikimedia Commons.","Sin artículo en Wikipedia para esta búsqueda.":"No Wikipedia article for this search.","Leer en Wikipedia ↗":"Read on Wikipedia ↗","Otros artículos":"Other articles","Fotos con licencia libre de Wikimedia Commons; el crédito de cada una se muestra junto a la foto.":"Freely licensed photos from Wikimedia Commons; each photo shows its credit.","Este coche ya existe":"This car already exists","¿Es alguno de estos?":"Is it one of these?","Usa el nombre exacto para no crear duplicados":"Use the exact name to avoid duplicates","Usar nombre":"Use name","Agregar con fotos":"Add with photos","Nombre del catálogo aplicado":"Catalog name applied","Solo las cuentas administradoras pueden usar este modo":"Only admin accounts can use this mode","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz.":"Three friends obsessed with cars: stories, debates and car culture.",
     "Nuevos episodios seguido, en YouTube.":"New episodes regularly, on YouTube.","Ver el canal →":"View the channel →",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.":"Three friends obsessed with cars: stories, debates and car culture. New episodes often.",
@@ -3421,6 +3440,76 @@ function rxApply(){
   }
 }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("#rx").hidden){ e.stopPropagation(); closeResearch(); } },true);
+/* ---------- Admin: completar fotos del catálogo ---------- */
+let enr={rows:[],stop:false,running:false};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function catPhotos(e){ const set=new Set(); if(e.image) set.add(e.image); catVariants(e).forEach(v=>(v.images||[]).forEach(u=>u&&set.add(u))); return [...set]; }
+// una foto es "probable" si el nombre del archivo menciona la marca y todas las palabras del modelo
+function likelyMatch(title,e){
+  const t=fzNorm(title), brand=fzNorm(e.brand), words=fzNorm(e.name).split(" ").filter(w=>w.length>1);
+  return (!brand||t.includes(brand.split(" ")[0]))&&words.every(w=>t.includes(w));
+}
+async function openEnrich(){
+  if(!adminUnlocked){ toast("Solo las cuentas administradoras pueden usar este modo"); return; }
+  if(enr.running) { $("#enrichScrim").classList.add("show"); return; }
+  $("#enrichModal").innerHTML=`<div class="mh"><h3>Completar fotos del catálogo</h3><button class="iconbtn" onclick="enr.stop=true;closeAll()">×</button></div>
+    <div class="mb">
+      <p class="enr-lead">Coches del catálogo con 0 o 1 foto. Para cada uno se buscan fotos libres en Wikimedia Commons; las que mencionan la marca y el modelo vienen preseleccionadas. Revisa y guarda.</p>
+      <div class="enr-status" id="enrStatus">Cargando el catálogo…</div>
+      <div id="enrList" class="enr-list"></div>
+    </div>
+    <div class="mf"><button class="btn ghost" onclick="enr.stop=true">Detener búsqueda</button><button class="btn primary" onclick="saveAllEnrich()">Guardar todos los seleccionados</button></div>`;
+  $("#enrichScrim").classList.add("show");
+  qsCat=null; catIndexP=null;                       // catálogo fresco
+  const cat=await loadCatalogIndex();
+  const need=cat.map(e=>({e,have:catPhotos(e)})).filter(x=>x.have.length<=1).slice(0,40);
+  enr={rows:[],stop:false,running:true};
+  const st=$("#enrStatus");
+  if(!need.length){ st.textContent="Todos los coches del catálogo tienen más de una foto."; enr.running=false; return; }
+  for(let i=0;i<need.length;i++){
+    if(enr.stop) break;
+    st.textContent=`Buscando ${i+1} de ${need.length}…`;
+    const {e,have}=need[i];
+    let cands=[];
+    try{ cands=(await commonsSearch(((e.brand||"")+" "+(e.name||"")).trim(),12)).filter(r=>!have.includes(r.url)).slice(0,6); }catch(err){}
+    const row={e,have,cands,picked:new Set(cands.map((c,k)=>likelyMatch(c.title,e)?k:-1).filter(k=>k>=0)),saved:false};
+    enr.rows.push(row); renderEnrichRow(enr.rows.length-1);
+    await sleep(350);                                // con calma: no saturar la API de Wikimedia
+  }
+  enr.running=false;
+  st.textContent=enr.stop?"Búsqueda detenida.":`Listo: ${enr.rows.length} coches revisados.`;
+}
+function renderEnrichRow(i){
+  const r=enr.rows[i], list=$("#enrList"); if(!list) return;
+  const html=`<div class="enr-row${r.saved?" saved":""}" id="enr-${i}">
+    <div class="enr-car"><span class="enr-ph">${r.have[0]?`<img src="${esc(r.have[0])}" alt="" loading="lazy">`:""}</span>
+      <span><b>${esc((r.e.brand||"")+" "+(r.e.name||""))}</b><small>${esc(String(r.e.year||""))} · ${r.have.length} ${r.have.length===1?"foto":"fotos"}</small></span></div>
+    <div class="enr-cands">${r.cands.length?r.cands.map((c,k)=>`<button type="button" class="enr-c" aria-pressed="${r.picked.has(k)}" title="${esc(c.author)} · ${esc(c.license)}" onclick="toggleEnrich(${i},${k})"><img src="${esc(c.thumb)}" alt="" loading="lazy"></button>`).join(""):'<span class="enr-none">Sin resultados en Commons</span>'}</div>
+    <div class="enr-act">${r.saved?'<span class="enr-ok">Guardado</span>':(r.cands.length?`<button class="btn sm" onclick="saveEnrich(${i})">Guardar</button>`:"")}</div>
+  </div>`;
+  const old=document.getElementById("enr-"+i); if(old) old.outerHTML=html; else list.insertAdjacentHTML("beforeend",html);
+}
+function toggleEnrich(i,k){ const r=enr.rows[i]; if(!r||r.saved) return; r.picked.has(k)?r.picked.delete(k):r.picked.add(k); renderEnrichRow(i); }
+async function saveEnrich(i){
+  const r=enr.rows[i]; if(!r||r.saved) return false;
+  const urls=[...r.picked].map(k=>r.cands[k]?.url).filter(Boolean); if(!urls.length){ toast("Elige al menos una foto"); return false; }
+  try{
+    const {data,error:e1}=await supa.from("catalog").select("variants,image").eq("key",r.e.key).maybeSingle(); if(e1) throw e1;
+    let variants=Array.isArray(data?.variants)?data.variants:[];
+    const cover=data?.image||r.e.image||urls[0];
+    if(variants.length){
+      const v=variants[0]; v.images=Array.isArray(v.images)&&v.images.length?v.images:(v.image?[v.image]:[]);
+      urls.forEach(u=>{ if(!v.images.includes(u)) v.images.push(u); }); v.images=v.images.slice(0,12); v.image=v.image||v.images[0];
+    } else variants=[{color:"",title:"",details:"",image:cover,images:[...new Set([cover,...urls])].slice(0,12)}];
+    const {error}=await supa.from("catalog").update({variants,image:cover}).eq("key",r.e.key); if(error) throw error;
+    r.saved=true; renderEnrichRow(i); return true;
+  }catch(err){ toast("No se pudo guardar: "+(err.message||"error")); return false; }
+}
+async function saveAllEnrich(){
+  let n=0; for(let i=0;i<enr.rows.length;i++){ const r=enr.rows[i]; if(!r.saved&&r.picked.size&&await saveEnrich(i)) n++; }
+  toast(n?n+" coches actualizados":"Nada nuevo que guardar");
+  if(n){ qsCat=null; catIndexP=null; }
+}
 /* ---------- Buscador rápido ---------- */
 let qsCat=null, qsSel=0, qsItems=[];
 const QS_TABS=[["home","Inicio"],["garage","Garage"],["irl","Manejados IRL"],["activities","Actividades"],["market","Marketplace"],["battle","Spec Battle"],["rare","Rarezas"],["historia","Historia"],["discover","Descubrir"]];
@@ -3868,6 +3957,7 @@ function renderMarketTab(){
   v.innerHTML=`
     <div class="toolbar"><input class="ctrl grow" id="mk-q" placeholder="Buscar marca o modelo…" oninput="loadMarket(this.value)">
       ${isAdmin()?`<button class="btn sm ${adminUnlocked?'primary':'ghost'}" onclick="adminToggle()">${adminUnlocked?'Admin activo':'Modo admin'}</button>`:''}
+      ${adminUnlocked?`<button class="btn sm" onclick="openEnrich()">Completar fotos</button>`:''}
     </div>
     <p style="color:var(--ink-dim);font-size:13px;margin:0 0 12px">Coches que la comunidad ha agregado. Añádelos a tu garage y ponles tus calificaciones.${adminUnlocked?' <b style="color:var(--accent2)">· Admin: puedes borrar coches o versiones.</b>':''}</p>
     <div class="eras" role="group" aria-label="Época">${MK_ERAS.map((e,i)=>`<button class="era${i===mkEra?" on":""}" aria-pressed="${i===mkEra}" onclick="setMkEra(${i})">${e[0]}</button>`).join("")}</div>

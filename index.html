@@ -841,7 +841,13 @@
     header.top{position:relative}
     .topbar{gap:10px}
   }
-  @media(max-width:600px){ .grid{grid-template-columns:1fr 1fr;gap:28px 12px} .car .nm{font-size:18px} }
+  @media(max-width:600px){
+    .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 12px} .car .nm{font-size:18px}
+    /* tarjetas con barras y acciones: una columna para que respiren */
+    #garageView .grid,#irlView .grid{grid-template-columns:minmax(0,1fr)} #garageView .car .nm,#irlView .car .nm{font-size:22px}
+    .slots{grid-template-columns:repeat(auto-fill,minmax(88px,1fr))}
+    .fivewrap{grid-template-columns:minmax(0,1fr)}
+  }
   @media(max-width:340px){ .grid{grid-template-columns:1fr} }
 
   /* --- Historias: formato artículo --- */

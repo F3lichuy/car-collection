@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Seguridad: solo se cargan scripts propios y del CDN fijado; conexiones solo a Supabase, Wikipedia/Commons y el CDN -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' https:; connect-src 'self' blob: data: https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://*.wikipedia.org https://commons.wikimedia.org https://upload.wikimedia.org; frame-src https://www.youtube-nocookie.com https://www.youtube.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' https:; connect-src 'self' blob: data: https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://*.wikipedia.org https://commons.wikimedia.org https://upload.wikimedia.org https://thumb.wikimedia.org; frame-src https://www.youtube-nocookie.com https://www.youtube.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Mi Garage — Colección de Coches</title>
 <meta name="description" content="Colecciona, califica y comparte autos clásicos. Publica tu garage, lee historias de la comunidad y sigue el mercado de clásicos.">
@@ -1102,6 +1102,57 @@
   .sug-t small{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint);margin-top:2px}
   .sug-a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
   @media(max-width:600px){ .sug-row{grid-template-columns:56px minmax(0,1fr)} .sug-a{grid-column:1/-1;justify-content:flex-start} }
+
+  /* --- panel Investigar --- */
+  .rx{position:fixed;inset:0;z-index:88;background:rgba(var(--shade),.55);backdrop-filter:blur(3px);display:flex;justify-content:flex-end}
+  .rx[hidden]{display:none}
+  body.rx-open{overflow:hidden}
+  .rx-panel{width:min(560px,100%);height:100%;background:var(--bg2);border-left:1px solid var(--line);display:flex;flex-direction:column;box-shadow:-30px 0 80px rgba(0,0,0,.35)}
+  @media(prefers-reduced-motion:no-preference){ .rx:not([hidden]) .rx-panel{animation:rxIn .35s cubic-bezier(.16,1,.3,1)} }
+  @keyframes rxIn{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
+  .rx-top{display:flex;gap:8px;align-items:center;padding:16px 16px 12px;border-bottom:1px solid var(--line)}
+  .rx-q{flex:1;display:flex;gap:8px}
+  .rx-q input{flex:1;min-width:0;background:transparent;border:1px solid var(--line);border-radius:var(--radius);color:var(--ink);padding:10px 12px;font-family:var(--display);font-size:18px}
+  .rx-q input:focus{outline:none;border-color:var(--accent)}
+  .rx-target{padding:10px 16px;font-size:13px;color:var(--ink-dim);border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--accent) 7%,transparent)}
+  .rx-target[hidden]{display:none}
+  .rx-tabs{display:flex;gap:22px;padding:0 16px;border-bottom:1px solid var(--line)}
+  .rx-tabs button{background:none;border:0;border-bottom:1px solid transparent;margin-bottom:-1px;padding:12px 0;color:var(--ink-faint);font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em}
+  .rx-tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--accent)}
+  .rx-body{flex:1;overflow:auto;padding:16px}
+  .rx-body[hidden]{display:none}
+  .rx-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 10px}
+  .rx-skel{aspect-ratio:4/3}
+  .rx-item{margin:0;display:flex;flex-direction:column;gap:6px}
+  .rx-img{position:relative;padding:0;border:0;background:var(--card);aspect-ratio:4/3;border-radius:var(--radius);overflow:hidden;cursor:pointer}
+  .rx-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s cubic-bezier(.16,1,.3,1)}
+  .rx-img:hover img{transform:scale(1.04)}
+  .rx-img[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:2px}
+  .rx-img[aria-pressed="true"]::after{content:"✓";position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+  .rx-item figcaption{font-size:10.5px;line-height:1.35;color:var(--ink-faint);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .rx-item figcaption a{color:var(--ink-dim)}
+  .rx-empty{color:var(--ink-faint);font-size:14px;padding:30px 4px;text-align:center}
+  .rx-wiki img{width:100%;max-height:260px;object-fit:cover;border-radius:var(--radius);margin-bottom:14px}
+  .rx-wiki h3{font-family:var(--display);font-weight:400;font-size:30px;line-height:1.1;margin:0 0 4px}
+  .rx-desc{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:12px}
+  .rx-wiki p{color:var(--ink-dim);line-height:1.7;font-size:15px;margin:0 0 16px}
+  .rx-more{display:flex;flex-wrap:wrap;gap:6px;margin-top:20px;padding-top:14px;border-top:1px solid var(--line)}
+  .rx-more span{width:100%;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint)}
+  .rx-more button{background:none;border:1px solid var(--line);border-radius:var(--radius);color:var(--ink-dim);padding:6px 10px;font-size:12.5px}
+  .rx-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-dim)}
+  .rx-foot[hidden]{display:none}
+  .rx-note{padding:8px 16px 12px;font-size:10.5px;color:var(--ink-faint)}
+  /* --- crédito de fotos y "más fotos" en la ficha --- */
+  .photo-credit{font-size:10.5px;color:var(--ink-faint);margin-top:6px;min-height:14px}
+  .photo-credit a{color:var(--ink-dim)}
+  .more-ph{margin-top:14px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+  .more-ph-h{font-size:13px;color:var(--ink-dim)}
+  .more-ph-strip{display:flex;gap:6px;overflow-x:auto;max-width:100%;background:none;border:0;padding:0;cursor:pointer;scrollbar-width:none}
+  .more-ph-strip:hover img{opacity:.85}
+  .more-ph-strip img{width:84px;height:60px;object-fit:cover;border-radius:var(--radius);flex:0 0 auto}
+  .gal-credit{font-size:11px;color:rgba(243,239,230,.55);margin-top:10px}
+  .gal-credit a{color:inherit}
+  .detailgrid > div{min-width:0}
 </style>
 </head>
 <body data-theme="paddock">
@@ -1406,7 +1457,7 @@
     "Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…":"Tell why it’s special: bespoke order, one-of-one, story, unique specs…",
     "Aún no escribes la historia. Edita el coche y llena el campo 'Historia / deep-dive' de esta versión.":"You haven’t written the story yet. Edit the car and fill the “Story / deep-dive” field on this version.",
     "Sin historia todavía.":"No story yet.","Historia":"Story","Detalles":"Details","Valor":"Value","Rareza":"Rarity","One-off":"One-off",
-    "Trifoglio Podcast":"Trifoglio Podcast","Este coche ya existe":"This car already exists","¿Es alguno de estos?":"Is it one of these?","Usa el nombre exacto para no crear duplicados":"Use the exact name to avoid duplicates","Usar nombre":"Use name","Agregar con fotos":"Add with photos","Nombre del catálogo aplicado":"Catalog name applied","Solo las cuentas administradoras pueden usar este modo":"Only admin accounts can use this mode","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
+    "Trifoglio Podcast":"Trifoglio Podcast","Investigar":"Research","Fotos":"Photos","Historia":"Story","Buscar más fotos":"Find more photos","Buscar fotos":"Find photos","Agregar fotos":"Add photos","Fotos e historia sin salir de la página":"Photos and history without leaving the page","Marca, modelo, año…":"Make, model, year…","Escribe un coche para buscar fotos e historia.":"Type a car to search photos and history.","No encontramos fotos libres con esa búsqueda. Prueba solo con marca y modelo.":"No free photos found. Try just make and model.","No se pudo conectar con Wikimedia Commons.":"Couldn't reach Wikimedia Commons.","Sin artículo en Wikipedia para esta búsqueda.":"No Wikipedia article for this search.","Leer en Wikipedia ↗":"Read on Wikipedia ↗","Otros artículos":"Other articles","Fotos con licencia libre de Wikimedia Commons; el crédito de cada una se muestra junto a la foto.":"Freely licensed photos from Wikimedia Commons; each photo shows its credit.","Este coche ya existe":"This car already exists","¿Es alguno de estos?":"Is it one of these?","Usa el nombre exacto para no crear duplicados":"Use the exact name to avoid duplicates","Usar nombre":"Use name","Agregar con fotos":"Add with photos","Nombre del catálogo aplicado":"Catalog name applied","Solo las cuentas administradoras pueden usar este modo":"Only admin accounts can use this mode","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz.":"Three friends obsessed with cars: stories, debates and car culture.",
     "Nuevos episodios seguido, en YouTube.":"New episodes regularly, on YouTube.","Ver el canal →":"View the channel →",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.":"Three friends obsessed with cars: stories, debates and car culture. New episodes often.",
@@ -1533,6 +1584,9 @@
   ];
 
   PAT.push(
+    P(/^Investigar “(.*)”$/, function(m){ return "Research “"+m[1]+"”"; }),
+    P(/^(d+) fotos? elegidas?$/, function(m){ return m[1]+" photo(s) selected"; }),
+    P(/^Este coche tiene una sola foto. Encontramos (d+) en Wikimedia Commons:$/, function(m){ return "This car has a single photo. We found "+m[1]+" on Wikimedia Commons:"; }),
     P(/^(.*) · ya está en tu garage$/, function(m){ return m[1]+" · already in your garage"; }),
     P(/^(.*) · en el catálogo$/, function(m){ return m[1]+" · in the catalog"; }),
     P(/^Lote (\d+)$/, function(m){ return "Lot "+m[1]; }),
@@ -2031,6 +2085,7 @@ function galShow(){
   $("#galN").textContent=String(gal.i+1).padStart(2,"0")+" / "+String(gal.list.length).padStart(2,"0");
   $("#galNm").textContent=c.name||"Sin nombre";
   $("#galMt").textContent=[c.brand,c.year,c.color].filter(Boolean).join(" · ");
+  showCredit($("#galCredit"),firstImg(c));
   const nx=gal.list[(gal.i+1)%gal.list.length]; if(nx){ const p=new Image(); p.src=firstImg(nx); }   // precarga
   const bar=$("#galBar"); bar.style.transition="none"; bar.style.width="0";
   clearTimeout(gal.timer);
@@ -2207,9 +2262,13 @@ function openDetail(id){
         <div>
           ${imgs.length?`<div class="carousel">
             ${imgs.length>1?`<button class="cnav prev" onclick="detailImg(-1)">‹</button><button class="cnav next" onclick="detailImg(1)">›</button>`:''}
-            <img id="detailMainImg" src="${imgs[0]}">
+            <img id="detailMainImg" src="${esc(imgs[0])}">
             ${imgs.length>1?`<div class="cdots">${imgs.map((_,i)=>`<span class="${i===0?'on':''}" onclick="detailGo(${i})"></span>`).join("")}</div>`:''}
           </div>${imgs.length>1?`<div style="text-align:center;color:var(--ink-faint);font-size:11px;margin-top:6px">${imgs.length} fotos · toca los lados para cambiar</div>`:''}`:`<div class="dropimg">Sin fotos</div>`}
+          <div class="photo-credit" id="detailCredit"></div>
+          ${readOnly?"":`<div class="more-ph" id="morePh">
+            <button class="btn sm" onclick="openResearch(${JSON.stringify(((c.brand||"")+" "+(c.name||"")).trim()).replace(/"/g,"&quot;")},{kind:'car',id:'${c.id}'})">Buscar más fotos</button>
+          </div>`}
         </div>
         <div style="display:flex;flex-direction:column;gap:12px">
           <div><div style="color:var(--ink-faint);font-size:12px;text-transform:uppercase;letter-spacing:1px">Valor</div>
@@ -2228,16 +2287,31 @@ function openDetail(id){
       <button class="btn primary" onclick="closeAll()">Cerrar</button>
     </div>`;
   $("#detailScrim").classList.add("show");
+  afterDetail(c);
+}
+function afterDetail(c){
+  showCredit($("#detailCredit"),detailImgs[detailIdx]);
+  if(readOnly||allImgs(c).length>1) return;
+  const box=$("#morePh"); if(!box) return;
+  const q=((c.brand||"")+" "+(c.name||"")).trim();
+  commonsSearch(q,8).then(res=>{
+    const have=new Set(allImgs(c)); res=res.filter(r=>!have.has(r.url)).slice(0,6);
+    if(!res.length||!$("#morePh")) return;
+    box.insertAdjacentHTML("afterbegin",`<div class="more-ph-h">Este coche tiene una sola foto. Encontramos ${res.length} en Wikimedia Commons:</div>
+      <button type="button" class="more-ph-strip" title="Elegir fotos" onclick="openResearch(${JSON.stringify(q).replace(/"/g,"&quot;")},{kind:'car',id:'${c.id}'})">${res.map(r=>`<img src="${esc(r.thumb)}" alt="" loading="lazy">`).join("")}</button>`);
+  }).catch(()=>{});
 }
 function detailImg(d){
   if(detailImgs.length<2)return;
   detailIdx=(detailIdx+d+detailImgs.length)%detailImgs.length;
   const im=document.getElementById("detailMainImg"); if(im)im.src=detailImgs[detailIdx];
   document.querySelectorAll("#detailModal .cdots span").forEach((s,i)=>s.classList.toggle("on",i===detailIdx));
+  showCredit($("#detailCredit"),detailImgs[detailIdx]);
 }
 function detailGo(i){
   if(i<0||i>=detailImgs.length)return;
   detailIdx=i; const im=document.getElementById("detailMainImg"); if(im)im.src=detailImgs[detailIdx];
+  showCredit($("#detailCredit"),detailImgs[detailIdx]);
   document.querySelectorAll("#detailModal .cdots span").forEach((s,j)=>s.classList.toggle("on",j===detailIdx));
 }
 /* ======================================================================
@@ -2342,6 +2416,7 @@ function renderSpecs(){
         </div>`).join("")||'<span style="color:var(--ink-faint);font-size:12px">Sin fotos en esta versión</span>'}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn sm" type="button" onclick="document.getElementById('specfile-${i}').click()">Añadir foto(s)</button>
+        <button class="btn sm" type="button" onclick="openResearch((($('#f-brand')?.value||'')+' '+($('#f-name')?.value||'')).trim(),{kind:'spec',index:${i}})">Buscar fotos</button>
         ${editSpecs.length>1?`<button class="btn sm ghost" type="button" style="color:var(--accent)" onclick="removeSpec(${i})">Quitar versión</button>`:''}
         <input type="file" id="specfile-${i}" accept="image/*" multiple hidden onchange="addSpecImgs(${i},this.files)">
       </div>
@@ -3227,6 +3302,125 @@ function checkDuplicateBeforeSave(){
   }
   return true;
 }
+/* ---------- Investigar: Wikimedia Commons + Wikipedia ---------- */
+const COMMONS="https://commons.wikimedia.org/w/api.php";
+const stripTags=h=>String(h||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim();
+// busca fotos libres (solo imágenes, mínimo 800 px de ancho)
+async function commonsSearch(q,limit){
+  const u=COMMONS+"?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit="+(limit||24)+
+    "&gsrsearch="+encodeURIComponent(q+" filetype:bitmap")+"&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=1280";
+  const r=await fetch(u); if(!r.ok) throw new Error("commons "+r.status);
+  const j=await r.json();
+  return Object.values(j.query?.pages||{}).sort((a,b)=>(a.index||0)-(b.index||0)).map(p=>{
+    const ii=(p.imageinfo||[])[0]||{}, md=ii.extmetadata||{};
+    // Wikimedia solo sirve miniaturas en tamaños estándar (…330, 500, 960, 1280…); sin parámetros de rastreo
+    const full=String(ii.thumburl||ii.url||"").split("?")[0];
+    return { title:p.title, url:full, page:ii.descriptionurl, w:ii.width, h:ii.height,
+      thumb:full.includes("/thumb/")?full.replace(/\/\d+px-/,"/500px-"):full,
+      author:stripTags(md.Artist?.value).slice(0,80)||"Autor desconocido", license:stripTags(md.LicenseShortName?.value)||"Licencia libre" };
+  }).filter(x=>x.url&&x.w>=800&&!/\.(svg|tif|tiff|pdf)$/i.test(x.title));
+}
+async function wikiLookup(q){
+  const lang=(window.__i18n&&window.__i18n.lang==="en")?"en":"es";
+  for(const l of [lang, lang==="es"?"en":"es"]){
+    try{
+      const sr=await (await fetch("https://"+l+".wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=5&srsearch="+encodeURIComponent(q))).json();
+      const hits=sr.query?.search||[]; if(!hits.length) continue;
+      const sum=await (await fetch("https://"+l+".wikipedia.org/api/rest_v1/page/summary/"+encodeURIComponent(hits[0].title.replace(/ /g,"_")))).json();
+      return { lang:l, sum, others:hits.slice(1).map(h=>h.title) };
+    }catch(e){}
+  }
+  return null;
+}
+// crédito de una foto de Commons a partir de su URL (se consulta una vez y se recuerda)
+const creditCache=new Map();
+function commonsFileFromUrl(u){ const m=String(u||"").match(/(?:upload|thumb)\.wikimedia\.org\/wikipedia\/commons\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^/]+)/); return m?decodeURIComponent(m[1]):null; }
+async function commonsCredit(u){
+  const f=commonsFileFromUrl(u); if(!f) return null;
+  if(creditCache.has(f)) return creditCache.get(f);
+  const p=(async()=>{ try{
+    const j=await (await fetch(COMMONS+"?action=query&format=json&origin=*&prop=imageinfo&iiprop=extmetadata|url&titles="+encodeURIComponent("File:"+f))).json();
+    const ii=(Object.values(j.query?.pages||{})[0]?.imageinfo||[])[0]||{}, md=ii.extmetadata||{};
+    return { author:stripTags(md.Artist?.value).slice(0,80)||"Autor desconocido", license:stripTags(md.LicenseShortName?.value)||"Licencia libre", page:ii.descriptionurl||("https://commons.wikimedia.org/wiki/File:"+encodeURIComponent(f)) };
+  }catch(e){ return null; } })();
+  creditCache.set(f,p); return p;
+}
+async function showCredit(el,url){
+  if(!el) return; el.textContent=""; const c=await commonsCredit(url); if(!c) return;
+  el.innerHTML=`Foto: ${esc(c.author)} · ${esc(c.license)} · <a href="${esc(c.page)}" target="_blank" rel="noopener noreferrer">Wikimedia Commons ↗</a>`;
+}
+let rx={mode:"browse",target:null,results:[],picked:new Set(),q:""};
+// target: {kind:"car", id} | {kind:"spec", index}
+function openResearch(q,target){
+  rx={mode:target?"pick":"browse",target:target||null,results:[],picked:new Set(),q:q||""};
+  const el=$("#rx"); el.hidden=false; document.body.classList.add("rx-open");
+  $("#rxIn").value=q||"";
+  const tg=$("#rxTarget");
+  if(target){ tg.hidden=false; tg.innerHTML=`Elige fotos para <b>${esc(rxTargetLabel())}</b>`; } else tg.hidden=true;
+  rxTab("ph"); if(q) rxSearch(q); else { $("#rxPh").innerHTML='<p class="rx-empty">Escribe un coche para buscar fotos e historia.</p>'; $("#rxWk").innerHTML=""; }
+  setTimeout(()=>$("#rxIn").focus(),0);
+}
+function closeResearch(){ const el=$("#rx"); if(el&&!el.hidden){ el.hidden=true; document.body.classList.remove("rx-open"); } }
+function rxTargetLabel(){
+  const t=rx.target; if(!t) return "";
+  if(t.kind==="car"){ const c=cars.find(x=>x.id===t.id); return c?((c.brand||"")+" "+(c.name||"")).trim():""; }
+  const sp=editSpecs[t.index]; return ((($("#f-brand")?.value||"")+" "+($("#f-name")?.value||"")).trim()+(sp&&sp.color?" · "+sp.color:""))||"esta versión";
+}
+function rxTab(t){
+  $("#rxTabPh").setAttribute("aria-selected",String(t==="ph")); $("#rxTabWk").setAttribute("aria-selected",String(t==="wk"));
+  $("#rxPh").hidden=t!=="ph"; $("#rxWk").hidden=t!=="wk";
+}
+async function rxSearch(q){
+  q=(q||"").trim(); if(!q) return; rx.q=q; rx.picked.clear(); rxFoot();
+  const ph=$("#rxPh"), wk=$("#rxWk");
+  ph.innerHTML='<div class="rx-grid">'+'<div class="rx-skel skel"></div>'.repeat(6)+'</div>';
+  wk.innerHTML='<div class="skel" style="height:220px"></div>';
+  commonsSearch(q,30).then(res=>{
+    rx.results=res;
+    ph.innerHTML=res.length?`<div class="rx-grid">${res.map((r,i)=>`<figure class="rx-item" data-i="${i}">
+        <button type="button" class="rx-img" onclick="${rx.mode==="pick"?`rxPick(${i})`:`stBig('${esc(r.url)}')`}" aria-pressed="false"><img src="${esc(r.thumb)}" alt="${esc(r.title.replace(/^File:/,""))}" loading="lazy"></button>
+        <figcaption>${esc(r.author)} · ${esc(r.license)} · <a href="${esc(r.page)}" target="_blank" rel="noopener noreferrer">ver ↗</a></figcaption></figure>`).join("")}</div>`
+      :'<p class="rx-empty">No encontramos fotos libres con esa búsqueda. Prueba solo con marca y modelo.</p>';
+  }).catch(()=>{ ph.innerHTML='<p class="rx-empty">No se pudo conectar con Wikimedia Commons.</p>'; });
+  wikiLookup(q).then(w=>{
+    if(!w||!w.sum||w.sum.type==="disambiguation"&&!w.sum.extract){ wk.innerHTML='<p class="rx-empty">Sin artículo en Wikipedia para esta búsqueda.</p>'; return; }
+    const sm=w.sum;
+    wk.innerHTML=`<article class="rx-wiki">
+      ${sm.originalimage||sm.thumbnail?`<img src="${esc((sm.thumbnail||sm.originalimage).source)}" alt="" loading="lazy">`:""}
+      <h3>${esc(sm.title||"")}</h3>${sm.description?`<div class="rx-desc">${esc(sm.description)}</div>`:""}
+      <p>${esc(sm.extract||"")}</p>
+      <a class="btn sm" href="${esc(sm.content_urls?.desktop?.page||"#")}" target="_blank" rel="noopener noreferrer">Leer en Wikipedia ↗</a>
+      ${w.others.length?`<div class="rx-more"><span>Otros artículos</span>${w.others.map(t=>`<button type="button" onclick="rxSearch('${esc(t).replace(/'/g,"")}');rxTab('wk')">${esc(t)}</button>`).join("")}</div>`:""}
+    </article>`;
+  });
+}
+function rxPick(i){
+  if(rx.picked.has(i)) rx.picked.delete(i); else rx.picked.add(i);
+  const b=document.querySelector(`.rx-item[data-i="${i}"] .rx-img`); if(b) b.setAttribute("aria-pressed",String(rx.picked.has(i)));
+  rxFoot();
+}
+function rxFoot(){ const f=$("#rxFoot"); if(!f) return; f.hidden=rx.mode!=="pick"||!rx.picked.size; $("#rxCount").textContent=rx.picked.size+(rx.picked.size===1?" foto elegida":" fotos elegidas"); }
+function rxApply(){
+  const urls=[...rx.picked].map(i=>rx.results[i]?.url).filter(Boolean); if(!urls.length) return;
+  const t=rx.target;
+  if(t&&t.kind==="spec"){
+    const sp=editSpecs[t.index]; if(!sp) return;
+    sp.images=sp.images||[]; urls.forEach(u=>{ if(!sp.images.includes(u)) sp.images.push(u); });
+    if(!editCoverImg) editCoverImg=sp.images[0];
+    renderSpecs(); closeResearch(); toast(urls.length+" fotos agregadas a la versión"); return;
+  }
+  if(t&&t.kind==="car"){
+    const c=cars.find(x=>x.id===t.id); if(!c) return;
+    c.specs=c.specs||[];
+    let sp=c.specs.find(s=>(s.images||[]).includes(c.image))||c.specs[0];
+    if(!sp){ sp={id:uid(),title:"",details:"",color:c.color||"",images:[],rare:false,story:"",storyTitle:""}; c.specs.push(sp); }
+    sp.images=sp.images||[]; urls.forEach(u=>{ if(!sp.images.includes(u)) sp.images.push(u); });
+    if(!c.image) c.image=sp.images[0];
+    saveAll(); upsertCatalog(c);   // también enriquece el catálogo para toda la comunidad
+    closeResearch(); renderGarage(); openDetail(c.id); toast(urls.length+" fotos agregadas");
+  }
+}
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("#rx").hidden){ e.stopPropagation(); closeResearch(); } },true);
 /* ---------- Buscador rápido ---------- */
 let qsCat=null, qsSel=0, qsItems=[];
 const QS_TABS=[["home","Inicio"],["garage","Garage"],["irl","Manejados IRL"],["activities","Actividades"],["market","Marketplace"],["battle","Spec Battle"],["rare","Rarezas"],["historia","Historia"],["discover","Descubrir"]];
@@ -3249,6 +3443,7 @@ function qsRender(q){
     (qsCat||[]).filter(e=>match(`${e.brand} ${e.name} ${e.year}`)).slice(0,10)
       .forEach(e=>out.push({kind:"Catálogo",title:e.name||"",sub:`${e.brand||""} ${e.year||""}`,img:e.image,run:()=>{mkData=[e];addFromCatalog(0);}}));
   }
+  if(words.length) out.unshift({kind:"Investigar",title:"Investigar “"+q.trim()+"”",sub:"Fotos e historia sin salir de la página",img:null,run:()=>openResearch(q.trim())});
   qsItems=out.slice(0,22); qsSel=0;
   const list=$("#qsList");
   list.innerHTML=qsItems.length?qsItems.map((it,i)=>`<button class="qs-row" role="option" data-i="${i}" aria-selected="${i===0}" onclick="qsRun(${i})" onmouseenter="qsMark(${i})">
@@ -4250,7 +4445,7 @@ window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredP
 </div>
 <div class="gal" id="gal" hidden role="dialog" aria-modal="true" aria-label="Modo galería">
   <div class="gal-stage"><img class="gal-img" id="galA" alt=""><img class="gal-img" id="galB" alt=""></div>
-  <div class="gal-cap"><div class="gal-n" id="galN"></div><h2 class="gal-nm" id="galNm"></h2><div class="gal-mt" id="galMt"></div></div>
+  <div class="gal-cap"><div class="gal-n" id="galN"></div><h2 class="gal-nm" id="galNm"></h2><div class="gal-mt" id="galMt"></div><div class="gal-credit" id="galCredit"></div></div>
   <div class="gal-ctl">
     <button onclick="galStep(-1)" aria-label="Anterior">←</button>
     <button onclick="galToggle()" id="galPlay" aria-label="Pausa">Pausa</button>
@@ -4259,6 +4454,26 @@ window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredP
   </div>
   <div class="gal-bar"><span id="galBar"></span></div>
 </div>
+<aside class="rx" id="rx" hidden role="dialog" aria-modal="true" aria-label="Investigar">
+  <div class="rx-panel">
+    <div class="rx-top">
+      <form class="rx-q" onsubmit="event.preventDefault();rxSearch($('#rxIn').value)">
+        <input id="rxIn" type="search" placeholder="Marca, modelo, año…" autocomplete="off">
+        <button class="btn sm primary" type="submit">Buscar</button>
+      </form>
+      <button class="iconbtn" onclick="closeResearch()" aria-label="Cerrar">×</button>
+    </div>
+    <div class="rx-target" id="rxTarget" hidden></div>
+    <div class="rx-tabs" role="tablist">
+      <button role="tab" id="rxTabPh" aria-selected="true" onclick="rxTab('ph')">Fotos</button>
+      <button role="tab" id="rxTabWk" aria-selected="false" onclick="rxTab('wk')">Historia</button>
+    </div>
+    <div class="rx-body" id="rxPh"></div>
+    <div class="rx-body" id="rxWk" hidden></div>
+    <div class="rx-foot" id="rxFoot" hidden><span id="rxCount"></span><button class="btn primary" id="rxAdd" onclick="rxApply()">Agregar fotos</button></div>
+    <div class="rx-note">Fotos con licencia libre de Wikimedia Commons; el crédito de cada una se muestra junto a la foto.</div>
+  </div>
+</aside>
 <button class="totop" id="toTop" aria-label="Volver arriba" onclick="scrollTo({top:0,behavior:'smooth'})">↑</button>
 <footer class="colophon">
   <div class="colo-in">

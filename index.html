@@ -926,6 +926,36 @@
   [data-theme="retro"] .car:hover .ph img{filter:sepia(.05) saturate(1) contrast(1.04)}
   [data-theme="light"] .car .ph img{filter:none}
   [data-theme="light"] .cine::after{opacity:.95}
+
+  /* --- Garage: cifras --- */
+  .gstats{margin:8px 0 44px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:22px 0 26px}
+  .gs-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  .gs-title{font-family:var(--display);font-weight:400;font-size:clamp(26px,2.6vw,36px);margin:0;letter-spacing:-.01em}
+  .gs-toggle{display:flex;border:1px solid var(--line);border-radius:var(--radius)}
+  .gs-toggle button{background:none;border:0;color:var(--ink-faint);padding:8px 14px;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+  .gs-toggle button.on{background:var(--ink);color:var(--bg)}
+  .gs-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:18px 0}
+  .gs-cell{padding:0 22px;border-left:1px solid var(--line)}
+  .gs-cell:first-child{border-left:0;padding-left:0}
+  .gs-v{font-family:var(--display);font-size:clamp(30px,3.4vw,48px);line-height:1;letter-spacing:-.02em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gs-k{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-faint);margin-top:10px}
+  .gs-s{font-size:12px;color:var(--ink-dim);margin-top:2px}
+  @media(max-width:600px){ .gs-row{grid-template-columns:1fr 1fr} .gs-cell{padding:0 12px} .gs-cell:nth-child(odd){border-left:0;padding-left:0} }
+  /* --- Garage: línea de tiempo --- */
+  .tl{display:flex;flex-direction:column}
+  .tl-dec{display:grid;grid-template-columns:200px minmax(0,1fr);gap:28px;padding:30px 0;border-top:1px solid var(--line)}
+  .tl-label{position:sticky;top:130px;align-self:start;display:flex;flex-direction:column;gap:6px}
+  .tl-y{font-family:var(--display);font-style:italic;font-size:clamp(48px,5vw,76px);line-height:.9;letter-spacing:-.03em;color:var(--ink)}
+  .tl-n{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent)}
+  .tl-row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,28%);gap:18px;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:12px;scrollbar-color:var(--line) transparent}
+  .tl-car{scroll-snap-align:start;background:none;border:0;padding:0;text-align:left;color:var(--ink);display:flex;flex-direction:column;gap:8px;cursor:pointer}
+  .tl-ph{display:block;aspect-ratio:4/3;border-radius:var(--radius);overflow:hidden;background:var(--card)}
+  .tl-ph img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 1s cubic-bezier(.16,1,.3,1)}
+  .tl-ph .noimg{display:block;width:100%;height:100%}
+  .tl-car:hover .tl-ph img{transform:scale(1.04)}
+  .tl-nm{font-family:var(--display);font-size:20px;line-height:1.1}
+  .tl-mt{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint)}
+  @media(max-width:760px){ .tl-dec{grid-template-columns:1fr;gap:14px} .tl-label{position:static;flex-direction:row;align-items:baseline;gap:14px} .tl-row{grid-auto-columns:72%} }
 </style>
 </head>
 <body data-theme="paddock">
@@ -1226,7 +1256,7 @@
     "Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…":"Tell why it’s special: bespoke order, one-of-one, story, unique specs…",
     "Aún no escribes la historia. Edita el coche y llena el campo 'Historia / deep-dive' de esta versión.":"You haven’t written the story yet. Edit the car and fill the “Story / deep-dive” field on this version.",
     "Sin historia todavía.":"No story yet.","Historia":"Story","Detalles":"Details","Valor":"Value","Rareza":"Rarity","One-off":"One-off",
-    "Trifoglio Podcast":"Trifoglio Podcast","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
+    "Trifoglio Podcast":"Trifoglio Podcast","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz.":"Three friends obsessed with cars: stories, debates and car culture.",
     "Nuevos episodios seguido, en YouTube.":"New episodes regularly, on YouTube.","Ver el canal →":"View the channel →",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.":"Three friends obsessed with cars: stories, debates and car culture. New episodes often.",
@@ -1822,7 +1852,53 @@ function renderGarage(){
       <p>Prueba con otra búsqueda o quita filtros.</p></div>`;
     return;
   }
-  view.innerHTML=`<div class="grid">${list.map((c,i)=>carCard(c,i,list)).join("")}</div>`;
+  const mode=garageMode();
+  view.innerHTML=garageStats()+(mode==="timeline"?garageTimeline(list):`<div class="grid">${list.map((c,i)=>carCard(c,i,list)).join("")}</div>`);
+}
+/* ---------- Garage: cifras y línea de tiempo ---------- */
+function garageMode(){ try{ return localStorage.getItem("cc-garage-view")||"grid"; }catch(e){ return "grid"; } }
+function setGarageMode(m){ try{ localStorage.setItem("cc-garage-view",m); }catch(e){} renderGarage(); }
+function decadeOf(c){ const y=parseInt(c.year,10); return y>1880&&y<2100?Math.floor(y/10)*10:null; }
+function modeOf(arr){ const m=new Map(); arr.forEach(v=>{ if(v!=null&&v!=="") m.set(v,(m.get(v)||0)+1); }); let best=null,n=0; m.forEach((k,v)=>{ if(k>n){best=v;n=k;} }); return best==null?null:{value:best,count:n}; }
+function garageStats(){
+  if(!cars.length) return "";
+  // valor estimado en la moneda más usada de la colección
+  const cur=(modeOf(cars.filter(c=>c.price!=null).map(c=>c.currency))||{value:"USD"}).value;
+  const total=cars.filter(c=>c.price!=null&&c.currency===cur).reduce((a,c)=>a+Number(c.price||0),0);
+  const dec=modeOf(cars.map(decadeOf)), brand=modeOf(cars.map(c=>(c.brand||"").trim()));
+  const rated=cars.map(avg).filter(Boolean), mean=rated.length?rated.reduce((a,b)=>a+b,0)/rated.length:0;
+  const fmtMoney=n=>n>=1e6?(CURR[cur]||"$")+(n/1e6).toFixed(n>=1e7?0:1)+" M":(CURR[cur]||"$")+Math.round(n).toLocaleString("en-US");
+  const mode=garageMode();
+  const cell=(k,v,sub)=>`<div class="gs-cell"><div class="gs-v">${v}</div><div class="gs-k">${k}</div>${sub?`<div class="gs-s">${sub}</div>`:""}</div>`;
+  return `<section class="gstats" aria-label="Tu colección en cifras">
+    <div class="gs-head"><h2 class="gs-title">Tu colección en cifras</h2>
+      <div class="gs-toggle" role="group" aria-label="Vista">
+        <button class="${mode==="grid"?"on":""}" aria-pressed="${mode==="grid"}" onclick="setGarageMode('grid')">Cuadrícula</button>
+        <button class="${mode==="timeline"?"on":""}" aria-pressed="${mode==="timeline"}" onclick="setGarageMode('timeline')">Línea de tiempo</button>
+      </div></div>
+    <div class="gs-row">
+      ${cell("Coches",cars.length)}
+      ${total?cell("Valor estimado",fmtMoney(total),cur):""}
+      ${dec?cell("Década favorita",dec.value+"s",dec.count+" coches"):""}
+      ${brand?cell("Marca más presente",esc(brand.value),brand.count+" coches"):""}
+      ${mean?cell("Promedio",mean.toFixed(1),"de 10"):""}
+    </div></section>`;
+}
+function garageTimeline(list){
+  const groups=new Map();
+  list.forEach(c=>{ const d=decadeOf(c); const k=d==null?"none":d; if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(c); });
+  const keys=[...groups.keys()].sort((a,b)=>a==="none"?1:b==="none"?-1:a-b);
+  return `<div class="tl">${keys.map(k=>{
+    const items=groups.get(k).slice().sort((a,b)=>(parseInt(a.year,10)||0)-(parseInt(b.year,10)||0));
+    return `<section class="tl-dec">
+      <div class="tl-label"><span class="tl-y">${k==="none"?"Sin año":k+"s"}</span><span class="tl-n">${items.length} ${items.length===1?"coche":"coches"}</span></div>
+      <div class="tl-row">${items.map(c=>{ const img=firstImg(c);
+        return `<button class="tl-car" onclick="openDetail('${c.id}')">
+          <span class="tl-ph">${img?`<img src="${img}" alt="" loading="lazy" decoding="async">`:'<span class="noimg"></span>'}</span>
+          <span class="tl-nm">${esc(c.name||"Sin nombre")}</span>
+          <span class="tl-mt">${esc(c.brand||"")} ${esc(String(c.year||""))}</span>
+        </button>`; }).join("")}</div>
+    </section>`; }).join("")}</div>`;
 }
 function stripHTML(items){
   let its=(items||[]).filter(x=>x&&x.image);
@@ -1854,7 +1930,7 @@ function carCard(c,i,list){
   const tags=(c.tags||[]).slice(0,4).map(t=>`<span class="tag">${t}</span>`).join("");
   return `<article class="car">
     <div class="ph" onclick="openDetail('${c.id}')">
-      ${img?`<img src="${img}" alt="">`:`<div class="noimg"></div>`}
+      ${img?`<img src="${img}" alt="${esc(((c.brand||"")+" "+(c.name||"")).trim())}" loading="lazy" decoding="async">`:`<div class="noimg"></div>`}
       ${showRank?`<div class="rankbadge">#${i+1}</div>`:""}
       ${a?`<div class="avgbadge">★ ${a.toFixed(1)}</div>`:""}${garageStrip(c)}
     </div>

@@ -397,40 +397,36 @@
   .hero-inner{position:relative;z-index:2;max-width:640px}
   .hero-cap{position:absolute;bottom:16px;right:20px;z-index:2;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink);background:color-mix(in srgb,var(--bg) 50%,transparent);border:1px solid var(--line);border-radius:999px;padding:5px 12px;backdrop-filter:blur(4px);opacity:.92;transition:opacity .4s}
   @media(max-width:640px){ .hero-cap{display:none} }
-  /* --- Hero 3D (showroom de clásicos) --- */
-  .pd-hero{position:relative;overflow:hidden;margin:22px 0 6px;border:1px solid var(--line);border-radius:var(--radius);
-    background:radial-gradient(70% 60% at 50% 42%, var(--card2), var(--bg) 78%)}
-  .pd-big{position:absolute;left:0;right:0;top:3%;text-align:center;font-family:var(--display);font-weight:900;text-transform:uppercase;
-    font-size:clamp(84px,17vw,250px);line-height:.85;color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--ink) 26%,transparent);
-    user-select:none;pointer-events:none}
-  .pd-stage{position:relative;height:clamp(280px,46vh,500px);cursor:grab}
-  .pd-stage:active{cursor:grabbing}
-  .pd-loading{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;pointer-events:none;transition:opacity .3s}
-  .pd-loading[hidden]{display:block;opacity:0}
-  .pd-board{position:relative;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);border-top:1px solid var(--line)}
-  .pd-board > div{padding:26px 30px}
-  .pd-copy{border-right:1px solid var(--line)}
-  .pd-copy h1{font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:clamp(36px,4.4vw,60px);line-height:.95;margin:0 0 12px;letter-spacing:.3px}
-  .pd-copy h1 b{color:var(--accent);font-weight:700}
-  .pd-copy p{color:var(--ink-dim);margin:0 0 20px;line-height:1.55;max-width:50ch;font-size:15px}
-  .pd-copy .cta{display:flex;gap:10px;flex-wrap:wrap}
-  .pd-conf{display:flex;flex-direction:column;gap:12px;font-family:"IBM Plex Mono",monospace;font-size:12.5px}
-  .pd-k{color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em}
-  .pd-picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px}
-  .pd-pick{display:flex;align-items:baseline;gap:10px;text-align:left;padding:10px 12px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;border-radius:var(--radius);transition:border-color .2s,background .2s}
-  .pd-pick:hover{border-color:var(--ink)}
-  .pd-pick[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-  .pd-pick .y{color:var(--accent);font-weight:500}
-  .pd-pick[aria-pressed="true"] .y{color:inherit;opacity:.65}
-  .pd-now{display:flex;justify-content:space-between;gap:12px;color:var(--ink-faint)}
-  .pd-now b{color:var(--ink);font-weight:500}
-  .pd-credit{font-size:11px;color:var(--ink-faint)}
-  .pd-credit a{color:var(--ink-dim)}
-  @media(max-width:760px){
-    .pd-board{grid-template-columns:1fr}
-    .pd-board > div{padding:20px 16px}
-    .pd-copy{border-right:0;border-bottom:1px solid var(--line)}
-    .pd-stage{height:clamp(240px,40vh,360px)}
+  /* --- Hero cinematográfico con estudio 3D --- */
+  html,body{overflow-x:clip}
+  .cine{position:relative;width:100vw;margin-left:calc(50% - 50vw);height:min(88vh,880px);min-height:520px;overflow:hidden;background:var(--bg)}
+  .cine-stage{position:absolute;inset:0;cursor:grab}
+  .cine-stage:active{cursor:grabbing}
+  .cine-stage canvas{display:block}
+  .cine-veil{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;background:var(--bg);transition:opacity 1.2s ease .2s,visibility 0s linear 1.4s}
+  .cine-veil span{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+  .cine-veil.off{opacity:0;visibility:hidden}
+  .cine::after{content:"";position:absolute;inset:auto 0 0 0;height:42%;z-index:1;pointer-events:none;
+    background:linear-gradient(0deg,var(--bg) 0%,color-mix(in srgb,var(--bg) 70%,transparent) 40%,transparent 100%)}
+  .cine-copy{position:absolute;z-index:2;left:max(32px,calc(50vw - 660px + 32px));bottom:56px;max-width:620px;pointer-events:none}
+  .cine-copy > *{pointer-events:auto}
+  .cine-copy h1{font-family:var(--display);font-weight:400;font-size:clamp(40px,5vw,76px);line-height:1.02;letter-spacing:-.02em;margin:0 0 16px}
+  .cine-copy h1 em{color:var(--accent);display:inline-block;padding-bottom:.06em}
+  .cine-copy p{color:var(--ink-dim);font-size:16px;line-height:1.55;max-width:46ch;margin:0 0 24px}
+  .cine-copy .cta{display:flex;gap:10px;flex-wrap:wrap}
+  .cine-plate{position:absolute;z-index:2;right:max(32px,calc(50vw - 660px + 32px));bottom:60px;width:260px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-faint);border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:8px}
+  .cp-name{font-family:var(--display);font-size:22px;color:var(--ink);line-height:1.15;letter-spacing:-.005em}
+  .cp-row{display:flex;justify-content:space-between;gap:10px;text-transform:uppercase;letter-spacing:.08em}
+  .cp-row b{color:var(--ink);font-weight:500}
+  .cp-hint{text-transform:uppercase;letter-spacing:.08em}
+  .cp-credit{font-size:10.5px;line-height:1.5}
+  .cp-credit a{color:var(--ink-dim)}
+  @media(max-width:860px){
+    .cine{height:auto;min-height:0;display:flex;flex-direction:column}
+    .cine-stage{position:relative;inset:auto;height:clamp(300px,62vw,460px)}
+    .cine::after{display:none}
+    .cine-copy{position:relative;left:auto;bottom:auto;padding:8px 16px 0;max-width:none}
+    .cine-plate{position:relative;right:auto;bottom:auto;width:auto;margin:28px 16px 0}
   }
   /* skeletons de carga */
   @keyframes shimmer{0%{background-position:-450px 0}100%{background-position:450px 0}}
@@ -709,26 +705,6 @@
   [data-theme="paddock"] .home-sechead a,[data-theme="paddock"] .home-sechead button.link{font-family:var(--mono);font-weight:400;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-dim)}
   [data-theme="paddock"] .home-sechead a:hover,[data-theme="paddock"] .home-sechead button.link:hover{color:var(--accent);text-decoration:none}
 
-  /* --- hero 3D --- */
-  [data-theme="paddock"] .pd-hero{margin:28px 0 0;border:0;border-radius:var(--radius);
-    background:radial-gradient(65% 70% at 50% 40%, color-mix(in srgb,var(--card2) 90%,#fff 3%), var(--bg) 75%)}
-  [data-theme="paddock"] .pd-big{font-weight:400;font-style:italic;text-transform:none;letter-spacing:-.03em;top:1%;
-    font-size:clamp(96px,19vw,290px);-webkit-text-stroke:1px color-mix(in srgb,var(--ink) 30%,transparent)}
-  [data-theme="paddock"] .pd-stage{height:clamp(300px,52vh,560px)}
-  [data-theme="paddock"] .pd-board{border-top:1px solid var(--line)}
-  [data-theme="paddock"] .pd-board > div{padding:30px 0}
-  [data-theme="paddock"] .pd-copy{padding-right:40px!important}
-  [data-theme="paddock"] .pd-conf{padding-left:40px!important}
-  [data-theme="paddock"] .pd-copy h1{font-weight:400;text-transform:none;font-size:clamp(36px,4.2vw,62px);line-height:1.04;letter-spacing:-.02em;margin-bottom:16px}
-  [data-theme="paddock"] .pd-copy h1 b{font-style:italic;font-weight:400}
-  [data-theme="paddock"] .pd-copy p{font-size:16px}
-  [data-theme="paddock"] .pd-pick{border-radius:var(--radius)}
-  @media(max-width:760px){
-    [data-theme="paddock"] .pd-copy{padding-right:0!important}
-    [data-theme="paddock"] .pd-conf{padding-left:0!important}
-    [data-theme="paddock"] .pd-board > div{padding:22px 0}
-  }
-
   /* --- historias: portada a sangre --- */
   [data-theme="paddock"] .ss-slide{border:0;border-radius:var(--radius);min-height:min(78vh,680px)}
   [data-theme="paddock"] .ss-grad{background:linear-gradient(0deg,rgba(8,14,11,.9) 0%,rgba(8,14,11,.55) 32%,rgba(8,14,11,0) 64%)}
@@ -877,6 +853,62 @@
   [data-theme="paddock"] .story-actions{border-top:0}
   [data-theme="paddock"] .ss-meta{margin-bottom:20px}
   [data-theme="paddock"] .admin-del{border-radius:var(--radius);font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding:4px 8px;background:rgba(8,14,11,.7)}
+
+  /* --- Trifoglio Podcast: banda editorial --- */
+  .trif{width:100vw;margin:96px 0 0 calc(50% - 50vw);background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden}
+  .trif-in{max-width:1320px;margin:0 auto;padding:56px 32px 72px}
+  .trif-head{display:flex;align-items:baseline;gap:22px;margin-bottom:28px}
+  .trif-k{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .trif-word{font-family:var(--display);font-style:italic;font-weight:400;font-size:clamp(72px,13vw,190px);line-height:.86;letter-spacing:-.035em;margin:0;color:var(--ink)}
+  .trif-grid{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(0,1fr);gap:48px;align-items:end}
+  .trif-player{position:relative;aspect-ratio:16/9;background:#000;border-radius:var(--radius);overflow:hidden}
+  .trif-player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .trif-side{display:flex;flex-direction:column;gap:16px;align-items:flex-start}
+  .trif-lead{font-family:var(--display);font-size:clamp(22px,2vw,30px);line-height:1.25;margin:0;color:var(--ink)}
+  .trif-sub{margin:0 0 6px;color:var(--ink-dim);font-size:15px}
+  .trif-links{display:flex;flex-direction:column;width:100%;margin-top:10px;border-top:1px solid var(--line)}
+  .trif-links a{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--line);text-decoration:none;
+    font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);transition:color .2s,padding .3s cubic-bezier(.16,1,.3,1)}
+  .trif-links a:hover{color:var(--accent);padding-left:6px}
+  @media(max-width:860px){
+    .trif{margin-top:64px}
+    .trif-in{padding:40px 16px 48px}
+    .trif-head{flex-direction:column;gap:6px}
+    .trif-grid{grid-template-columns:1fr;gap:28px}
+  }
+
+  /* --- menú de cuenta --- */
+  .acct{position:relative}
+  .acct summary{list-style:none;cursor:pointer}
+  .acct summary::-webkit-details-marker{display:none}
+  .acct summary::after{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px);margin-left:4px;opacity:.6}
+  .acct[open] summary::after{transform:rotate(-135deg) translateY(-1px)}
+  .acct-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:70;min-width:190px;display:flex;flex-direction:column;background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 20px 50px rgba(0,0,0,.4);padding:6px}
+  .acct-menu button{background:none;border:0;text-align:left;color:var(--ink-dim);padding:10px 12px;font-size:13px;border-radius:var(--radius)}
+  .acct-menu button:hover{background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--ink)}
+  .acct-menu button:last-child{border-top:1px solid var(--line);margin-top:4px;padding-top:12px}
+  [data-theme="paddock"] .acct-menu button{font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.07em}
+  /* --- pie de página --- */
+  .colophon{border-top:1px solid var(--line);margin-top:40px}
+  .colo-in{max-width:1320px;margin:0 auto;padding:56px 32px 64px;display:grid;grid-template-columns:auto 1fr;gap:20px 48px;align-items:baseline}
+  .colo-wm{font-family:var(--display);font-size:44px;line-height:1;font-style:italic}
+  .colo-wm b{font-style:normal;font-weight:inherit}
+  .colo-nav{display:flex;gap:26px;flex-wrap:wrap;justify-content:flex-end}
+  .colo-nav button{background:none;border:0;padding:0;color:var(--ink-dim);font-size:13px}
+  .colo-nav button:hover{color:var(--accent)}
+  .colo-note{grid-column:1/-1;margin:16px 0 0;padding-top:20px;border-top:1px solid var(--line);color:var(--ink-faint);font-size:13px;max-width:70ch}
+  [data-theme="paddock"] .colo-nav button{font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.08em}
+  @media(max-width:760px){ .colo-in{grid-template-columns:1fr;padding:40px 16px 96px} .colo-nav{justify-content:flex-start;gap:18px} .colo-wm{font-size:36px} }
+
+  /* --- tarjetas más calmadas: la foto primero, los datos después --- */
+  [data-theme="paddock"] .car .bars{display:grid;grid-template-columns:1fr 1fr;gap:5px 18px}
+  [data-theme="paddock"] .barrow .lab{width:auto;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  [data-theme="paddock"] .barrow .track{flex:0 0 38%}
+  [data-theme="paddock"] .car .tags .tag:nth-child(n+4){display:none}
+  @media(hover:hover){
+    [data-theme="paddock"] .car .acts{opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s cubic-bezier(.16,1,.3,1)}
+    [data-theme="paddock"] .car:hover .acts,[data-theme="paddock"] .car:focus-within .acts{opacity:1;transform:none}
+  }
 </style>
 </head>
 <body data-theme="paddock">
@@ -1164,7 +1196,7 @@
     "Publicados recientemente":"Recently published",
     "Clásicos":"Classics","Tu garage de":"Your garage of","clásicos":"classics",", en línea de salida.":", on the starting grid.",
     "Publica tus autos, compara especificaciones y sigue lo que se mueve en el mercado de clásicos.":"Post your cars, compare specs and follow what's moving in the classic car market.",
-    "En pista":"On track","Precio":"Price","Borrar":"Delete","Azar":"Random","Motor":"Engine","Mi garage":"My garage","Cargando":"Loading","No se pudo cargar el modelo":"Couldn't load the model","Ver todo →":"View all →",
+    "En pista":"On track","Cargando el estudio":"Loading the studio","Arrastra para recorrer el estudio":"Drag to explore the studio","Precio":"Price","Borrar":"Delete","Azar":"Random","Motor":"Engine","Mi garage":"My garage","Cargando":"Loading","No se pudo cargar el modelo":"Couldn't load the model","Ver todo →":"View all →",
     "Historias y artículos":"Stories & articles","Explora":"Explore",
     "El mercado, en video":"The market, in video","Más en Hagerty →":"More on Hagerty →",
     "Rarezas":"Rare Specs","Rarezas":"Rare Specs","pieza(s)":"piece(s)",
@@ -1177,7 +1209,9 @@
     "Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…":"Tell why it’s special: bespoke order, one-of-one, story, unique specs…",
     "Aún no escribes la historia. Edita el coche y llena el campo 'Historia / deep-dive' de esta versión.":"You haven’t written the story yet. Edit the car and fill the “Story / deep-dive” field on this version.",
     "Sin historia todavía.":"No story yet.","Historia":"Story","Detalles":"Details","Valor":"Value","Rareza":"Rarity","One-off":"One-off",
-    "Trifoglio Podcast":"Trifoglio Podcast","Ver el canal →":"View the channel →",
+    "Trifoglio Podcast":"Trifoglio Podcast","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
+    "Tres amigos apasionados por los autos: historias, debates y cultura automotriz.":"Three friends obsessed with cars: stories, debates and car culture.",
+    "Nuevos episodios seguido, en YouTube.":"New episodes regularly, on YouTube.","Ver el canal →":"View the channel →",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.":"Three friends obsessed with cars: stories, debates and car culture. New episodes often.",
     "Suscríbete en YouTube":"Subscribe on YouTube","Borrar (admin)":"Delete (admin)",
     "Leer historia →":"Read story →","Añade coches que la comunidad publicó.":"Add cars the community published.",
@@ -2758,6 +2792,9 @@ function applyAfterLoad(){
   const cur=document.querySelector("#tabs button.on")?.dataset.tab||"home";
   if(cur==="home"&&!viewing)renderHome(); else if(cur==="irl")renderIrl(); else if(cur==="activities")renderAct();
 }
+document.addEventListener("click",e=>{
+  document.querySelectorAll("details.acct[open]").forEach(d=>{ if(!d.contains(e.target)||e.target.closest(".acct-menu button")) d.removeAttribute("open"); });
+});
 function renderAuthUI(){
   const el=$("#authArea"); if(!el)return;
   if(viewing){
@@ -2769,11 +2806,15 @@ function renderAuthUI(){
   }
   if(session){
     const u=myProfile?myProfile.username:"…", pub=myProfile?myProfile.is_public:true;
-    el.innerHTML=`<button class="btn sm" onclick="openFriends()">Amigos</button>
-      <span class="authuser">@${u}</span>
-      <button class="btn sm" onclick="togglePublic()">${pub?"Público":"Privado"}</button>
-      <button class="btn sm" onclick="copyMyLink()">Mi enlace</button>
-      <button class="btn sm ghost" onclick="doLogout()">Salir</button>`;
+    el.innerHTML=`<details class="acct">
+        <summary class="btn sm"><span class="authuser">@${u}</span></summary>
+        <div class="acct-menu" role="menu">
+          <button role="menuitem" onclick="openFriends()">Amigos</button>
+          <button role="menuitem" onclick="togglePublic()">${pub?"Público":"Privado"}</button>
+          <button role="menuitem" onclick="copyMyLink()">Mi enlace</button>
+          <button role="menuitem" onclick="doLogout()">Salir</button>
+        </div>
+      </details>`;
   } else {
     el.innerHTML=`<button class="btn primary sm" onclick="openAuth('login')">Iniciar sesión</button>`;
   }
@@ -3464,26 +3505,24 @@ let homeCars=[], homeStories=[];
 async function renderHome(){
   const v=$("#tab-home"); if(!v)return;
   v.innerHTML=`
-    <div class="pd-hero">
-      <div class="pd-big" aria-hidden="true">Clásicos</div>
-      <div class="pd-stage" id="heroStage" aria-label="Modelo 3D interactivo de un auto clásico. Arrastra para girarlo."><div class="pd-loading" id="heroLoading">Cargando</div></div>
-      <div class="pd-board">
-        <div class="pd-copy">
-          <h1>Tu garage de <b>clásicos</b>, en línea de salida.</h1>
-          <p>Publica tus autos, compara especificaciones y sigue lo que se mueve en el mercado de clásicos.</p>
-          <div class="cta">
-            <button class="btn primary" onclick="showTab('garage')">Mi garage</button>
-            <button class="btn" onclick="showTab('market')">Marketplace</button>
-          </div>
-        </div>
-        <div class="pd-conf">
-          <div class="pd-k">En pista</div>
-          <div class="pd-picker" id="heroPicker"></div>
-          <div class="pd-now"><span>Motor</span><b id="heroSpec"></b></div>
-          <div class="pd-credit" id="heroCredit"></div>
+    <section class="cine" aria-label="Portada">
+      <div class="cine-stage" id="heroStage" aria-label="Modelo 3D interactivo de dos Alfa Romeo Giulia Sprint de 1965. Arrastra para girar la escena."></div>
+      <div class="cine-veil" id="heroLoading" aria-hidden="true"><span>Cargando el estudio</span></div>
+      <div class="cine-copy">
+        <h1>Tu garage de <em>clásicos</em>, en línea de salida.</h1>
+        <p>Publica tus autos, compara especificaciones y sigue lo que se mueve en el mercado de clásicos.</p>
+        <div class="cta">
+          <button class="btn primary" onclick="showTab('garage')">Mi garage</button>
+          <button class="btn" onclick="showTab('market')">Marketplace</button>
         </div>
       </div>
-    </div>
+      <aside class="cine-plate" aria-label="Ficha">
+        <div class="cp-name" id="heroName"></div>
+        <div class="cp-row"><span>Motor</span><b id="heroSpec"></b></div>
+        <div class="cp-hint">Arrastra para recorrer el estudio</div>
+        <div class="cp-credit" id="heroCredit"></div>
+      </aside>
+    </section>
     <div class="home-sec">
       <div class="home-sechead"><h2>Publicados recientemente</h2><button class="link" onclick="showTab('market')">Ver todo →</button></div>
       <div id="home-cars" class="grid">${skelCards(6)}</div>
@@ -3496,19 +3535,26 @@ async function renderHome(){
       <div class="home-sechead"><h2>El mercado, en video</h2><a href="https://www.hagerty.com/media/" target="_blank" rel="noopener noreferrer">Más en Hagerty →</a></div>
       <div id="home-market" class="mv-wrap"></div>
     </div>
-    <div class="home-sec">
-      <div class="home-sechead"><h2>Trifoglio Podcast</h2><a href="https://www.youtube.com/@TrifoglioPodcast" target="_blank" rel="noopener noreferrer">Ver el canal →</a></div>
-      <div class="podcast-wrap">
-        <div class="pod-embed"><iframe src="https://www.youtube-nocookie.com/embed/videoseries?list=UUQlYk6kGVgBBQlusZYBkGYA" title="Trifoglio Podcast" loading="lazy" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-        <div class="pod-side">
-          <div class="pod-mark"></div>
-          <div class="pod-name">Trifoglio Podcast</div>
-          <div class="pod-desc">Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.</div>
-          <a class="btn primary" href="https://www.youtube.com/@TrifoglioPodcast?sub_confirmation=1" target="_blank" rel="noopener noreferrer">Suscríbete en YouTube</a>
-          <a class="btn ghost sm" href="https://www.instagram.com/trifoglio.pod" target="_blank" rel="noopener noreferrer" style="justify-content:center">@trifoglio.pod</a>
+    <section class="trif" aria-labelledby="trif-h">
+      <div class="trif-in">
+        <header class="trif-head">
+          <div class="trif-k">Podcast</div>
+          <h2 id="trif-h" class="trif-word">Trifoglio</h2>
+        </header>
+        <div class="trif-grid">
+          <div class="trif-player"><iframe src="https://www.youtube-nocookie.com/embed/videoseries?list=UUQlYk6kGVgBBQlusZYBkGYA" title="Trifoglio Podcast" loading="lazy" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+          <div class="trif-side">
+            <p class="trif-lead">Tres amigos apasionados por los autos: historias, debates y cultura automotriz.</p>
+            <p class="trif-sub">Nuevos episodios seguido, en YouTube.</p>
+            <a class="btn primary" href="https://www.youtube.com/@TrifoglioPodcast?sub_confirmation=1" target="_blank" rel="noopener noreferrer">Suscríbete en YouTube</a>
+            <nav class="trif-links" aria-label="Trifoglio en redes">
+              <a href="https://www.youtube.com/@TrifoglioPodcast" target="_blank" rel="noopener noreferrer"><span>Ver el canal</span><span aria-hidden="true">↗</span></a>
+              <a href="https://www.instagram.com/trifoglio.pod" target="_blank" rel="noopener noreferrer"><span>@trifoglio.pod</span><span aria-hidden="true">↗</span></a>
+            </nav>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
     <div class="home-sec">
       <div class="home-sechead"><h2>Explora</h2></div>
       <div class="home-tiles">
@@ -3665,35 +3711,36 @@ function showInstall(kind){
 window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredPrompt=e; showInstall("android"); });
 (function(){ const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent); if(isIOS && !pwaStandalone()){ setTimeout(()=>showInstall("ios"),2500); } })();
 </script>
+<footer class="colophon">
+  <div class="colo-in">
+    <div class="colo-wm">Mi <b>Garage</b></div>
+    <nav class="colo-nav" aria-label="Secciones">
+      <button onclick="showTab('garage');scrollTo(0,0)">Garage</button>
+      <button onclick="showTab('market');scrollTo(0,0)">Marketplace</button>
+      <button onclick="showTab('historia');scrollTo(0,0)">Historia</button>
+      <button onclick="showTab('battle');scrollTo(0,0)">Spec Battle</button>
+      <button onclick="showTab('discover');scrollTo(0,0)">Descubrir</button>
+    </nav>
+    <p class="colo-note">Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.</p>
+  </div>
+</footer>
 <script type="module">
-/* Hero 3D: monta el showroom en #heroStage cada vez que se renderiza Inicio */
+/* Hero 3D: monta el estudio en #heroStage cada vez que se renderiza Inicio */
 import { mountShowroom, CLASSICS } from "./showroom.js";
-const cars = CLASSICS.filter(c => c.ready);
 let room = null, stageEl = null;
-function init(){
+async function init(){
   const stage = document.getElementById("heroStage"); if(!stage || stage === stageEl) return;
   if(room){ room.dispose(); room = null; }
   stageEl = stage;
-  room = mountShowroom(stage, { exposure: 1.05, keyLight: 2.2, cameraPos: [5.1, 1.15, 5.3], targetY: 0.5 });
-  const picker = document.getElementById("heroPicker"), loading = document.getElementById("heroLoading");
-  const spec = document.getElementById("heroSpec"), credit = document.getElementById("heroCredit");
-  async function select(car, btn){
-    picker.querySelectorAll(".pd-pick").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
-    spec.textContent = car.spec;
-    // crédito requerido por la licencia CC Attribution
-    credit.innerHTML = 'Modelo 3D: <a href="' + car.credit.url + '" target="_blank" rel="noopener">' + car.credit.title + '</a> por ' + car.credit.author + ', <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>';
-    loading.hidden = false; loading.textContent = "Cargando";
-    try{ await room.show(car, p => (loading.textContent = "Cargando " + Math.round(p * 100) + "%")); loading.hidden = true; }
-    catch(e){ loading.textContent = "No se pudo cargar el modelo"; }
-  }
-  cars.forEach((car, i) => {
-    const b = document.createElement("button");
-    b.className = "pd-pick";
-    b.innerHTML = '<span class="y">' + car.year + '</span><span>' + car.name + '</span>';
-    b.addEventListener("click", () => select(car, b));
-    picker.appendChild(b);
-    if(i === 0) select(car, b);
-  });
+  const car = CLASSICS.find(c => c.ready); if(!car) return;
+  const veil = document.getElementById("heroLoading");
+  document.getElementById("heroName").textContent = car.year + " " + car.name;
+  document.getElementById("heroSpec").textContent = car.spec;
+  // crédito requerido por la licencia CC Attribution
+  document.getElementById("heroCredit").innerHTML = 'Modelo 3D: <a href="' + car.credit.url + '" target="_blank" rel="noopener">' + car.credit.title + '</a> por ' + car.credit.author + ', <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>';
+  room = mountShowroom(stage, { exposure: 1.05 });
+  try{ await room.show(car); veil.classList.add("off"); }
+  catch(e){ veil.querySelector("span").textContent = "No se pudo cargar el modelo"; }
 }
 window.initHeroShowroom = init;
 init();

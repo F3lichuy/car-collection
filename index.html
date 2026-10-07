@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mi Garage — Colección de Coches</title>
+<meta name="description" content="Colecciona, califica y comparte autos clásicos. Publica tu garage, lee historias de la comunidad y sigue el mercado de clásicos.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Car Collection">
+<meta property="og:title" content="Mi Garage · Car Collection">
+<meta property="og:description" content="Colecciona, califica y comparte autos clásicos con la comunidad.">
+<meta property="og:url" content="https://carcollection.app/">
+<meta property="og:image" content="https://carcollection.app/hero1.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f2219">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -956,6 +964,36 @@
   .tl-nm{font-family:var(--display);font-size:20px;line-height:1.1}
   .tl-mt{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint)}
   @media(max-width:760px){ .tl-dec{grid-template-columns:1fr;gap:14px} .tl-label{position:static;flex-direction:row;align-items:baseline;gap:14px} .tl-row{grid-auto-columns:72%} }
+
+  /* --- El clásico del día --- */
+  .dayc{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:48px;align-items:center;margin:96px 0 0;padding-top:28px;border-top:1px solid var(--line)}
+  .dayc:empty{display:none}
+  .dayc-ph{aspect-ratio:4/3;border-radius:var(--radius);overflow:hidden;background:var(--card);cursor:pointer}
+  .dayc-ph img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 1.4s cubic-bezier(.16,1,.3,1)}
+  .dayc-ph:hover img{transform:scale(1.035)}
+  .dayc-k{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+  .dayc-nm{font-family:var(--display);font-style:italic;font-weight:400;font-size:clamp(40px,4.6vw,68px);line-height:1.02;letter-spacing:-.02em;margin:0 0 10px}
+  .dayc-mt{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:22px}
+  .dayc-mt span{color:var(--ink-faint);margin-left:8px}
+  .dayc-tx p{color:var(--ink-dim);max-width:40ch;margin:0 0 24px}
+  .dayc-tx .cta{display:flex;gap:10px;flex-wrap:wrap}
+  @media(max-width:860px){ .dayc{grid-template-columns:1fr;gap:22px;margin-top:64px} }
+  /* --- revelado y fundidos (solo si el usuario no pidió menos movimiento) --- */
+  @media(prefers-reduced-motion:no-preference){
+    .rv{opacity:0;transform:translateY(26px);transition:opacity .9s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1)}
+    .rv.in{opacity:1;transform:none}
+    .car .ph img,.tl-ph img,.dayc-ph img,.story-tile .cover img,.st-cover img,.st-plates img{opacity:0;transition:opacity .7s ease,transform 1.1s cubic-bezier(.16,1,.3,1),filter .6s}
+    .car .ph img.ld,.tl-ph img.ld,.dayc-ph img.ld,.story-tile .cover img.ld,.st-cover img.ld,.st-plates img.ld{opacity:1}
+  }
+  /* --- volver arriba --- */
+  .totop{position:fixed;right:22px;bottom:22px;z-index:45;width:44px;height:44px;border-radius:var(--radius);border:1px solid var(--line);background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(6px);color:var(--ink);font-size:18px;opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .3s,transform .3s}
+  .totop.show{opacity:1;transform:none;pointer-events:auto}
+  .totop:hover{border-color:var(--accent);color:var(--accent)}
+  /* --- accesibilidad --- */
+  .skip{position:absolute;left:12px;top:-60px;z-index:100;background:var(--accent);color:var(--on-accent);padding:10px 14px;border-radius:var(--radius);font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.06em;text-decoration:none}
+  .skip:focus{top:12px}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  #main:focus{outline:none}
 </style>
 </head>
 <body data-theme="paddock">
@@ -975,6 +1013,8 @@
   setTimeout(kill,2200); // respaldo por si el evento no dispara
 })();
 </script>
+<a class="skip" href="#main">Saltar al contenido</a>
+<div id="topSentinel" style="position:absolute;top:0;left:0;height:900px;width:1px;pointer-events:none" aria-hidden="true"></div>
 <header class="top">
   <div class="topbar">
     <div class="brand">
@@ -997,7 +1037,7 @@
     <button data-tab="discover">Descubrir</button>
   </div>
 </header>
-<div class="wrap">
+<div class="wrap" id="main" tabindex="-1">
   <!-- ============ HOME TAB ============ -->
   <section id="tab-home"></section>
   <!-- ============ GARAGE TAB ============ -->
@@ -1256,7 +1296,7 @@
     "Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…":"Tell why it’s special: bespoke order, one-of-one, story, unique specs…",
     "Aún no escribes la historia. Edita el coche y llena el campo 'Historia / deep-dive' de esta versión.":"You haven’t written the story yet. Edit the car and fill the “Story / deep-dive” field on this version.",
     "Sin historia todavía.":"No story yet.","Historia":"Story","Detalles":"Details","Valor":"Value","Rareza":"Rarity","One-off":"One-off",
-    "Trifoglio Podcast":"Trifoglio Podcast","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
+    "Trifoglio Podcast":"Trifoglio Podcast","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz.":"Three friends obsessed with cars: stories, debates and car culture.",
     "Nuevos episodios seguido, en YouTube.":"New episodes regularly, on YouTube.","Ver el canal →":"View the channel →",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.":"Three friends obsessed with cars: stories, debates and car culture. New episodes often.",
@@ -1383,6 +1423,7 @@
   ];
 
   PAT.push(
+    P(/^El clásico del día · (.+)$/, function(m){ return "Classic of the day · "+m[1]; }),
     P(/^Comentarios (\d+)$/, function(m){ return "Comments "+m[1]; }),
     P(/^(.*) fotos$/, function(m){ return m[1]+" photos"; })
   );
@@ -1853,6 +1894,7 @@ function renderGarage(){
     return;
   }
   const mode=garageMode();
+  setTimeout(revealScan,0);
   view.innerHTML=garageStats()+(mode==="timeline"?garageTimeline(list):`<div class="grid">${list.map((c,i)=>carCard(c,i,list)).join("")}</div>`);
 }
 /* ---------- Garage: cifras y línea de tiempo ---------- */
@@ -2888,6 +2930,11 @@ function applyAfterLoad(){
 document.addEventListener("click",e=>{
   document.querySelectorAll("details.acct[open]").forEach(d=>{ if(!d.contains(e.target)||e.target.closest(".acct-menu button")) d.removeAttribute("open"); });
 });
+(function(){
+  const sen=document.getElementById("topSentinel"), btn=document.getElementById("toTop");
+  if(!sen||!btn||!("IntersectionObserver" in window)) return;
+  new IntersectionObserver(([e])=>btn.classList.toggle("show",!e.isIntersecting)).observe(sen);
+})();
 function renderAuthUI(){
   const el=$("#authArea"); if(!el)return;
   if(viewing){
@@ -3536,7 +3583,7 @@ async function renderHistoria(){
     storiesCache=data||[]; const feed=$("#st-feed");
     if(!storiesCache.length){ feed.innerHTML=`<div class="empty"><div class="big"></div><h2>Aún no hay historias</h2><p>Sé el primero en compartir la historia o un dato curioso de un coche.</p></div>`; return; }
     await loadSocial(storiesCache.map(s=>s.id));
-    feed.innerHTML=storiesCache.map(storyCard).join("");
+    feed.innerHTML=storiesCache.map(storyCard).join(""); revealScan();
   }catch(e){ const f=$("#st-feed"); if(f)f.innerHTML='<p style="color:var(--accent)">Error al cargar.</p>'; }
 }
 function storyCard(s){
@@ -3620,6 +3667,7 @@ async function renderHome(){
       <div class="home-sechead"><h2>Publicados recientemente</h2><button class="link" onclick="showTab('market')">Ver todo →</button></div>
       <div id="home-cars" class="grid">${skelCards(6)}</div>
     </div>
+    <section class="dayc" id="home-day" aria-label="El clásico del día"></section>
     <div class="home-sec">
       <div class="home-sechead"><h2>Historias y artículos</h2><button class="link" onclick="showTab('historia')">Ver todo →</button></div>
       <div id="home-stories"><div class="skel" style="height:460px;border-radius:16px"></div></div>
@@ -3658,6 +3706,7 @@ async function renderHome(){
       </div>
     </div>`;
   if(window.initHeroShowroom) window.initHeroShowroom();
+  revealScan();
   if(!supa){ const hc=$("#home-cars"); if(hc)hc.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Conéctate para ver lo más reciente.</p>'; const hs=$("#home-stories"); if(hs)hs.innerHTML=''; renderMarketVideos(); return; }
   // --- coches publicados recientemente (catálogo) ---
   try{
@@ -3669,6 +3718,7 @@ async function renderHome(){
           <div class="meta"><b>${esc(e.brand||"")}</b> <span>${esc(e.year||"")}</span></div></div>
       </article>`).join("") : '<p style="color:var(--ink-faint);font-size:13px">Aún no hay coches. ¡Sé el primero en publicar!</p>';
   }catch(e){ const box=$("#home-cars"); if(box)box.innerHTML='<p style="color:var(--accent);font-size:13px">Error al cargar.</p>'; }
+  renderDayCar();
   // --- historias recientes ---
   try{
     const {data}=await supa.from("stories").select("*").order("created_at",{ascending:false}).limit(6);
@@ -3676,6 +3726,42 @@ async function renderHome(){
   }catch(e){ const box=$("#home-stories"); if(box)box.innerHTML='<p style="color:var(--accent);font-size:13px">Error al cargar.</p>'; }
   renderMarketVideos();
 }
+/* ---------- El clásico del día: un auto anterior a 1990 del catálogo, fijo durante todo el día ---------- */
+let dayCar=null;
+async function renderDayCar(){
+  const box=$("#home-day"); if(!box||!supa) return;
+  try{
+    const {data}=await supa.from("catalog").select("key,brand,name,year,image,variants").not("image","is",null).limit(400);
+    const pool=(data||[]).filter(e=>e.image&&parseInt(e.year,10)>1900&&parseInt(e.year,10)<1990);
+    if(!pool.length){ box.remove(); return; }
+    const d=new Date(), seed=d.getFullYear()*1000+Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);
+    pool.sort((a,b)=>String(a.key).localeCompare(String(b.key)));
+    dayCar=pool[seed%pool.length];
+    const fecha=d.toLocaleDateString(LANG_CODE(),{weekday:"long",day:"numeric",month:"long"});
+    box.innerHTML=`<div class="dayc-ph" onclick="openDayCar()"><img src="${esc(dayCar.image)}" alt="${esc((dayCar.brand||"")+" "+(dayCar.name||""))}" loading="lazy" decoding="async"></div>
+      <div class="dayc-tx">
+        <div class="dayc-k">El clásico del día · ${esc(fecha)}</div>
+        <h2 class="dayc-nm">${esc(dayCar.name||"")}</h2>
+        <div class="dayc-mt">${esc(dayCar.brand||"")} <span>${esc(String(dayCar.year||""))}</span></div>
+        <p>Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.</p>
+        <div class="cta"><button class="btn primary" onclick="openDayCar()">Agregar a mi garage</button><button class="btn" onclick="showTab('market')">Ver Marketplace</button></div>
+      </div>`;
+    revealScan();
+  }catch(e){ box.remove(); }
+}
+function openDayCar(){ if(!dayCar)return; mkData=[dayCar]; addFromCatalog(0); }
+function LANG_CODE(){ return (window.__i18n&&window.__i18n.lang==="en")?"en-US":"es-MX"; }
+/* ---------- revelado suave al entrar en pantalla ---------- */
+let revealSeen=false;
+const revealIO=("IntersectionObserver" in window)?new IntersectionObserver(es=>es.forEach(e=>{ revealSeen=true; if(e.isIntersecting){ e.target.classList.add("in"); revealIO.unobserve(e.target); } }),{rootMargin:"0px 0px -8% 0px"}):null;
+function revealScan(){
+  document.querySelectorAll(".home-sec:not(.rv),.trif:not(.rv),.dayc:not(.rv),.gstats:not(.rv),.tl-dec:not(.rv),.st-article:not(.rv)").forEach(el=>{
+    el.classList.add("rv"); if(revealIO) revealIO.observe(el); else el.classList.add("in");
+    setTimeout(()=>{ if(!revealSeen) el.classList.add("in"); },3000);   // respaldo: nunca dejar contenido oculto
+  });
+}
+/* fundido de fotos al terminar de cargar */
+document.addEventListener("load",e=>{ const t=e.target; if(t&&t.tagName==="IMG") t.classList.add("ld"); },true);
 function openHomeCar(i){ if(!homeCars[i])return; mkData=homeCars.slice(); addFromCatalog(i); }
 function openStoryView(id){
   const s=(homeStories||[]).find(x=>String(x.id)===String(id)); if(!s)return;
@@ -3804,6 +3890,7 @@ function showInstall(kind){
 window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredPrompt=e; showInstall("android"); });
 (function(){ const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent); if(isIOS && !pwaStandalone()){ setTimeout(()=>showInstall("ios"),2500); } })();
 </script>
+<button class="totop" id="toTop" aria-label="Volver arriba" onclick="scrollTo({top:0,behavior:'smooth'})">↑</button>
 <footer class="colophon">
   <div class="colo-in">
     <div class="colo-wm">Mi <b>Garage</b></div>

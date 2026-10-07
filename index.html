@@ -1048,6 +1048,13 @@
   .era.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
   .mk-more{display:flex;justify-content:center;margin:48px 0 0}
   @media(max-width:600px){ .eras{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px} .era{flex:0 0 auto} }
+
+  /* --- Explora con fotos --- */
+  .home-tile.has-img{min-height:280px;justify-content:flex-end;color:#f3efe6;
+    background:linear-gradient(0deg,rgba(var(--shade),.94) 8%,rgba(var(--shade),.45) 55%,rgba(var(--shade),.12) 100%),var(--img) center/cover no-repeat;transition:filter .4s}
+  .home-tile.has-img:hover{filter:brightness(1.12)}
+  .home-tile.has-img .t{color:#f6f2ea}
+  .home-tile.has-img .d{color:rgba(246,242,234,.78)}
 </style>
 </head>
 <body data-theme="paddock">
@@ -3864,6 +3871,7 @@ async function renderHome(){
       </article>`).join("") : '<p style="color:var(--ink-faint);font-size:13px">Aún no hay coches. ¡Sé el primero en publicar!</p>';
   }catch(e){ const box=$("#home-cars"); if(box)box.innerHTML='<p style="color:var(--accent);font-size:13px">Error al cargar.</p>'; }
   renderDayCar();
+  paintHomeTiles();
   // --- historias recientes ---
   try{
     const {data}=await supa.from("stories").select("*").order("created_at",{ascending:false}).limit(6);
@@ -3893,6 +3901,11 @@ async function renderDayCar(){
       </div>`;
     revealScan();
   }catch(e){ box.remove(); }
+}
+/* accesos de "Explora" con fotos de la comunidad de fondo */
+function paintHomeTiles(){
+  const pics=(homeCars||[]).filter(e=>e.image); if(!pics.length) return;
+  document.querySelectorAll(".home-tile").forEach((t,k)=>{ const e=pics[(k*3+2)%pics.length]; t.style.setProperty("--img",'url("'+String(e.image).replace(/["\\]/g,"")+'")'); t.classList.add("has-img"); });
 }
 function openDayCar(){ if(!dayCar)return; mkData=[dayCar]; addFromCatalog(0); }
 function LANG_CODE(){ return (window.__i18n&&window.__i18n.lang==="en")?"en-US":"es-MX"; }

@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Seguridad: solo se cargan scripts propios y del CDN fijado; conexiones solo a Supabase, Wikipedia/Commons y el CDN -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' https:; connect-src 'self' blob: data: https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://*.wikipedia.org https://commons.wikimedia.org https://upload.wikimedia.org; frame-src https://www.youtube-nocookie.com https://www.youtube.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Mi Garage — Colección de Coches</title>
 <meta name="description" content="Colecciona, califica y comparte autos clásicos. Publica tu garage, lee historias de la comunidad y sigue el mercado de clásicos.">
 <meta property="og:type" content="website">
@@ -1387,7 +1390,7 @@
     "Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…":"Tell why it’s special: bespoke order, one-of-one, story, unique specs…",
     "Aún no escribes la historia. Edita el coche y llena el campo 'Historia / deep-dive' de esta versión.":"You haven’t written the story yet. Edit the car and fill the “Story / deep-dive” field on this version.",
     "Sin historia todavía.":"No story yet.","Historia":"Story","Detalles":"Details","Valor":"Value","Rareza":"Rarity","One-off":"One-off",
-    "Trifoglio Podcast":"Trifoglio Podcast","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
+    "Trifoglio Podcast":"Trifoglio Podcast","Solo las cuentas administradoras pueden usar este modo":"Only admin accounts can use this mode","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz.":"Three friends obsessed with cars: stories, debates and car culture.",
     "Nuevos episodios seguido, en YouTube.":"New episodes regularly, on YouTube.","Ver el canal →":"View the channel →",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.":"Three friends obsessed with cars: stories, debates and car culture. New episodes often.",
@@ -1570,21 +1573,18 @@
   wireLang();
 })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js" integrity="sha384-BWcjm9OdFth9TbhCxZPdm+gAOUMAzQy9nmTs12ioXdCcbVnJaPMn+fMUoQCLt60R" crossorigin="anonymous"></script>
 <script>
 /* ---- Supabase (nube) ---- */
 const SUPABASE_URL="https://tayybbmbhsqxocugwzji.supabase.co";
 const SUPABASE_KEY="sb_publishable_WQcCQMw9q514W_NYWWJEsw_us7a3uNu";
 let supa=null, session=null, myProfile=null, viewing=null, readOnly=false;
-const ADMIN_CODE="MG-9X4K-Q72B"; let adminUnlocked=false;
+let adminUnlocked=false;   // la verdadera protección está en las reglas RLS de Supabase (ver supabase/seguridad.sql)
 function isAdmin(){ return !!(myProfile && (myProfile.is_admin || (myProfile.username||"").toLowerCase()==="feli_chuy")); }
 function adminToggle(){
   if(adminUnlocked){ adminUnlocked=false; toast("Modo admin desactivado"); renderMarketTab(); return; }
   if(isAdmin()){ adminUnlocked=true; toast("Modo admin activado"); renderMarketTab(); return; }
-  const code=prompt("Código de administrador:");
-  if(code===null) return;
-  if(code.trim()===ADMIN_CODE){ adminUnlocked=true; toast("Modo admin activado"); renderMarketTab(); }
-  else toast("Código incorrecto");
+  toast("Solo las cuentas administradoras pueden usar este modo");
 }
 async function adminDeleteCatalog(i){
   const e=mkData[i]; if(!e)return;
@@ -1797,7 +1797,7 @@ function processImage(file,maxW){
 /* Backward-compat guard: any older export (4 ratings, no tags, no new params,
    strings instead of numbers) is coerced into a safe shape without losing data. */
 function normalizeCar(c){
-  c=c||{};
+  c=deepClean(c||{});
   c.id=c.id||uid(); c.created=c.created||Date.now();
   c.tags=Array.isArray(c.tags)?c.tags:[];
   c.specs=Array.isArray(c.specs)?c.specs:[];
@@ -1815,7 +1815,7 @@ function normalizeCar(c){
   return c;
 }
 function normalizeIrl(c){
-  c=c||{};
+  c=deepClean(c||{});
   c.id=c.id||uid(); c.created=c.created||Date.now();
   c.ratings=c.ratings&&typeof c.ratings==="object"?c.ratings:{};
   IRL_PARAMS.forEach(p=>{ if(c.ratings[p]!=null && c.ratings[p]!=="") c.ratings[p]=Number(c.ratings[p]); });
@@ -2133,7 +2133,7 @@ function carCard(c,i,list){
     return `<div class="barrow"><span class="lab">${PARAM_LABELS[p]}</span>
       <span class="track"><span class="fill" style="width:${v*10}%"></span></span><span class="v">${v}</span></div>`;
   }).join("");
-  const tags=(c.tags||[]).slice(0,4).map(t=>`<span class="tag">${t}</span>`).join("");
+  const tags=(c.tags||[]).slice(0,4).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
   return `<article class="car">
     <div class="ph" onclick="openDetail('${c.id}')">
       ${img?`<img src="${img}" alt="${esc(((c.brand||"")+" "+(c.name||"")).trim())}" loading="lazy" decoding="async">`:`<div class="noimg"></div>`}
@@ -2141,8 +2141,8 @@ function carCard(c,i,list){
       ${a?`<div class="avgbadge">★ ${a.toFixed(1)}</div>`:""}${garageStrip(c)}
     </div>
     <div class="body">
-      <div class="nm" onclick="openDetail('${c.id}')" style="cursor:pointer">${c.name||"Sin nombre"}</div>
-      <div class="meta"><b>${c.brand||"—"}</b> <span>${c.year||""}</span> <span>${money(c)}</span>${c.color?` <span>· ${esc(c.color)}</span>`:''}</div>
+      <div class="nm" onclick="openDetail('${c.id}')" style="cursor:pointer">${esc(c.name||"Sin nombre")}</div>
+      <div class="meta"><b>${esc(c.brand||"—")}</b> <span>${esc(c.year||"")}</span> <span>${money(c)}</span>${c.color?` <span>· ${esc(c.color)}</span>`:''}</div>
       ${tags?`<div class="tags">${tags}</div>`:""}
       <div class="bars">${bars}</div>
       <div class="acts">
@@ -2174,11 +2174,11 @@ function openDetail(id){
       ${s.images?.length?`<div class="specthumbs">${s.images.map(im=>`<img src="${im}">`).join("")}</div>`:""}
     </div>`).join("");
   $("#detailModal").innerHTML=`
-    <div class="mh"><h3>${c.name||"Coche"}</h3>
+    <div class="mh"><h3>${esc(c.name||"Coche")}</h3>
       <button class="iconbtn" onclick="closeAll()">×</button></div>
     <div class="mb">
       <div class="detailhead">
-        <div class="big">${c.year||""} <span style="color:var(--accent)">${c.brand||""}</span></div>
+        <div class="big">${esc(c.year||"")} <span style="color:var(--accent)">${esc(c.brand||"")}</span></div>
         <div style="margin-left:auto;text-align:right">
           <div style="font-family:var(--display);font-size:40px;line-height:.9">★ ${avg(c).toFixed(1)}</div>
           <div style="color:var(--ink-faint);font-size:12px">promedio</div>
@@ -2198,7 +2198,7 @@ function openDetail(id){
             <div style="font-family:var(--display);font-size:30px">${money(c)}</div></div>
           <div class="bars">${bars}</div>
           ${c.notes?`<div><div style="color:var(--ink-faint);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Notas</div>
-            <div style="font-size:14px;color:var(--ink-dim)">${c.notes}</div></div>`:""}
+            <div style="font-size:14px;color:var(--ink-dim)">${esc(c.notes)}</div></div>`:""}
           ${specs}
         </div>
       </div>
@@ -2255,12 +2255,12 @@ function openEdit(id){
       <button class="iconbtn" onclick="closeAll()">×</button></div>
     <div class="mb">
       <div class="three">
-        <div class="field"><label>Marca</label><input id="f-brand" list="brandList" autocomplete="off" value="${c?.brand||""}" placeholder="Ferrari"></div>
-        <div class="field"><label>Año</label><input id="f-year" value="${c?.year||""}" placeholder="2014"></div>
+        <div class="field"><label>Marca</label><input id="f-brand" list="brandList" autocomplete="off" maxlength="40" value="${c?.brand||""}" placeholder="Ferrari"></div>
+        <div class="field"><label>Año</label><input id="f-year" inputmode="numeric" maxlength="4" value="${c?.year||""}" placeholder="2014"></div>
         <div class="field"><label>Valor</label><input id="f-price" type="number" value="${c?.price??""}" placeholder="700000"></div>
       </div>
       <div class="two">
-        <div class="field"><label>Modelo / Nombre *</label><input id="f-name" list="modelList" autocomplete="off" value="${c?.name||""}" placeholder="458 Speciale"></div>
+        <div class="field"><label>Modelo / Nombre *</label><input id="f-name" list="modelList" autocomplete="off" maxlength="90" value="${c?.name||""}" placeholder="458 Speciale"></div>
         <div class="field"><label>Moneda</label>
           <select id="f-curr">${Object.keys(CURR).map(k=>`<option value="${k}" ${c?.currency===k?'selected':''}>${k} ${CURR[k]}</option>`).join("")}</select>
         </div>
@@ -2938,10 +2938,10 @@ function openIrlDetail(id){
   }).join("");
   const log=c.log||{};
   $("#irlDetailModal").innerHTML=`
-    <div class="mh"><h3>${c.name||"Coche"}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mh"><h3>${esc(c.name||"Coche")}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
     <div class="mb">
       <div class="detailhead">
-        <div class="big">${c.year||""} <span style="color:var(--accent)">${c.brand||""}</span></div>
+        <div class="big">${esc(c.year||"")} <span style="color:var(--accent)">${esc(c.brand||"")}</span></div>
         <div style="margin-left:auto;text-align:right">
           <div style="font-family:var(--display);font-size:40px;line-height:.9">★ ${irlAvg(c).toFixed(1)}</div>
           <div style="color:var(--ink-faint);font-size:12px">experiencia</div>
@@ -3080,7 +3080,30 @@ function wire(){
 /* ======================================================================
    NUBE (Supabase): auth, sincronización, perfiles, buscador
    ====================================================================== */
-function initSupabase(){ try{ supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY); }catch(e){ supa=null; } }
+/* ---------- Limpieza de datos externos (defensa contra XSS) ----------
+   Todo texto que viene de la base de datos o de archivos importados pasa por cleanText:
+   se quitan < y > y las comillas rectas se cambian por tipográficas, así ningún dato
+   puede romper el HTML ni los atributos donde se inserta. Los identificadores no se tocan. */
+const RAW_KEYS=new Set(["key","id","user_id","target_id","target_type","following_id","follower_id","added_by","created_by","created_at","updated_at","created","currency"]);
+function cleanText(v){ return typeof v==="string"?v.replace(/[<>]/g,"").replace(/"/g,"\u201D").replace(/'/g,"\u2019"):v; }
+function deepClean(v,k){
+  if(typeof v==="string") return RAW_KEYS.has(k)?v:cleanText(v);
+  if(Array.isArray(v)){ for(let i=0;i<v.length;i++) v[i]=deepClean(v[i],k); return v; }
+  if(v&&typeof v==="object"){ for(const kk of Object.keys(v)) v[kk]=deepClean(v[kk],kk); return v; }
+  return v;
+}
+function guardSupabase(client){
+  try{
+    // intercepta la respuesta de cualquier consulta (from().select()...) y limpia sus datos
+    let p=Object.getPrototypeOf(client.from("catalog").select("key"));
+    while(p&&!Object.prototype.hasOwnProperty.call(p,"then")) p=Object.getPrototypeOf(p);
+    if(!p||p.__guarded) return;
+    const orig=p.then;
+    p.then=function(ok,ko){ return orig.call(this,r=>{ if(r&&r.data) r.data=deepClean(r.data); return ok?ok(r):r; },ko); };
+    p.__guarded=true;
+  }catch(e){}
+}
+function initSupabase(){ try{ supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY); guardSupabase(supa); }catch(e){ supa=null; } }
 function applyAfterLoad(){
   remapCats();   // migra categorías viejas (español) → inglés
   document.body.classList.toggle("viewing", !!viewing);
@@ -3833,9 +3856,9 @@ function openStoryForm(){
   storyImgs=[]; fillBrandList();
   $("#promptModal").innerHTML=`<div class="mh"><h3>Nueva historia</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
     <div class="mb">
-      <div class="field"><label>Título</label><input id="sf-title" placeholder="La leyenda del Ferrari 250 GTO"></div>
+      <div class="field"><label>Título</label><input id="sf-title" maxlength="160" placeholder="La leyenda del Ferrari 250 GTO"></div>
       <div class="field"><label>Coche relacionado (opcional)</label><input id="sf-car" list="brandList" placeholder="Ferrari 250 GTO"></div>
-      <div class="field"><label>Historia / dato curioso</label><textarea id="sf-body" style="min-height:130px" placeholder="Cuenta la historia, el dato curioso, una anécdota…"></textarea></div>
+      <div class="field"><label>Historia / dato curioso</label><textarea id="sf-body" maxlength="12000" style="min-height:130px" placeholder="Cuenta la historia, el dato curioso, una anécdota…"></textarea></div>
       <div class="field"><label>Imágenes (opcional)</label>
         <div id="sf-thumbs" class="specthumbs" style="margin-bottom:8px"></div>
         <button class="btn sm" type="button" onclick="document.getElementById('sf-file').click()">Añadir imagen(es)</button>

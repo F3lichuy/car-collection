@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mi Garage — Colección de Coches</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1c130c">
+<meta name="theme-color" content="#0f2219">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="favicon-64.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,7 +14,8 @@
 <meta name="apple-mobile-web-app-title" content="Mi Garage">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Big+Shoulders+Display:wght@700;900&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
 <style>
   /* ============================================================
      TOKENS  — themeable via [data-theme]
@@ -44,6 +45,13 @@
     --bg:#1a0d0c; --bg2:#240f0d; --card:#2b1311; --card2:#371613;
     --line:#4d211c; --ink:#fbeae6; --ink-dim:#d3a59c; --ink-faint:#a8746a;
     --accent:#ff2a1a; --accent2:#ffce4a; --good:#6fd06a; --shadow:rgba(0,0,0,.55);
+  }
+  /* Paddock: carreras históricas de los 60. Verde de carreras, hueso y ámbar. */
+  [data-theme="paddock"]{
+    --bg:#0f2219; --bg2:#142c21; --card:#15291f; --card2:#1a3328;
+    --line:#2a4637; --ink:#ebe7da; --ink-dim:#b9c2b6; --ink-faint:#8f9c8e;
+    --accent:#e3a33b; --accent2:#e3a33b; --good:#8fcf7a; --shadow:rgba(0,0,0,.4);
+    --radius:4px; --display:"Big Shoulders Display",Impact,sans-serif; --body:"Archivo",system-ui,sans-serif;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -389,6 +397,55 @@
   .hero-inner{position:relative;z-index:2;max-width:640px}
   .hero-cap{position:absolute;bottom:16px;right:20px;z-index:2;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink);background:color-mix(in srgb,var(--bg) 50%,transparent);border:1px solid var(--line);border-radius:999px;padding:5px 12px;backdrop-filter:blur(4px);opacity:.92;transition:opacity .4s}
   @media(max-width:640px){ .hero-cap{display:none} }
+  /* --- Hero 3D (showroom de clásicos) --- */
+  .pd-hero{position:relative;overflow:hidden;margin:22px 0 6px;border:1px solid var(--line);border-radius:var(--radius);
+    background:radial-gradient(70% 60% at 50% 42%, var(--card2), var(--bg) 78%)}
+  .pd-big{position:absolute;left:0;right:0;top:3%;text-align:center;font-family:var(--display);font-weight:900;text-transform:uppercase;
+    font-size:clamp(84px,17vw,250px);line-height:.85;color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--ink) 26%,transparent);
+    user-select:none;pointer-events:none}
+  .pd-stage{position:relative;height:clamp(280px,46vh,500px);cursor:grab}
+  .pd-stage:active{cursor:grabbing}
+  .pd-loading{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;pointer-events:none;transition:opacity .3s}
+  .pd-loading[hidden]{display:block;opacity:0}
+  .pd-board{position:relative;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);border-top:1px solid var(--line)}
+  .pd-board > div{padding:26px 30px}
+  .pd-copy{border-right:1px solid var(--line)}
+  .pd-copy h1{font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:clamp(36px,4.4vw,60px);line-height:.95;margin:0 0 12px;letter-spacing:.3px}
+  .pd-copy h1 b{color:var(--accent);font-weight:700}
+  .pd-copy p{color:var(--ink-dim);margin:0 0 20px;line-height:1.55;max-width:50ch;font-size:15px}
+  .pd-copy .cta{display:flex;gap:10px;flex-wrap:wrap}
+  .pd-conf{display:flex;flex-direction:column;gap:12px;font-family:"IBM Plex Mono",monospace;font-size:12.5px}
+  .pd-k{color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em}
+  .pd-picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px}
+  .pd-pick{display:flex;align-items:baseline;gap:10px;text-align:left;padding:10px 12px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;border-radius:var(--radius);transition:border-color .2s,background .2s}
+  .pd-pick:hover{border-color:var(--ink)}
+  .pd-pick[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .pd-pick .y{color:var(--accent);font-weight:500}
+  .pd-pick[aria-pressed="true"] .y{color:inherit;opacity:.65}
+  .pd-now{display:flex;justify-content:space-between;gap:12px;color:var(--ink-faint)}
+  .pd-now b{color:var(--ink);font-weight:500}
+  .pd-credit{font-size:11px;color:var(--ink-faint)}
+  .pd-credit a{color:var(--ink-dim)}
+  @media(max-width:760px){
+    .pd-board{grid-template-columns:1fr}
+    .pd-board > div{padding:20px 16px}
+    .pd-copy{border-right:0;border-bottom:1px solid var(--line)}
+    .pd-stage{height:clamp(240px,40vh,360px)}
+  }
+  /* --- Ajustes globales del tema Paddock --- */
+  body[data-theme="paddock"]{background:var(--bg)}
+  body[data-theme="paddock"]::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:90;opacity:.06;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+  [data-theme="paddock"] header.top{background:color-mix(in srgb,var(--bg) 92%,transparent)}
+  [data-theme="paddock"] .brand .wm{font-weight:900;text-transform:uppercase;letter-spacing:.5px}
+  [data-theme="paddock"] .tabs button{font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:12.5px;text-transform:uppercase;letter-spacing:.03em;padding:10px 12px;border-bottom:0}
+  [data-theme="paddock"] .tabs button.on{background:var(--ink);color:var(--bg)}
+  [data-theme="paddock"] .btn{border-radius:var(--radius);font-family:"IBM Plex Mono",monospace;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+  [data-theme="paddock"] .btn:hover{border-color:var(--ink)}
+  [data-theme="paddock"] .btn.primary,[data-theme="paddock"] .chip.on{color:#1a1407}
+  [data-theme="paddock"] .btn.primary:hover{border-color:var(--accent)}
+  [data-theme="paddock"] .home-sechead h2{font-weight:900;text-transform:uppercase;font-size:34px;letter-spacing:.3px}
+  [data-theme="paddock"] .themes button,[data-theme="paddock"] .chip{border-radius:var(--radius)}
   /* skeletons de carga */
   @keyframes shimmer{0%{background-position:-450px 0}100%{background-position:450px 0}}
   .skel{background:linear-gradient(90deg,var(--card) 0%,var(--card2) 50%,var(--card) 100%);background-size:900px 100%;animation:shimmer 1.3s infinite linear;border-radius:8px}
@@ -579,7 +636,7 @@
   }
 </style>
 </head>
-<body data-theme="retro">
+<body data-theme="paddock">
 <div id="introOverlay" aria-hidden="true">
   <div class="intro-wm">MI <b>GARAGE</b><span class="intro-line"></span><span class="intro-sub">colección personal</span></div>
 </div>
@@ -861,7 +918,10 @@
     "Descubre, colecciona y":"Discover, collect and","rankea":"rank","los coches que amas.":"the cars you love.",
     "Explora lo que la comunidad acaba de publicar, lee historias, arma tu garage y sigue el mercado de clásicos y modernos.":"Explore what the community just published, read stories, build your garage and follow the market for classics and moderns.",
     "🚗 Mi garage":"🚗 My garage","🏪 Explorar Marketplace":"🏪 Explore Marketplace","📈 Ver mercado":"📈 View market",
-    "Publicados recientemente":"Recently published","Ver todo →":"View all →",
+    "Publicados recientemente":"Recently published",
+    "Clásicos":"Classics","Tu garage de":"Your garage of","clásicos":"classics",", en línea de salida.":", on the starting grid.",
+    "Publica tus autos, compara especificaciones y sigue lo que se mueve en el mercado de clásicos.":"Post your cars, compare specs and follow what's moving in the classic car market.",
+    "En pista":"On track","Motor":"Engine","Mi garage":"My garage","Cargando":"Loading","No se pudo cargar el modelo":"Couldn't load the model","Ver todo →":"View all →",
     "Historias y artículos":"Stories & articles","Explora":"Explore",
     "El mercado, en video":"The market, in video","Más en Hagerty →":"More on Hagerty →",
     "💎 Rarezas":"💎 Rare Specs","Rarezas":"Rare Specs","pieza(s)":"piece(s)",
@@ -1202,6 +1262,8 @@ function loadFromBlob(d){
   irlCars=(d.irlCars||[]).map(normalizeIrl);
   categories=d.categories?.length?d.categories:[...DEFAULT_CATS];
   combos=d.combos||[]; top100=d.top100||{}; theme=d.theme||"retro"; tierMap=d.tierMap||{};
+  // nueva identidad: Paddock por defecto hasta que el usuario elija otro tema a mano
+  try{ if(localStorage.getItem("cc-theme-picked")!=="1") theme="paddock"; }catch(e){}
 }
 async function loadAll(){                     // garage local (invitado / cache)
   let raw=null;
@@ -1377,16 +1439,19 @@ function openPriceMenuFromForm(){showPriceMenu(carQuery($("#f-brand").value,$("#
    THEME
    ====================================================================== */
 const THEMES=[
+  {id:"paddock",label:"Paddock",c:"#e3a33b"},
   {id:"retro",label:"Garage retro",c:"#c0451f"},
   {id:"dark",label:"Oscuro deportivo",c:"#37c0ff"},
   {id:"light",label:"Claro minimalista",c:"#b5341d"},
   {id:"rosso",label:"Rosso Corsa",c:"#ff2a1a"},
 ];
 function renderThemes(){
+  try{ if(localStorage.getItem("cc-theme-picked")!=="1") theme="paddock"; }catch(e){}
   $("#themes").innerHTML=THEMES.map(t=>
     `<button data-th="${t.id}" class="${t.id===theme?'on':''}">
        <span class="swatch" style="background:${t.c}"></span>${t.label}</button>`).join("");
   document.querySelectorAll("#themes button").forEach(b=>b.onclick=()=>{
+    try{ localStorage.setItem("cc-theme-picked","1"); }catch(e){}
     theme=b.dataset.th; document.body.dataset.theme=theme; renderThemes(); saveAll();
   });
   document.body.dataset.theme=theme;
@@ -3151,28 +3216,23 @@ let homeCars=[], homeStories=[];
 async function renderHome(){
   const v=$("#tab-home"); if(!v)return;
   v.innerHTML=`
-    <div class="home-hero">
-      <div class="hero-bg" id="heroBg">
-        <div class="hero-slide on" data-src="hero1.jpg?v=2"></div>
-        <div class="hero-slide" data-src="hero2.jpg?v=2"></div>
-        <div class="hero-slide" data-src="hero3.jpg?v=2"></div>
-        <div class="hero-slide" data-src="hero4.jpg?v=2"></div>
-        <div class="hero-slide" data-src="hero5.jpg?v=1"></div>
-        <div class="hero-slide" data-src="hero6.jpg?v=1"></div>
-        <div class="hero-slide" data-src="hero7.jpg?v=1"></div>
-        <div class="hero-slide" data-src="hero8.jpg?v=1"></div>
-        <div class="hero-slide" data-src="hero9.jpg?v=1"></div>
-        <div class="hero-slide" data-src="hero10.jpg?v=1"></div>
-      </div>
-      <div class="hero-ov"></div>
-      <div class="hero-cap" id="heroCap"></div>
-      <div class="hero-inner">
-        <div class="kicker">Colección de coches</div>
-        <h1>Descubre, colecciona y <b>rankea</b> los coches que amas.</h1>
-        <p>Explora lo que la comunidad acaba de publicar, lee historias, arma tu garage y sigue el mercado de clásicos y modernos.</p>
-        <div class="cta">
-          <button class="btn primary" onclick="showTab('garage')">🚗 Mi garage</button>
-          <button class="btn" onclick="showTab('market')">🏪 Explorar Marketplace</button>
+    <div class="pd-hero">
+      <div class="pd-big" aria-hidden="true">Clásicos</div>
+      <div class="pd-stage" id="heroStage" aria-label="Modelo 3D interactivo de un auto clásico. Arrastra para girarlo."><div class="pd-loading" id="heroLoading">Cargando</div></div>
+      <div class="pd-board">
+        <div class="pd-copy">
+          <h1>Tu garage de <b>clásicos</b>, en línea de salida.</h1>
+          <p>Publica tus autos, compara especificaciones y sigue lo que se mueve en el mercado de clásicos.</p>
+          <div class="cta">
+            <button class="btn primary" onclick="showTab('garage')">Mi garage</button>
+            <button class="btn" onclick="showTab('market')">Marketplace</button>
+          </div>
+        </div>
+        <div class="pd-conf">
+          <div class="pd-k">En pista</div>
+          <div class="pd-picker" id="heroPicker"></div>
+          <div class="pd-now"><span>Motor</span><b id="heroSpec"></b></div>
+          <div class="pd-credit" id="heroCredit"></div>
         </div>
       </div>
     </div>
@@ -3210,7 +3270,7 @@ async function renderHome(){
         <button class="home-tile" onclick="showTab('activities')"><span class="ic">🏆</span><span class="t">Actividades</span><span class="d">Tier lists, torneos y tu Top 100.</span></button>
       </div>
     </div>`;
-  startHeroRotator();
+  if(window.initHeroShowroom) window.initHeroShowroom();
   if(!supa){ const hc=$("#home-cars"); if(hc)hc.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Conéctate para ver lo más reciente.</p>'; const hs=$("#home-stories"); if(hs)hs.innerHTML=''; renderMarketVideos(); return; }
   // --- coches publicados recientemente (catálogo) ---
   try{
@@ -3356,6 +3416,39 @@ function showInstall(kind){
 }
 window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredPrompt=e; showInstall("android"); });
 (function(){ const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent); if(isIOS && !pwaStandalone()){ setTimeout(()=>showInstall("ios"),2500); } })();
+</script>
+<script type="module">
+/* Hero 3D: monta el showroom en #heroStage cada vez que se renderiza Inicio */
+import { mountShowroom, CLASSICS } from "./showroom.js";
+const cars = CLASSICS.filter(c => c.ready);
+let room = null, stageEl = null;
+function init(){
+  const stage = document.getElementById("heroStage"); if(!stage || stage === stageEl) return;
+  if(room){ room.dispose(); room = null; }
+  stageEl = stage;
+  room = mountShowroom(stage, { exposure: 1.05, keyLight: 2.2, cameraPos: [5.1, 1.15, 5.3], targetY: 0.5 });
+  const picker = document.getElementById("heroPicker"), loading = document.getElementById("heroLoading");
+  const spec = document.getElementById("heroSpec"), credit = document.getElementById("heroCredit");
+  async function select(car, btn){
+    picker.querySelectorAll(".pd-pick").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+    spec.textContent = car.spec;
+    // crédito requerido por la licencia CC Attribution
+    credit.innerHTML = 'Modelo 3D: <a href="' + car.credit.url + '" target="_blank" rel="noopener">' + car.credit.title + '</a> por ' + car.credit.author + ', <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>';
+    loading.hidden = false; loading.textContent = "Cargando";
+    try{ await room.show(car, p => (loading.textContent = "Cargando " + Math.round(p * 100) + "%")); loading.hidden = true; }
+    catch(e){ loading.textContent = "No se pudo cargar el modelo"; }
+  }
+  cars.forEach((car, i) => {
+    const b = document.createElement("button");
+    b.className = "pd-pick";
+    b.innerHTML = '<span class="y">' + car.year + '</span><span>' + car.name + '</span>';
+    b.addEventListener("click", () => select(car, b));
+    picker.appendChild(b);
+    if(i === 0) select(car, b);
+  });
+}
+window.initHeroShowroom = init;
+init();
 </script>
 </body>
 </html>

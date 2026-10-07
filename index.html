@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Mi Garage">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Big+Shoulders+Display:wght@700;900&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400;1,6..96,500&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
 <style>
   /* ============================================================
@@ -46,12 +46,12 @@
     --line:#4d211c; --ink:#fbeae6; --ink-dim:#d3a59c; --ink-faint:#a8746a;
     --accent:#ff2a1a; --accent2:#ffce4a; --good:#6fd06a; --shadow:rgba(0,0,0,.55);
   }
-  /* Paddock: carreras históricas de los 60. Verde de carreras, hueso y ámbar. */
+  /* Paddock: verde de carreras, hueso y ámbar; dirección de arte editorial (ver "PADDOCK GALERÍA") */
   [data-theme="paddock"]{
-    --bg:#0f2219; --bg2:#142c21; --card:#15291f; --card2:#1a3328;
-    --line:#2a4637; --ink:#ebe7da; --ink-dim:#b9c2b6; --ink-faint:#8f9c8e;
-    --accent:#e3a33b; --accent2:#e3a33b; --good:#8fcf7a; --shadow:rgba(0,0,0,.4);
-    --radius:4px; --display:"Big Shoulders Display",Impact,sans-serif; --body:"Archivo",system-ui,sans-serif;
+    --bg:#0c1712; --bg2:#10201a; --card:#14261e; --card2:#1a2f25;
+    --line:#26392f; --ink:#ece6d6; --ink-dim:#bdb9aa; --ink-faint:#8e968a;
+    --accent:#dda13a; --accent2:#dda13a; --good:#8fcf7a; --shadow:rgba(0,0,0,.4);
+    --radius:2px; --display:"Bodoni Moda",Didot,"Times New Roman",serif; --body:"Archivo",system-ui,sans-serif;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -432,20 +432,6 @@
     .pd-copy{border-right:0;border-bottom:1px solid var(--line)}
     .pd-stage{height:clamp(240px,40vh,360px)}
   }
-  /* --- Ajustes globales del tema Paddock --- */
-  body[data-theme="paddock"]{background:var(--bg)}
-  body[data-theme="paddock"]::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:90;opacity:.06;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
-  [data-theme="paddock"] header.top{background:color-mix(in srgb,var(--bg) 92%,transparent)}
-  [data-theme="paddock"] .brand .wm{font-weight:900;text-transform:uppercase;letter-spacing:.5px}
-  [data-theme="paddock"] .tabs button{font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:12.5px;text-transform:uppercase;letter-spacing:.03em;padding:10px 12px;border-bottom:0}
-  [data-theme="paddock"] .tabs button.on{background:var(--ink);color:var(--bg)}
-  [data-theme="paddock"] .btn{border-radius:var(--radius);font-family:"IBM Plex Mono",monospace;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
-  [data-theme="paddock"] .btn:hover{border-color:var(--ink)}
-  [data-theme="paddock"] .btn.primary,[data-theme="paddock"] .chip.on{color:#1a1407}
-  [data-theme="paddock"] .btn.primary:hover{border-color:var(--accent)}
-  [data-theme="paddock"] .home-sechead h2{font-weight:900;text-transform:uppercase;font-size:34px;letter-spacing:.3px}
-  [data-theme="paddock"] .themes button,[data-theme="paddock"] .chip{border-radius:var(--radius)}
   /* skeletons de carga */
   @keyframes shimmer{0%{background-position:-450px 0}100%{background-position:450px 0}}
   .skel{background:linear-gradient(90deg,var(--card) 0%,var(--card2) 50%,var(--card) 100%);background-size:900px 100%;animation:shimmer 1.3s infinite linear;border-radius:8px}
@@ -634,6 +620,263 @@
     .ss-title{font-size:27px}
     .mv-list{max-height:none}
   }
+  /* ============================================================
+     PADDOCK GALERÍA: dirección de arte editorial para coleccionistas.
+     Serif clásica (Bodoni Moda) + Archivo + IBM Plex Mono.
+     Imágenes grandes y sin marco; líneas finas en lugar de cajas.
+     Radios: 2px en todo (imágenes, botones, campos, modales).
+     ============================================================ */
+  [data-theme="paddock"]{ --mono:"IBM Plex Mono",ui-monospace,monospace; }
+  body[data-theme="paddock"]{background:var(--bg);font-size:15px;line-height:1.55}
+  body[data-theme="paddock"]::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:95;opacity:.055;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+  [data-theme="paddock"] ::selection{background:var(--accent);color:#1a1407}
+  [data-theme="paddock"] .wrap{max-width:1320px;padding:0 32px 120px}
+
+  /* --- cabecera: mancheta de revista --- */
+  [data-theme="paddock"] header.top{background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  [data-theme="paddock"] .topbar{max-width:1320px;padding:16px 32px 10px;gap:20px}
+  [data-theme="paddock"] .brand{align-items:baseline;gap:14px}
+  [data-theme="paddock"] .brand .wm{font-family:var(--display);font-style:italic;font-weight:500;font-size:34px;letter-spacing:-.01em;line-height:1}
+  [data-theme="paddock"] .brand .wm b{font-style:normal;font-weight:500;color:var(--ink)}
+  [data-theme="paddock"] .brand .sub{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--ink-faint)}
+  /* selector de temas: solo muestras de color */
+  [data-theme="paddock"] .themes{gap:4px}
+  [data-theme="paddock"] .themes button{font-size:0;padding:5px;border-radius:50%;background:transparent;border-color:transparent;gap:0}
+  [data-theme="paddock"] .themes button .swatch{width:12px;height:12px;border:0}
+  [data-theme="paddock"] .themes button.on{border-color:var(--ink-dim)}
+  [data-theme="paddock"] .tabs{max-width:1320px;padding:0 32px;gap:26px}
+  [data-theme="paddock"] .tabs button{font-family:var(--mono);font-weight:400;font-size:12px;text-transform:uppercase;letter-spacing:.08em;
+    padding:10px 0 12px;border-bottom:1px solid transparent;color:var(--ink-faint);background:none}
+  [data-theme="paddock"] .tabs button:hover{color:var(--ink)}
+  [data-theme="paddock"] .tabs button.on{color:var(--ink);border-color:var(--accent);background:none}
+
+  /* --- botones, campos, chips --- */
+  [data-theme="paddock"] .btn{border-radius:var(--radius);font-family:var(--mono);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.06em;
+    padding:10px 16px;background:transparent;border-color:color-mix(in srgb,var(--ink) 28%,transparent);transition:background .2s,color .2s,border-color .2s,transform .2s}
+  [data-theme="paddock"] .btn:hover{border-color:var(--ink);transform:none;background:color-mix(in srgb,var(--ink) 6%,transparent)}
+  [data-theme="paddock"] .btn:active{transform:translateY(1px)}
+  [data-theme="paddock"] .btn.primary{background:var(--accent);border-color:var(--accent);color:#1a1407}
+  [data-theme="paddock"] .btn.primary:hover{background:color-mix(in srgb,var(--accent) 88%,#fff);filter:none}
+  [data-theme="paddock"] .btn.ghost{border-color:transparent;color:var(--ink-dim)}
+  [data-theme="paddock"] .btn.ghost:hover{border-color:color-mix(in srgb,var(--ink) 28%,transparent);color:var(--ink)}
+  [data-theme="paddock"] .btn.sm{padding:7px 11px;font-size:11px}
+  [data-theme="paddock"] select.ctrl,[data-theme="paddock"] input.ctrl,
+  [data-theme="paddock"] .field input,[data-theme="paddock"] .field select,[data-theme="paddock"] .field textarea{
+    border-radius:var(--radius);background:transparent;border-color:var(--line);font-family:var(--body)}
+  [data-theme="paddock"] select.ctrl:focus,[data-theme="paddock"] input.ctrl:focus,
+  [data-theme="paddock"] .field input:focus,[data-theme="paddock"] .field select:focus,[data-theme="paddock"] .field textarea:focus{outline:none;border-color:var(--accent)}
+  [data-theme="paddock"] .field label{font-family:var(--mono);font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint)}
+  [data-theme="paddock"] .chip,[data-theme="paddock"] .tag,[data-theme="paddock"] .tagpick .tg{border-radius:var(--radius);font-family:var(--mono);font-weight:400;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;background:transparent}
+  [data-theme="paddock"] .chip.on,[data-theme="paddock"] .tagpick .tg.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+  [data-theme="paddock"] .count{font-family:var(--mono);font-weight:400;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+
+  /* --- tarjetas de coche: la foto manda, sin caja --- */
+  [data-theme="paddock"] .grid{grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:44px 24px}
+  [data-theme="paddock"] .car{background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible}
+  [data-theme="paddock"] .car:hover{transform:none;border-color:transparent}
+  [data-theme="paddock"] .car .ph{aspect-ratio:4/3;border-radius:var(--radius);background:var(--card)}
+  [data-theme="paddock"] .car .ph img{transition:transform 1.1s cubic-bezier(.16,1,.3,1),filter .6s;filter:saturate(.9) contrast(1.02)}
+  [data-theme="paddock"] .car:hover .ph img{transform:scale(1.045);filter:saturate(1) contrast(1.04)}
+  [data-theme="paddock"] .car .body{padding:14px 0 0;gap:7px}
+  [data-theme="paddock"] .car .nm{font-family:var(--display);font-weight:500;font-size:24px;letter-spacing:-.01em;line-height:1.08}
+  [data-theme="paddock"] .car .meta{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-top:0}
+  [data-theme="paddock"] .car .meta b{color:var(--accent);font-weight:500}
+  [data-theme="paddock"] .car .rankbadge{background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:12px;border-radius:var(--radius);padding:3px 8px;letter-spacing:.04em;top:10px;left:10px}
+  [data-theme="paddock"] .car .avgbadge{border-radius:var(--radius);font-family:var(--mono);font-weight:500;font-size:12px;top:10px;right:10px}
+  [data-theme="paddock"] .barrow{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+  [data-theme="paddock"] .barrow .track{height:2px;border:0;background:var(--line)}
+  [data-theme="paddock"] .barrow .fill{background:var(--accent)}
+  [data-theme="paddock"] .car .acts{padding-top:8px}
+  [data-theme="paddock"] .car .ph .noimg,[data-theme="paddock"] .noimg,[data-theme="paddock"] .pn{
+    background:repeating-linear-gradient(135deg,var(--card) 0 12px,var(--card2) 12px 13px)}
+  [data-theme="paddock"] .vthumb{border-radius:var(--radius)}
+
+  /* --- portada: mosaico editorial con los coches recientes --- */
+  @media(min-width:900px){
+    [data-theme="paddock"] #home-cars{grid-template-columns:repeat(4,1fr);grid-auto-flow:dense}
+    [data-theme="paddock"] #home-cars > .car:nth-child(1){grid-column:span 2;grid-row:span 2}
+    [data-theme="paddock"] #home-cars > .car:nth-child(1) .ph{aspect-ratio:auto;flex:1;min-height:420px}
+    [data-theme="paddock"] #home-cars > .car:nth-child(1) .nm{font-size:40px;font-style:italic}
+    [data-theme="paddock"] #home-cars > .car:nth-child(8){grid-column:span 2}
+    [data-theme="paddock"] #home-cars > .car:nth-child(8) .ph{aspect-ratio:8/3}
+  }
+
+  /* --- titulares de sección --- */
+  [data-theme="paddock"] .home-sec{margin:96px 0 0}
+  [data-theme="paddock"] .home-sechead{border-top:1px solid var(--line);padding-top:20px;margin:0 0 32px;align-items:baseline}
+  [data-theme="paddock"] .home-sechead h2{font-family:var(--display);font-weight:400;font-size:clamp(32px,3.6vw,50px);letter-spacing:-.015em;line-height:1.05;text-transform:none}
+  [data-theme="paddock"] .home-sechead a,[data-theme="paddock"] .home-sechead button.link{font-family:var(--mono);font-weight:400;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-dim)}
+  [data-theme="paddock"] .home-sechead a:hover,[data-theme="paddock"] .home-sechead button.link:hover{color:var(--accent);text-decoration:none}
+
+  /* --- hero 3D --- */
+  [data-theme="paddock"] .pd-hero{margin:28px 0 0;border:0;border-radius:var(--radius);
+    background:radial-gradient(65% 70% at 50% 40%, color-mix(in srgb,var(--card2) 90%,#fff 3%), var(--bg) 75%)}
+  [data-theme="paddock"] .pd-big{font-weight:400;font-style:italic;text-transform:none;letter-spacing:-.03em;top:1%;
+    font-size:clamp(96px,19vw,290px);-webkit-text-stroke:1px color-mix(in srgb,var(--ink) 30%,transparent)}
+  [data-theme="paddock"] .pd-stage{height:clamp(300px,52vh,560px)}
+  [data-theme="paddock"] .pd-board{border-top:1px solid var(--line)}
+  [data-theme="paddock"] .pd-board > div{padding:30px 0}
+  [data-theme="paddock"] .pd-copy{padding-right:40px!important}
+  [data-theme="paddock"] .pd-conf{padding-left:40px!important}
+  [data-theme="paddock"] .pd-copy h1{font-weight:400;text-transform:none;font-size:clamp(36px,4.2vw,62px);line-height:1.04;letter-spacing:-.02em;margin-bottom:16px}
+  [data-theme="paddock"] .pd-copy h1 b{font-style:italic;font-weight:400}
+  [data-theme="paddock"] .pd-copy p{font-size:16px}
+  [data-theme="paddock"] .pd-pick{border-radius:var(--radius)}
+  @media(max-width:760px){
+    [data-theme="paddock"] .pd-copy{padding-right:0!important}
+    [data-theme="paddock"] .pd-conf{padding-left:0!important}
+    [data-theme="paddock"] .pd-board > div{padding:22px 0}
+  }
+
+  /* --- historias: portada a sangre --- */
+  [data-theme="paddock"] .ss-slide{border:0;border-radius:var(--radius);min-height:min(78vh,680px)}
+  [data-theme="paddock"] .ss-grad{background:linear-gradient(0deg,rgba(8,14,11,.9) 0%,rgba(8,14,11,.55) 32%,rgba(8,14,11,0) 64%)}
+  [data-theme="paddock"] .ss-content{padding:48px 56px;max-width:820px}
+  [data-theme="paddock"] .ss-meta{font-family:var(--mono);font-size:11px;letter-spacing:.12em}
+  [data-theme="paddock"] .ss-title{font-family:var(--display);font-weight:400;font-size:clamp(36px,5.4vw,76px);line-height:1.02;letter-spacing:-.02em;text-transform:none}
+  [data-theme="paddock"] .ss-ex{font-size:16px;line-height:1.6}
+  [data-theme="paddock"] .ss-arrow{border-radius:var(--radius);width:44px;height:44px;font-family:var(--mono);background:rgba(8,14,11,.5)}
+  [data-theme="paddock"] .ss-arrow:hover{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  [data-theme="paddock"] .ss-dot{border-radius:0;width:22px;height:2px}
+  [data-theme="paddock"] .ss-dot.on{transform:none;background:var(--accent)}
+  [data-theme="paddock"] .story-tile{background:transparent;border:0;border-radius:0}
+  [data-theme="paddock"] .story-tile:hover{transform:none}
+  [data-theme="paddock"] .story-tile .cover{border-radius:var(--radius)}
+  [data-theme="paddock"] .story-tile .cover img{transition:transform 1.1s cubic-bezier(.16,1,.3,1)}
+  [data-theme="paddock"] .story-tile:hover .cover img{transform:scale(1.04)}
+  [data-theme="paddock"] .story-tile .st-b{padding:14px 0 0}
+  [data-theme="paddock"] .story-tile .st-t{font-family:var(--display);font-size:24px;font-weight:500;line-height:1.1;letter-spacing:-.01em}
+  [data-theme="paddock"] .story-tile .st-m{font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;font-size:11px}
+
+  /* --- video, podcast, accesos --- */
+  [data-theme="paddock"] .mv-frame,[data-theme="paddock"] .pod-embed{border:0;border-radius:var(--radius)}
+  [data-theme="paddock"] .mv-item{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px 0}
+  [data-theme="paddock"] .mv-item:hover{transform:none}
+  [data-theme="paddock"] .mv-item.on .mv-t{color:var(--accent)}
+  [data-theme="paddock"] .mv-thumb{border-radius:var(--radius)}
+  [data-theme="paddock"] .mv-s{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  [data-theme="paddock"] .podcast-wrap{background:transparent;border:0;padding:0;gap:40px}
+  [data-theme="paddock"] .pod-mark:empty{display:none}
+  [data-theme="paddock"] .pod-name{font-family:var(--display);font-style:italic;font-weight:400;font-size:40px;line-height:1}
+  [data-theme="paddock"] .pod-desc{font-size:15px}
+  [data-theme="paddock"] .home-tiles{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0;border-top:1px solid var(--line)}
+  [data-theme="paddock"] .home-tile{background:transparent;border:0;border-right:1px solid var(--line);border-radius:0;padding:28px 24px 30px;gap:10px}
+  [data-theme="paddock"] .home-tile:last-child{border-right:0}
+  [data-theme="paddock"] .home-tile:hover{transform:none;background:color-mix(in srgb,var(--ink) 4%,transparent)}
+  [data-theme="paddock"] .home-tile .ic{display:none}
+  [data-theme="paddock"] .home-tile .t{font-family:var(--display);font-size:30px;font-weight:400;font-style:italic;letter-spacing:-.01em}
+  [data-theme="paddock"] .home-tile .d{font-size:14px;color:var(--ink-dim)}
+  [data-theme="paddock"] .mkt-card{background:transparent;border:0;border-top:1px solid var(--line);border-radius:0;padding:20px 0}
+  [data-theme="paddock"] .mkt-card:hover{transform:none}
+  [data-theme="paddock"] .mkt-card .mk-logo{display:none}
+  [data-theme="paddock"] .mkt-card .mk-name{font-family:var(--display);font-size:26px;font-weight:500}
+  [data-theme="paddock"] .mkt-card .mk-kind,[data-theme="paddock"] .mkt-card .mk-go{font-family:var(--mono);font-weight:400;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
+
+  /* --- paneles, actividades, duelos --- */
+  [data-theme="paddock"] .panel{background:transparent;border:0;border-top:1px solid var(--line);border-radius:0;padding:28px 0 0}
+  [data-theme="paddock"] .panel h3{font-family:var(--display);font-weight:400;font-size:clamp(30px,3.2vw,44px);letter-spacing:-.015em;line-height:1.05;margin-bottom:8px}
+  [data-theme="paddock"] .panel .lead{font-size:15px;max-width:62ch}
+  [data-theme="paddock"] .actnav{gap:0;border-bottom:1px solid var(--line);margin:28px 0 34px}
+  [data-theme="paddock"] .actnav button{background:transparent;border:0;border-bottom:1px solid transparent;border-radius:0;margin-bottom:-1px;padding:12px 22px 14px 0;min-width:0;
+    font-family:var(--display);font-size:22px;font-weight:400;letter-spacing:-.01em;color:var(--ink-faint)}
+  [data-theme="paddock"] .actnav button .ic{display:none}
+  [data-theme="paddock"] .actnav button small{font-family:var(--mono);font-size:10px;letter-spacing:.1em}
+  [data-theme="paddock"] .actnav button.on{transform:none;color:var(--ink);border-color:var(--accent)}
+  [data-theme="paddock"] .slot,[data-theme="paddock"] .tierdrop,[data-theme="paddock"] .picker,[data-theme="paddock"] .comboitem,
+  [data-theme="paddock"] .t100row,[data-theme="paddock"] .bmatch,[data-theme="paddock"] .specsec,[data-theme="paddock"] .dropimg{border-radius:var(--radius)}
+  [data-theme="paddock"] .slot .n,[data-theme="paddock"] .t100row .pos{font-family:var(--display);font-style:italic;font-weight:400}
+  [data-theme="paddock"] .tierlabel{border-radius:var(--radius);font-family:var(--display);font-weight:500}
+  [data-theme="paddock"] .poolcar{border-radius:var(--radius)}
+  [data-theme="paddock"] .vscard{background:transparent;border:0;border-radius:0}
+  [data-theme="paddock"] .vscard:hover{transform:none}
+  [data-theme="paddock"] .vscard .ph{border-radius:var(--radius);overflow:hidden}
+  [data-theme="paddock"] .vscard .cap{padding:12px 0}
+  [data-theme="paddock"] .vscard .cap .t{font-family:var(--display);font-size:24px;font-weight:500}
+  [data-theme="paddock"] .vsmid{font-family:var(--display);font-style:italic;font-weight:400;font-size:64px;color:var(--accent)}
+  [data-theme="paddock"] .tourbar,[data-theme="paddock"] .budgetbar .meter{height:2px;border-radius:0;background:var(--line)}
+
+  /* --- rarezas --- */
+  [data-theme="paddock"] .rare-item{background:transparent;border:0;border-top:1px solid var(--line);border-radius:0;padding-top:22px;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:36px}
+  [data-theme="paddock"] .rare-item:hover{transform:none}
+  [data-theme="paddock"] .ri-ph{border-radius:var(--radius);overflow:hidden;min-height:300px}
+  [data-theme="paddock"] .ri-body{padding:0}
+  [data-theme="paddock"] .ri-title,[data-theme="paddock"] .rare-storytitle{font-family:var(--display);font-weight:400;font-size:clamp(28px,3vw,42px);letter-spacing:-.015em;line-height:1.06}
+  [data-theme="paddock"] .ri-more{font-family:var(--mono);font-weight:400;text-transform:uppercase;letter-spacing:.08em;font-size:12px}
+  [data-theme="paddock"] .rare-tag,[data-theme="paddock"] .rare-badge,[data-theme="paddock"] .rare-color{border-radius:var(--radius);font-family:var(--mono);font-weight:500;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#1a1407}
+  [data-theme="paddock"] .rare-carousel{border-radius:var(--radius)}
+  [data-theme="paddock"] .rare-storytext{font-size:17px;line-height:1.8}
+  [data-theme="paddock"] .rare-val{font-family:var(--display);font-weight:400}
+  @media(max-width:640px){ [data-theme="paddock"] .rare-item{grid-template-columns:1fr;gap:16px} [data-theme="paddock"] .ri-ph{min-height:0} }
+
+  /* --- modales y detalle --- */
+  [data-theme="paddock"] .scrim{background:rgba(6,11,9,.82);backdrop-filter:blur(6px)}
+  [data-theme="paddock"] .modal{background:var(--bg2);border-color:var(--line);border-radius:var(--radius);box-shadow:0 40px 120px rgba(0,0,0,.55)}
+  [data-theme="paddock"] .modal .mh h3{font-family:var(--display);font-weight:400;font-size:30px;letter-spacing:-.01em}
+  [data-theme="paddock"] .detailhead .big{font-family:var(--display);font-weight:400;font-size:clamp(40px,5vw,72px);letter-spacing:-.02em;line-height:1}
+  [data-theme="paddock"] .gallery img,[data-theme="paddock"] .carousel,[data-theme="paddock"] .preview,[data-theme="paddock"] .specthumbs img,[data-theme="paddock"] .spthumb img{border-radius:var(--radius)}
+  [data-theme="paddock"] .stlb{background:rgba(6,11,9,.95)}
+  [data-theme="paddock"] .stlb img{border-radius:var(--radius)}
+
+  /* --- estados vacíos: tipografía en vez de iconos --- */
+  [data-theme="paddock"] .empty{padding:96px 20px}
+  [data-theme="paddock"] .empty .big{display:none}
+  [data-theme="paddock"] .empty h2{font-family:var(--display);font-style:italic;font-weight:400;font-size:clamp(34px,4vw,52px);letter-spacing:-.015em;text-transform:none}
+  [data-theme="paddock"] .empty p{max-width:46ch;margin-left:auto;margin-right:auto}
+  [data-theme="paddock"] .skel-card{border:0;border-radius:0}
+  [data-theme="paddock"] .skel-card .ph{border-radius:var(--radius)}
+
+  /* --- detalles --- */
+  [data-theme="paddock"] .toast{border-radius:var(--radius);font-family:var(--mono);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+  [data-theme="paddock"] #introOverlay .intro-wm{font-family:var(--display);font-style:italic;font-weight:400;letter-spacing:-.02em}
+  [data-theme="paddock"] #introOverlay .intro-wm b{font-style:normal;font-weight:400;color:var(--accent)}
+  [data-theme="paddock"] #introOverlay .intro-sub{font-family:var(--mono);font-weight:400}
+  [data-theme="paddock"] #introOverlay .intro-line{height:1px;background:var(--accent)}
+  [data-theme="paddock"] .authArea .authuser{font-family:var(--mono);font-weight:500;color:var(--accent)}
+  [data-theme="paddock"] .toolbar{margin:32px 0 22px}
+
+  /* --- móvil --- */
+  @media(max-width:760px){
+    [data-theme="paddock"] .wrap{padding:0 16px 100px}
+    [data-theme="paddock"] .topbar{padding:12px 16px 8px}
+    [data-theme="paddock"] .tabs{padding:0 16px;gap:20px}
+    [data-theme="paddock"] .brand .wm{font-size:28px}
+    [data-theme="paddock"] .grid{gap:36px 16px}
+    [data-theme="paddock"] .home-sec{margin-top:64px}
+    [data-theme="paddock"] .ss-content{padding:26px 22px}
+    [data-theme="paddock"] .home-tile{border-right:0;border-bottom:1px solid var(--line);padding:22px 0}
+    [data-theme="paddock"] .actnav{flex-wrap:nowrap;overflow-x:auto}
+    [data-theme="paddock"] .actnav button{flex:0 0 auto}
+    /* cabecera compacta: no fija en celular para no tapar las fotos */
+    [data-theme="paddock"] header.top{position:relative}
+    [data-theme="paddock"] .topbar{gap:10px}
+  }
+  @media(max-width:600px){ [data-theme="paddock"] .grid{grid-template-columns:1fr 1fr;gap:28px 12px} [data-theme="paddock"] .car .nm{font-size:18px} }
+  @media(max-width:340px){ [data-theme="paddock"] .grid{grid-template-columns:1fr} }
+
+  /* --- Historias: formato artículo --- */
+  .tab-title{font-family:var(--display);font-size:26px;letter-spacing:.8px;margin:0}
+  .st-article{max-width:980px;margin:0 auto 72px;padding-bottom:28px;border-bottom:1px solid var(--line)}
+  .st-cover{margin:0 0 26px;border-radius:var(--radius);overflow:hidden;background:var(--card2)}
+  .st-cover img{width:100%;max-height:72vh;aspect-ratio:16/9;object-fit:cover;display:block;cursor:zoom-in}
+  .st-head{max-width:720px;margin:0 auto}
+  .st-kick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--ink-faint);margin-bottom:12px}
+  .st-del{margin-left:auto;color:var(--accent)}
+  .st-h{font-family:var(--display);font-size:clamp(30px,4vw,48px);line-height:1.05;margin:0 0 22px;letter-spacing:.5px}
+  .st-text{max-width:720px;margin:0 auto;font-size:16.5px;line-height:1.8;color:var(--ink-dim);white-space:pre-wrap}
+  .st-plates{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin:30px 0 0}
+  .st-plates img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;border-radius:var(--radius);cursor:zoom-in;transition:opacity .2s}
+  .st-plates img:hover{opacity:.85}
+  .st-plates img:first-child:nth-last-child(odd){grid-column:1/-1;aspect-ratio:21/9}
+  .st-article .story-actions{max-width:720px;margin:18px auto 0}
+  [data-theme="paddock"] .tab-title{font-weight:400;font-size:clamp(34px,4vw,56px);letter-spacing:-.015em;line-height:1.05}
+  [data-theme="paddock"] .st-kick{font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;font-size:11px}
+  [data-theme="paddock"] .st-h{font-weight:400;letter-spacing:-.02em;font-size:clamp(34px,4.6vw,60px)}
+  [data-theme="paddock"] .st-text{color:var(--ink);opacity:.86;font-size:17px}
+  [data-theme="paddock"] .st-text::first-letter{font-family:var(--display);font-size:5.2em;line-height:.8;float:left;margin:.06em .1em 0 0;color:var(--accent)}
+  [data-theme="paddock"] .story-actions{border-top:0}
+  [data-theme="paddock"] .ss-meta{margin-bottom:20px}
+  [data-theme="paddock"] .admin-del{border-radius:var(--radius);font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding:4px 8px;background:rgba(8,14,11,.7)}
 </style>
 </head>
 <body data-theme="paddock">
@@ -660,19 +903,19 @@
       <div class="sub">colección personal</div>
     </div>
     <div class="themes" id="themes"></div>
-    <button class="btn sm" id="langToggle" title="Language / Idioma" style="white-space:nowrap">🌐 ES</button>
+    <button class="btn sm" id="langToggle" title="Language / Idioma" style="white-space:nowrap">ES</button>
     <div class="authArea" id="authArea"></div>
   </div>
   <div class="tabs" id="tabs">
-    <button data-tab="home" class="on">🏠 Inicio</button>
+    <button data-tab="home" class="on">Inicio</button>
     <button data-tab="garage">Garage</button>
     <button data-tab="irl">Manejados IRL</button>
     <button data-tab="activities">Actividades</button>
-    <button data-tab="market">🏪 Marketplace</button>
-    <button data-tab="battle">⚔️ Spec Battle</button>
-    <button data-tab="rare">💎 Rarezas</button>
-    <button data-tab="historia">📖 Historia</button>
-    <button data-tab="discover">🔎 Descubrir</button>
+    <button data-tab="market">Marketplace</button>
+    <button data-tab="battle">Spec Battle</button>
+    <button data-tab="rare">Rarezas</button>
+    <button data-tab="historia">Historia</button>
+    <button data-tab="discover">Descubrir</button>
   </div>
 </header>
 <div class="wrap">
@@ -695,11 +938,11 @@
         <option value="priceLo">Valor (menor → mayor)</option>
         <option value="recent">Más recientes</option>
       </select>
-      <button class="btn ghost sm" id="importBtn">⬆ Importar</button>
-      <button class="btn ghost sm" id="exportBtn">⬇ Exportar</button>
-      <button class="btn ghost sm" id="backupBtn" title="Respaldo completo: coches + IRL + combos + Top 100">⬇ Respaldo</button>
-      <button class="btn ghost sm" id="filterBtn">🔖 Filtrar</button>
-      <button class="btn ghost sm" id="catBtn">🏷 Categorías</button>
+      <button class="btn ghost sm" id="importBtn">Importar</button>
+      <button class="btn ghost sm" id="exportBtn">Exportar</button>
+      <button class="btn ghost sm" id="backupBtn" title="Respaldo completo: coches + IRL + combos + Top 100">Respaldo</button>
+      <button class="btn ghost sm" id="filterBtn">Filtrar</button>
+      <button class="btn ghost sm" id="catBtn">Categorías</button>
       <button class="btn primary" id="addBtn">＋ Añadir coche</button>
       <input type="file" id="importFile" accept="application/json" hidden>
     </div>
@@ -728,11 +971,11 @@
   <!-- ============ ACTIVITIES TAB ============ -->
   <section id="tab-activities" style="display:none">
     <div class="actnav" id="actnav">
-      <button data-act="five" class="on"><span class="ic">🅿️</span> Garaje de ensueño <small>combo con límites</small></button>
-      <button data-act="tier"><span class="ic">📊</span> Tier list <small>S/A/B/C/D</small></button>
-      <button data-act="bracket"><span class="ic">🏆</span> Torneo <small>bracket + podio</small></button>
-      <button data-act="top100"><span class="ic">🥇</span> Top 100 <small>tu ranking</small></button>
-      <button data-act="tourney"><span class="ic">⚔️</span> Duelos <small>esto o aquello</small></button>
+      <button data-act="five" class="on"><span class="ic"></span> Garaje de ensueño <small>combo con límites</small></button>
+      <button data-act="tier"><span class="ic"></span> Tier list <small>S/A/B/C/D</small></button>
+      <button data-act="bracket"><span class="ic"></span> Torneo <small>bracket + podio</small></button>
+      <button data-act="top100"><span class="ic"></span> Top 100 <small>tu ranking</small></button>
+      <button data-act="tourney"><span class="ic"></span> Duelos <small>esto o aquello</small></button>
     </div>
     <div id="actView"></div>
   </section>
@@ -778,15 +1021,15 @@
     // header / tabs
     "MI":"MY","GARAGE":"GARAGE","colección personal":"personal collection",
     "Garage":"Garage","Manejados IRL":"Driven IRL","Actividades":"Activities",
-    "🏪 Marketplace":"🏪 Marketplace","📖 Historia":"📖 Stories",
+    "Marketplace":"Marketplace","Historia":"Stories",
     // sort / toolbar
     "Mejor promedio":"Best average","Nombre (A-Z)":"Name (A-Z)","Estilo":"Style",
     "Coleccionable":"Collectible","Historia":"History","Importancia histórica":"Historical importance",
     "Rendimiento":"Performance","Exclusividad":"Exclusivity","Deseo":"Desire","Deseo personal":"Personal desire",
     "Valor (mayor → menor)":"Value (high → low)","Valor (menor → mayor)":"Value (low → high)",
-    "Más recientes":"Most recent","⬆ Importar":"⬆ Import","⬇ Exportar":"⬇ Export","⬇ Respaldo":"⬇ Backup",
+    "Más recientes":"Most recent","Importar":"Import","Exportar":"Export","Respaldo":"Backup",
     "Respaldo completo: coches + IRL + combos + Top 100":"Full backup: cars + IRL + combos + Top 100",
-    "🔖 Filtrar":"🔖 Filter","🏷 Categorías":"🏷 Categories","＋ Añadir coche":"＋ Add car",
+    "Filtrar":"Filter","Categorías":"Categories","＋ Añadir coche":"＋ Add car",
     "Buscar marca, modelo, año…":"Search brand, model, year…",
     // IRL toolbar
     "Buscar coche manejado…":"Search a car you've driven…","Manejo":"Driving","Motor / sonido":"Engine / sound",
@@ -802,17 +1045,17 @@
     "Limpiar ✕":"Clear ✕","Limpiar":"Clear",
     // detail
     "Coche":"Car","promedio":"average","Valor":"Value","Notas":"Notes","Sin fotos":"No photos",
-    "💲 Precios":"💲 Prices","✎ Editar":"✎ Edit","Eliminar":"Delete","Cerrar":"Close","Versión":"Version",
+    "Precios":"Prices","✎ Editar":"✎ Edit","Eliminar":"Delete","Cerrar":"Close","Versión":"Version",
     "Ver":"View",
     // edit modal
     "Editar coche":"Edit car","Añadir coche":"Add car","Marca":"Brand","Año":"Year",
-    "Modelo / Nombre *":"Model / Name *","Moneda":"Currency","💲 Ver precios de mercado":"💲 See market prices",
+    "Modelo / Nombre *":"Model / Name *","Moneda":"Currency","Ver precios de mercado":"See market prices",
     "Categorías / Tags":"Categories / Tags","Nueva categoría…":"New category…","＋ Crear":"＋ Create",
     "Versiones, color y fotos — toca una foto para ponerla de ★ portada":"Versions, color and photos — tap a photo to set it as ★ cover",
     "＋ Añadir otra versión":"＋ Add another version","Calificación (1 – 10)":"Rating (1 – 10)",
     "Por qué te gusta, recuerdos, specs…":"Why you like it, memories, specs…","Cancelar":"Cancel","Guardar":"Save",
     "Versión / Edición":"Version / Edition","Color":"Color","Detalles (VIN, motor…)":"Details (VIN, engine…)",
-    "Sin fotos en esta versión":"No photos in this version","📷 Añadir foto(s)":"📷 Add photo(s)",
+    "Sin fotos en esta versión":"No photos in this version","Añadir foto(s)":"Add photo(s)",
     "Quitar versión":"Remove version","Poner de portada":"Set as cover","★ portada":"★ cover","Quitar":"Remove",
     // categories modal
     "Categorías":"Categories",
@@ -820,8 +1063,8 @@
     "Nueva categoría (p.ej. Targa, Le Mans, V12…)":"New category (e.g. Targa, Le Mans, V12…)",
     "Sin categorías todavía.":"No categories yet.",
     // import
-    "Importar garage":"Import garage","➕ Añadir a mi garage actual":"➕ Add to my current garage",
-    "conserva los actuales":"keeps the current ones","♻ Reemplazar todo":"♻ Replace everything",
+    "Importar garage":"Import garage","Añadir a mi garage actual":"Add to my current garage",
+    "conserva los actuales":"keeps the current ones","Reemplazar todo":"Replace everything",
     "borra los actuales":"deletes the current ones",
     "Funciona con exportaciones viejas (4 calificaciones, sin tags) y con respaldos completos.":"Works with old exports (4 ratings, no tags) and full backups.",
     // marketplace
@@ -830,28 +1073,28 @@
     "Coches que la comunidad ha agregado. Añádelos a tu garage y ponles tus calificaciones.":"Cars the community has added. Add them to your garage and give them your ratings.",
     "Cargando…":"Loading…","No disponible.":"Not available.",
     "Sin coches todavía. ¡Agrega el primero!":"No cars yet. Add the first one!",
-    "➕ A mi garage":"➕ To my garage","Error al cargar.":"Error loading.",
-    "🔧 Admin activo":"🔧 Admin active","🔧 Modo admin":"🔧 Admin mode",
+    "A mi garage":"To my garage","Error al cargar.":"Error loading.",
+    "Admin activo":"Admin active","Modo admin":"Admin mode",
     "Elegir":"Choose","Sin imagen":"No image","Sin color":"No color",
     "Elige la versión / color que quieres. Si ya tienes este coche, se añade como otra versión.":"Choose the version / color you want. If you already have this car, it's added as another version.",
     "Este coche aún no tiene fotos; se añadirá sin imagen (puedes ponerle la tuya después).":"This car has no photos yet; it will be added without an image (you can add yours later).",
-    "· Admin: 🗑 quita versiones.":"· Admin: 🗑 removes versions.",
+    "· Admin: quita versiones.":"· Admin: removes versions.",
     "· Admin: puedes borrar coches o versiones.":"· Admin: you can delete cars or versions.",
     "Quitar versión del marketplace":"Remove version from marketplace","Borrar del marketplace":"Delete from marketplace",
     "Añadir specs seleccionados":"Add selected specs","Ese coche no tiene specs.":"That car has no specs.",
     // auth / social
-    "☁ Iniciar sesión":"☁ Sign in","🔎 Descubrir":"🔎 Discover","👥 Amigos":"👥 Friends",
-    "🌐 Público":"🌐 Public","🔒 Privado":"🔒 Private","🔗 Mi enlace":"🔗 My link","Salir":"Sign out",
-    "← Volver a mi garage":"← Back to my garage","✓ Amigo":"✓ Friend","➕ Agregar amigo":"➕ Add friend",
-    "👁 Viendo":"👁 Viewing","Crear cuenta":"Create account","Iniciar sesión":"Sign in","Correo":"Email",
+    "Iniciar sesión":"Sign in","Descubrir":"Discover","Amigos":"Friends",
+    "Público":"Public","Privado":"Private","Mi enlace":"My link","Salir":"Sign out",
+    "← Volver a mi garage":"← Back to my garage","✓ Amigo":"✓ Friend","Agregar amigo":"Add friend",
+    "Viendo":"Viewing","Crear cuenta":"Create account","Iniciar sesión":"Sign in","Correo":"Email",
     "Contraseña":"Password","mínimo 6 caracteres":"minimum 6 characters","Entrar":"Enter","Crea una":"Create one",
     "Inicia sesión":"Sign in","Elige tu nombre de usuario":"Choose your username","Usuario":"Username",
     "Mi garage es público (otros pueden verlo)":"My garage is public (others can see it)",
-    "🔎 Descubrir garages":"🔎 Discover garages","Buscar usuario…":"Search user…",
+    "Descubrir garages":"Discover garages","Buscar usuario…":"Search user…",
     "Escribe para buscar usuarios con garage público.":"Type to find users with a public garage.",
     "Conéctate para buscar.":"Sign in to search.","Escribe al menos 2 letras.":"Type at least 2 letters.",
-    "Sin resultados públicos.":"No public results.","Error al buscar.":"Error searching.","👥 Mis amigos":"👥 My friends",
-    "Aún no agregas amigos. Entra a un garage público (🔎 Descubrir) y pulsa \"➕ Agregar amigo\".":"You haven't added friends yet. Open a public garage (🔎 Discover) and tap \"➕ Add friend\".",
+    "Sin resultados públicos.":"No public results.","Error al buscar.":"Error searching.","Mis amigos":"My friends",
+    "Aún no agregas amigos. Entra a un garage público (Descubrir) y pulsa \"Agregar amigo\".":"You haven't added friends yet. Open a public garage (Discover) and tap \"Add friend\".",
     "Tus amigos pusieron su garage en privado.":"Your friends set their garage to private.",
     "tu@correo.com":"you@email.com","tu_usuario":"your_username",
     // price menu
@@ -864,10 +1107,10 @@
     // five / combo
     "Arma tu combo soñado. Ajusta cuántos coches y activa límites opcionales (modo realista = cada coche aporta una categoría distinta). Guárdalo con nombre.":"Build your dream combo. Adjust how many cars and enable optional limits (realistic mode = each car brings a different category). Save it with a name.",
     "Modo realista":"Realistic mode","Época":"Era","Presupuesto (opcional):":"Budget (optional):",
-    "⚙ Modo realista — categoría requerida por posición":"⚙ Realistic mode — required category per slot","Cualquiera":"Any",
+    "Modo realista — categoría requerida por posición":"Realistic mode — required category per slot","Cualquiera":"Any",
     "El selector de coches solo dejará elegir los que cumplan la categoría de la siguiente posición vacía.":"The car picker will only let you choose those matching the category of the next empty slot.",
     "Nombre del combo (p.ej. 'Fin de semana italiano')":"Combo name (e.g. 'Italian weekend')",
-    "💾 Guardar combo":"💾 Save combo","🔗 Compartir":"🔗 Share","Elige tus coches":"Choose your cars",
+    "Guardar combo":"Save combo","Compartir":"Share","Elige tus coches":"Choose your cars",
     "No hay coches en tu garage.":"No cars in your garage.","Combos guardados":"Saved combos","Cargar":"Load",
     "Cualquier época":"Any era","Clásico (pre-1975)":"Classic (pre-1975)","Retro (1975–1999)":"Retro (1975–1999)",
     "Moderno (2000–2014)":"Modern (2000–2014)","Actual (2015+)":"Current (2015+)","Sin año":"No year",
@@ -875,14 +1118,14 @@
     "Añade coches primero.":"Add cars first.","Todos los coches":"All cars","Por categoría":"By category","Por época":"By era",
     "Toca un coche para seleccionarlo y luego toca un nivel (S, A, B, C, D). Puedes filtrar por categoría o por época.":"Tap a car to select it, then tap a tier (S, A, B, C, D). You can filter by category or era.",
     "Filtrar:":"Filter:","● seleccionado — toca un nivel":"● selected — tap a tier",
-    "⚡ Autollenar por promedio":"⚡ Auto-fill by average","Vaciar":"Clear",
+    "Autollenar por promedio":"Auto-fill by average","Vaciar":"Clear",
     "Sin clasificar — toca uno y luego un nivel (o aquí para quitarlo)":"Unranked — tap one then a tier (or here to remove it)",
-    "Todos clasificados 🎉":"All ranked 🎉",
+    "Todos clasificados ":"All ranked ",
     // bracket
     "Necesitas al menos 2 coches.":"You need at least 2 cars.","Torneo — bracket":"Tournament — bracket",
-    "Eliminatorias por rondas; al final, podio 🥇🥈🥉 con ranking completo.":"Knockout rounds; at the end, a 🥇🥈🥉 podium with full ranking.",
-    "▶ Empezar torneo":"▶ Start tournament","Final":"Final","Semifinal":"Semifinal","Cuartos":"Quarterfinals","Octavos":"Round of 16",
-    "VS":"VS","✕ Reiniciar":"✕ Reset","🏆 Campeón del torneo":"🏆 Tournament champion",
+    "Eliminatorias por rondas; al final, podio con ranking completo.":"Knockout rounds; at the end, a podium with full ranking.",
+    "Empezar torneo":"Start tournament","Final":"Final","Semifinal":"Semifinal","Cuartos":"Quarterfinals","Octavos":"Round of 16",
+    "VS":"VS","✕ Reiniciar":"✕ Reset","Campeón del torneo":"Tournament champion",
     "El camino — quién eliminó a quién":"The path — who knocked out whom","↻ Otro torneo":"↻ Another tournament","pasa directo":"bye",
     // top100
     "Tu ranking definitivo. Asigna una posición a cada coche (1 = el mejor). Edita el número para reordenar.":"Your definitive ranking. Assign a position to each car (1 = best). Edit the number to reorder.",
@@ -892,7 +1135,7 @@
     // duels
     "Necesitas al menos 2 coches para jugar.":"You need at least 2 cars to play.","Duelos — rey de la colina":"Duels — king of the hill",
     "Elige tu preferido entre dos. El ganador se queda y enfrenta al siguiente coche, uno por uno, hasta tu favorito definitivo.":"Pick your favorite between two. The winner stays and faces the next car, one by one, until your ultimate favorite.",
-    "▶ Empezar":"▶ Start","🏆 Tu favorito":"🏆 Your favorite","↻ Jugar otra vez":"↻ Play again","★ Campeón":"★ Champion",
+    "Empezar":"Start","Tu favorito":"Your favorite","↻ Jugar otra vez":"↻ Play again","★ Campeón":"★ Champion",
     // IRL
     "Aún no registras manejos":"You haven't logged any drives yet",
     "Apunta los coches que has manejado en la vida real, con su propia calificación de experiencia.":"Note the cars you've driven in real life, with their own experience rating.",
@@ -902,41 +1145,41 @@
     "¿Cómo se sintió? ¿Qué te sorprendió?":"How did it feel? What surprised you?","Bitácora":"Log","experiencia":"experience",
     "Sin foto":"No photo","Sin nombre":"No name",
     // stories
-    "📖 Historias y datos curiosos":"📖 Stories & fun facts","＋ Nueva historia":"＋ New story",
+    "Historias y datos curiosos":"Stories & fun facts","＋ Nueva historia":"＋ New story",
     "Inicia sesión para publicar":"Sign in to post","Aún no hay historias":"No stories yet",
     "Sé el primero en compartir la historia o un dato curioso de un coche.":"Be the first to share a story or fun fact about a car.",
     "Sin título":"Untitled","Nueva historia":"New story","Título":"Title",
     "La leyenda del Ferrari 250 GTO":"The legend of the Ferrari 250 GTO","Coche relacionado (opcional)":"Related car (optional)",
     "Historia / dato curioso":"Story / fun fact","Cuenta la historia, el dato curioso, una anécdota…":"Tell the story, the fun fact, an anecdote…",
-    "Imágenes (opcional)":"Images (optional)","📷 Añadir imagen(es)":"📷 Add image(s)","Publicar":"Post",
-    "💬 Comentarios":"💬 Comments","Escribe un comentario…":"Write a comment…","Enviar":"Send",
+    "Imágenes (opcional)":"Images (optional)","Añadir imagen(es)":"Add image(s)","Publicar":"Post",
+    "Comentarios":"Comments","Escribe un comentario…":"Write a comment…","Enviar":"Send",
     "Inicia sesión para comentar":"Sign in to comment","Sé el primero en comentar.":"Be the first to comment.",
     "eliminar":"delete","anónimo":"anonymous",
     // home / mercado
-    "🏠 Inicio":"🏠 Home","📈 Mercado":"📈 Market","Mercado":"Market","Descubrir":"Discover",
+    "Inicio":"Home","Mercado":"Market","Mercado":"Market","Descubrir":"Discover",
     "Colección de coches":"Car collection",
     "Descubre, colecciona y":"Discover, collect and","rankea":"rank","los coches que amas.":"the cars you love.",
     "Explora lo que la comunidad acaba de publicar, lee historias, arma tu garage y sigue el mercado de clásicos y modernos.":"Explore what the community just published, read stories, build your garage and follow the market for classics and moderns.",
-    "🚗 Mi garage":"🚗 My garage","🏪 Explorar Marketplace":"🏪 Explore Marketplace","📈 Ver mercado":"📈 View market",
+    "Mi garage":"My garage","Explorar Marketplace":"Explore Marketplace","Ver mercado":"View market",
     "Publicados recientemente":"Recently published",
     "Clásicos":"Classics","Tu garage de":"Your garage of","clásicos":"classics",", en línea de salida.":", on the starting grid.",
     "Publica tus autos, compara especificaciones y sigue lo que se mueve en el mercado de clásicos.":"Post your cars, compare specs and follow what's moving in the classic car market.",
-    "En pista":"On track","Motor":"Engine","Mi garage":"My garage","Cargando":"Loading","No se pudo cargar el modelo":"Couldn't load the model","Ver todo →":"View all →",
+    "En pista":"On track","Precio":"Price","Borrar":"Delete","Azar":"Random","Motor":"Engine","Mi garage":"My garage","Cargando":"Loading","No se pudo cargar el modelo":"Couldn't load the model","Ver todo →":"View all →",
     "Historias y artículos":"Stories & articles","Explora":"Explore",
     "El mercado, en video":"The market, in video","Más en Hagerty →":"More on Hagerty →",
-    "💎 Rarezas":"💎 Rare Specs","Rarezas":"Rare Specs","pieza(s)":"piece(s)",
+    "Rarezas":"Rare Specs","Rarezas":"Rare Specs","pieza(s)":"piece(s)",
     "Specs especiales: one-of-one y pedidos a medida.":"Special specs: one-of-one and bespoke builds.",
     "Marca una versión como “One-off / a medida” al editar un coche para que aparezca aquí.":"Mark a version as “One-off / bespoke” when editing a car so it shows up here.",
     "Aún no hay rarezas":"No rare specs yet","Esta colección no tiene piezas marcadas como one-off.":"This collection has no one-off pieces marked.",
     "Edita un coche y activa “One-off / a medida” en una versión especial.":"Edit a car and turn on “One-off / bespoke” on a special version.",
-    "One-off / a medida":"One-off / bespoke","⭐ One-off / a medida (pieza especial)":"⭐ One-off / bespoke (special piece)",
+    "One-off / a medida":"One-off / bespoke","One-off / a medida (pieza especial)":"One-off / bespoke (special piece)",
     "Historia / deep-dive (para Rarezas)":"Story / deep-dive (for Rare Specs)",
     "Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…":"Tell why it’s special: bespoke order, one-of-one, story, unique specs…",
     "Aún no escribes la historia. Edita el coche y llena el campo 'Historia / deep-dive' de esta versión.":"You haven’t written the story yet. Edit the car and fill the “Story / deep-dive” field on this version.",
     "Sin historia todavía.":"No story yet.","Historia":"Story","Detalles":"Details","Valor":"Value","Rareza":"Rarity","One-off":"One-off",
-    "🍀 Trifoglio Podcast":"🍀 Trifoglio Podcast","Ver el canal →":"View the channel →",
+    "Trifoglio Podcast":"Trifoglio Podcast","Ver el canal →":"View the channel →",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.":"Three friends obsessed with cars: stories, debates and car culture. New episodes often.",
-    "▶ Suscríbete en YouTube":"▶ Subscribe on YouTube","Borrar (admin)":"Delete (admin)",
+    "Suscríbete en YouTube":"Subscribe on YouTube","Borrar (admin)":"Delete (admin)",
     "Leer historia →":"Read story →","Añade coches que la comunidad publicó.":"Add cars the community published.",
     "11 coches de colección que despegarían en 2026":"11 collector cars set to surge in 2026",
     "Tendencias de precios de clásicos: ¿qué dicen los datos?":"Classic price trends: what does the data say?",
@@ -953,7 +1196,7 @@
     "Estos son los sitios de referencia para precios, valores y resultados de subastas reales. Busca un modelo o abre cualquiera para ver datos en vivo.":"These are the go-to sites for real prices, values and auction results. Search a model or open any of them for live data.",
     "Busca un modelo (ej. Porsche 911)…":"Search a model (e.g. Porsche 911)…","Buscar en Classic.com":"Search on Classic.com",
     "Los precios y datos viven en cada sitio (requieren internet). Los enlaces abren en una pestaña nueva.":"Prices and data live on each site (internet required). Links open in a new tab.",
-    "Índices y datos":"Indices & data","Subastas":"Auctions","Abrir sitio ↗":"Open site ↗",
+    "Índices y datos":"Indices & data","Subastas":"Auctions","Abrir sitio ":"Open site ",
     "Índices de precios y tendencias por modelo, con historial de ventas real.":"Price indices and trends by model, with real sales history.",
     "Valores por condición (#1–#4) y tendencias del mercado de clásicos.":"Condition-based values (#1–#4) and classic-market trends.",
     "Anuncios, precios de venta y guías de valor de coches clásicos.":"Listings, sale prices and value guides for classic cars.",
@@ -966,7 +1209,7 @@
     "Subastas globales de coches y motos de colección.":"Global auctions of collector cars and motorcycles.",
     // admin
     "Código de administrador:":"Administrator code:","Modo admin desactivado":"Admin mode off",
-    "🔧 Modo admin activado":"🔧 Admin mode on","Código incorrecto":"Wrong code",
+    "Modo admin activado":"Admin mode on","Código incorrecto":"Wrong code",
     // toasts (fixed)
     "Añadiendo…":"Adding…","Colección exportada":"Collection exported","Respaldo completo guardado":"Full backup saved",
     "Combo guardado":"Combo saved","Clasificado por promedio":"Ranked by average","Rankeado por promedio":"Ranked by average",
@@ -989,7 +1232,7 @@
     "Escribe correo y contraseña.":"Enter email and password.",
     "✓ Cuenta creada. Revisa tu correo, confirma el enlace y luego inicia sesión.":"✓ Account created. Check your email, confirm the link, then sign in.",
     "Escribe al menos un título o la historia.":"Write at least a title or the story.",
-    "⚠ Error de conexión.":"⚠ Connection error.","⚠ Error.":"⚠ Error.","Archivo no válido":"Invalid file",
+    "Error de conexión.":"Connection error.","Error.":"Error.","Archivo no válido":"Invalid file",
     // confirms (fixed)
     "¿Vaciar la tier list (de los coches mostrados)?":"Clear the tier list (for the shown cars)?",
     "¿Vaciar todo el Top 100?":"Clear the entire Top 100?","¿Eliminar este coche de tu garage?":"Delete this car from your garage?",
@@ -1005,14 +1248,14 @@
     "＋ Elegir spec":"＋ Choose spec","Elegir spec":"Choose spec",
     "Buscar marca, modelo o color…":"Search brand, model or color…","Sin specs todavía.":"No specs yet.",
     // discover (pestaña)
-    "🔎 Descubrir":"🔎 Discover","Sin resultados.":"No results.",
+    "Descubrir":"Discover","Sin resultados.":"No results.",
     "Colecciones de la comunidad. Toca una para ver su garage.":"Community collections. Tap one to see its garage.",
     "Aún no hay colecciones públicas.":"No public collections yet.",
     // spec battle — aleatoria / rey de la colina
     "Elige dos specs (o sortéalos), compara sus fotos y elige al ganador. El campeón se queda y entra un retador nuevo.":"Choose two specs (or shuffle them), compare their photos and pick the winner. The champion stays and a new challenger comes in.",
-    "🎲 Batalla aleatoria":"🎲 Random battle","🏆 Gana A":"🏆 A wins","🏆 Gana B":"🏆 B wins",
+    "Batalla aleatoria":"Random battle","Gana A":"A wins","Gana B":"B wins",
     "No hay specs en el catálogo":"No specs in the catalog","No se pudo sortear":"Couldn't shuffle",
-    "🎲 Sorteando duelo…":"🎲 Shuffling duel…","🎲 Sorteando…":"🎲 Shuffling…"
+    "Sorteando duelo…":"Shuffling duel…","Sorteando…":"Shuffling…"
   };
 
   function P(re,fn){ return [re,fn]; }
@@ -1023,14 +1266,14 @@
     P(/^(\d+) coches$/, function(m){ return m[1]+" cars"; }),
     P(/^(\d+) coche manejado$/, function(m){ return m[1]+" car driven"; }),
     P(/^(\d+) coches manejados$/, function(m){ return m[1]+" cars driven"; }),
-    P(/^🔖 Filtrar \((\d+)\)$/, function(m){ return "🔖 Filter ("+m[1]+")"; }),
+    P(/^Filtrar \((\d+)\)$/, function(m){ return "Filter ("+m[1]+")"; }),
     P(/^(\d+) fotos · toca los lados para cambiar$/, function(m){ return m[1]+" photos · tap the sides to change"; }),
     P(/^(\d+) foto\(s\)$/, function(m){ return m[1]+" photo(s)"; }),
     P(/^(\d+) versión\(es\) · (\d+) foto\(s\)$/, function(m){ return m[1]+" version(s) · "+m[2]+" photo(s)"; }),
-    P(/^🚗 (\d+) coche\(s\)$/, function(m){ return "🚗 "+m[1]+" car(s)"; }),
+    P(/^(\d+) coche\(s\)$/, function(m){ return ""+m[1]+" car(s)"; }),
     P(/^★ (.+) promedio$/, function(m){ return "★ "+m[1]+" average"; }),
-    P(/^🏆 (\d+) victoria\(s\)$/, function(m){ return "🏆 "+m[1]+" win(s)"; }),
-    P(/^🏆 Ganó (.+)$/, function(m){ return "🏆 "+m[1]+" won"; }),
+    P(/^(\d+) victoria\(s\)$/, function(m){ return ""+m[1]+" win(s)"; }),
+    P(/^Ganó (.+)$/, function(m){ return ""+m[1]+" won"; }),
     P(/^✓ (.+) añadido — ponle tus calificaciones$/, function(m){ return "✓ "+m[1]+" added — set your ratings"; }),
     P(/^Ya tienes (\d+) coches$/, function(m){ return "You already have "+m[1]+" cars"; }),
     P(/^Ya tienes (.+)$/, function(m){ return "You already have "+m[1]; }),
@@ -1041,7 +1284,7 @@
     P(/^(\d+) coches importados$/, function(m){ return m[1]+" cars imported"; }),
     P(/^Combo (\d+)$/, function(m){ return "Combo "+m[1]; }),
     P(/^No se pudo: (.+)$/, function(m){ return "Couldn't: "+m[1]; }),
-    P(/^💲 Precios · (.+)$/, function(m){ return "💲 Prices · "+m[1]; }),
+    P(/^Precios · (.+)$/, function(m){ return "Prices · "+m[1]; }),
     P(/^Torneo · (.+)$/, function(m){ return "Tournament · "+translateCore(m[1]); }),
     P(/^¿Cuál prefieres\? · Duelo (\d+) de (\d+)$/, function(m){ return "Which do you prefer? · Duel "+m[1]+" of "+m[2]; }),
     P(/^Partido (\d+) de (\d+) · (\d+) coches en esta ronda$/, function(m){ return "Match "+m[1]+" of "+m[2]+" · "+m[3]+" cars in this round"; }),
@@ -1058,6 +1301,10 @@
     P(/^¿Quitar la categoría "(.+)"\? Los coches conservarán otras etiquetas\.$/, function(m){ return "Remove the category \""+m[1]+"\"? Cars will keep their other tags."; })
   ];
 
+  PAT.push(
+    P(/^Comentarios (\d+)$/, function(m){ return "Comments "+m[1]; }),
+    P(/^(.*) fotos$/, function(m){ return m[1]+" photos"; })
+  );
   function translateCore(s){
     if(Object.prototype.hasOwnProperty.call(DICT,s)) return DICT[s];
     for(var i=0;i<PAT.length;i++){ var r=PAT[i][0].exec(s); if(r) return PAT[i][1](r); }
@@ -1092,7 +1339,7 @@
   function wireLang(){
     var btn=document.getElementById("langToggle");
     if(btn){
-      btn.textContent = (LANG==="en") ? "🌐 ES" : "🌐 EN";
+      btn.textContent = (LANG==="en") ? "ES" : "EN";
       btn.onclick=function(){ try{ localStorage.setItem("mg-lang", LANG==="en"?"es":"en"); }catch(e){} location.reload(); };
     }
   }
@@ -1119,10 +1366,10 @@ const ADMIN_CODE="MG-9X4K-Q72B"; let adminUnlocked=false;
 function isAdmin(){ return !!(myProfile && (myProfile.is_admin || (myProfile.username||"").toLowerCase()==="feli_chuy")); }
 function adminToggle(){
   if(adminUnlocked){ adminUnlocked=false; toast("Modo admin desactivado"); renderMarketTab(); return; }
-  if(isAdmin()){ adminUnlocked=true; toast("🔧 Modo admin activado"); renderMarketTab(); return; }
+  if(isAdmin()){ adminUnlocked=true; toast("Modo admin activado"); renderMarketTab(); return; }
   const code=prompt("Código de administrador:");
   if(code===null) return;
-  if(code.trim()===ADMIN_CODE){ adminUnlocked=true; toast("🔧 Modo admin activado"); renderMarketTab(); }
+  if(code.trim()===ADMIN_CODE){ adminUnlocked=true; toast("Modo admin activado"); renderMarketTab(); }
   else toast("Código incorrecto");
 }
 async function adminDeleteCatalog(i){
@@ -1410,18 +1657,18 @@ function priceSources(query){
   const q=encodeURIComponent(query);
   const slug=encodeURIComponent(query.toLowerCase().replace(/\s+/g," ").trim());
   return [
-    {ic:"📊",name:"classic.com",desc:"Valor de mercado y ventas recientes",url:`https://www.classic.com/search/?q=${q}`},
-    {ic:"🔨",name:"Bring a Trailer",desc:"Subastas recientes y resultados",url:`https://bringatrailer.com/search/?s=${q}`},
-    {ic:"🚘",name:"Cars & Bids",desc:"Subastas modernas / enthusiast",url:`https://carsandbids.com/search/${slug}`},
-    {ic:"🏆",name:"RM Sotheby's",desc:"Subastas premium / coleccionables",url:`https://www.google.com/search?q=site:rmsothebys.com+${q}`},
-    {ic:"🏁",name:"Mecum",desc:"Clásicos y muscle cars",url:`https://www.google.com/search?q=site:mecum.com+${q}`},
-    {ic:"🔎",name:"Búsqueda general",desc:"Precio / a la venta",url:`https://www.google.com/search?q=${q}+price+for+sale`}
+    {ic:"",name:"classic.com",desc:"Valor de mercado y ventas recientes",url:`https://www.classic.com/search/?q=${q}`},
+    {ic:"",name:"Bring a Trailer",desc:"Subastas recientes y resultados",url:`https://bringatrailer.com/search/?s=${q}`},
+    {ic:"",name:"Cars & Bids",desc:"Subastas modernas / enthusiast",url:`https://carsandbids.com/search/${slug}`},
+    {ic:"",name:"RM Sotheby's",desc:"Subastas premium / coleccionables",url:`https://www.google.com/search?q=site:rmsothebys.com+${q}`},
+    {ic:"",name:"Mecum",desc:"Clásicos y muscle cars",url:`https://www.google.com/search?q=site:mecum.com+${q}`},
+    {ic:"",name:"Búsqueda general",desc:"Precio / a la venta",url:`https://www.google.com/search?q=${q}+price+for+sale`}
   ];
 }
 function showPriceMenu(query){
   if(!query){toast("Escribe marca o modelo primero");return;}
   $("#promptModal").innerHTML=`
-    <div class="mh"><h3>💲 Precios · ${query}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mh"><h3>Precios · ${query}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
     <div class="mb">
       <p style="color:var(--ink-dim);font-size:13px;margin:0">Abre el valor de mercado y subastas recientes en sitios reales:</p>
       <div style="display:flex;flex-direction:column;gap:8px">
@@ -1465,7 +1712,7 @@ function renderTagFilters(){
   const list=[...new Set([...categories,...used])];
   // reflejar filtros activos en el botón
   const fb=$("#filterBtn");
-  if(fb){ const n=activeTagFilters.size; fb.innerHTML="🔖 Filtrar"+(n?` (${n})`:""); fb.classList.toggle("primary",!!n); fb.classList.toggle("ghost",!n); }
+  if(fb){ const n=activeTagFilters.size; fb.innerHTML="Filtrar"+(n?` (${n})`:""); fb.classList.toggle("primary",!!n); fb.classList.toggle("ghost",!n); }
   if(!list.length){ el.innerHTML=""; el.style.display="none"; tagPanelOpen=false; return; }
   el.style.display=tagPanelOpen?"flex":"none";
   if(!tagPanelOpen){ el.innerHTML=""; return; }
@@ -1513,14 +1760,14 @@ function renderGarage(){
     (activeTagFilters.size?` · filtrando: ${[...activeTagFilters].join(", ")}`:"");
   const view=$("#garageView");
   if(!cars.length){
-    view.innerHTML=`<div class="empty"><div class="big">🏁</div>
+    view.innerHTML=`<div class="empty"><div class="big"></div>
       <h2>Tu garage está vacío</h2>
       <p>Importa tu colección o añade tu primer coche favorito.</p>
       <button class="btn primary" onclick="openEdit()">＋ Añadir coche</button></div>`;
     return;
   }
   if(!list.length){
-    view.innerHTML=`<div class="empty"><div class="big">🔍</div><h2>Sin resultados</h2>
+    view.innerHTML=`<div class="empty"><div class="big"></div><h2>Sin resultados</h2>
       <p>Prueba con otra búsqueda o quita filtros.</p></div>`;
     return;
   }
@@ -1556,19 +1803,19 @@ function carCard(c,i,list){
   const tags=(c.tags||[]).slice(0,4).map(t=>`<span class="tag">${t}</span>`).join("");
   return `<article class="car">
     <div class="ph" onclick="openDetail('${c.id}')">
-      ${img?`<img src="${img}" alt="">`:`<div class="noimg">🚗</div>`}
+      ${img?`<img src="${img}" alt="">`:`<div class="noimg"></div>`}
       ${showRank?`<div class="rankbadge">#${i+1}</div>`:""}
       ${a?`<div class="avgbadge">★ ${a.toFixed(1)}</div>`:""}${garageStrip(c)}
     </div>
     <div class="body">
       <div class="nm" onclick="openDetail('${c.id}')" style="cursor:pointer">${c.name||"Sin nombre"}</div>
-      <div class="meta"><b>${c.brand||"—"}</b> <span>${c.year||""}</span> <span>${money(c)}</span>${c.color?` <span>· 🎨 ${esc(c.color)}</span>`:''}</div>
+      <div class="meta"><b>${c.brand||"—"}</b> <span>${c.year||""}</span> <span>${money(c)}</span>${c.color?` <span>· ${esc(c.color)}</span>`:''}</div>
       ${tags?`<div class="tags">${tags}</div>`:""}
       <div class="bars">${bars}</div>
       <div class="acts">
-        ${readOnly?`<button class="btn primary sm" onclick="grabFromViewed('${c.id}')">➕ A mi garage</button>`
+        ${readOnly?`<button class="btn primary sm" onclick="grabFromViewed('${c.id}')">A mi garage</button>`
                   :`<button class="btn ghost sm" onclick="openEdit('${c.id}')">✎ Editar</button>`}
-        <button class="btn ghost sm" onclick="openPriceMenu('${c.id}')">💲</button>
+        <button class="btn ghost sm" onclick="openPriceMenu('${c.id}')">Precio</button>
         <button class="btn ghost sm" onclick="openDetail('${c.id}')">Ver</button>
       </div>
     </div>
@@ -1589,7 +1836,7 @@ function openDetail(id){
   }).join("");
   const specs=(c.specs||[]).map(s=>`
     <div class="specsec">
-      <strong>${esc(s.title||"Versión")}</strong>${s.color?` <span class="tag">🎨 ${esc(s.color)}</span>`:""}
+      <strong>${esc(s.title||"Versión")}</strong>${s.color?` <span class="tag">${esc(s.color)}</span>`:""}
       ${s.details?`<div style="color:var(--ink-dim);font-size:13px">${esc(s.details)}</div>`:""}
       ${s.images?.length?`<div class="specthumbs">${s.images.map(im=>`<img src="${im}">`).join("")}</div>`:""}
     </div>`).join("");
@@ -1624,7 +1871,7 @@ function openDetail(id){
       </div>
     </div>
     <div class="mf">
-      <button class="btn ghost" onclick="openPriceMenu('${c.id}')">💲 Precios</button>
+      <button class="btn ghost" onclick="openPriceMenu('${c.id}')">Precios</button>
       ${readOnly?'':`<button class="btn ghost" onclick="openEdit('${c.id}')">✎ Editar</button>
       <button class="btn ghost" onclick="delCar('${c.id}')" style="color:var(--accent)">Eliminar</button>`}
       <button class="btn primary" onclick="closeAll()">Cerrar</button>
@@ -1685,7 +1932,7 @@ function openEdit(id){
           <select id="f-curr">${Object.keys(CURR).map(k=>`<option value="${k}" ${c?.currency===k?'selected':''}>${k} ${CURR[k]}</option>`).join("")}</select>
         </div>
       </div>
-      <button class="btn sm ghost" type="button" onclick="openPriceMenuFromForm()" style="align-self:flex-start">💲 Ver precios de mercado</button>
+      <button class="btn sm ghost" type="button" onclick="openPriceMenuFromForm()" style="align-self:flex-start">Ver precios de mercado</button>
       <div class="field"><label>Categorías / Tags</label>
         <div class="tagpick" id="editTagPick">${catChips()}</div>
         <div style="display:flex;gap:8px;margin-top:8px">
@@ -1733,7 +1980,7 @@ function renderSpecs(){
         <div class="field"><label>Color</label><input value="${esc(s.color||'')}" oninput="editSpecs[${i}].color=this.value" placeholder="ej. Giallo"></div>
         <div class="field"><label>Detalles (VIN, motor…)</label><input value="${esc(s.details||'')}" oninput="editSpecs[${i}].details=this.value"></div>
       </div>
-      <label class="rare-toggle"><input type="checkbox" ${s.rare?'checked':''} onchange="editSpecs[${i}].rare=this.checked;toggleSpecStory(${i},this.checked)"> ⭐ One-off / a medida (pieza especial)</label>
+      <label class="rare-toggle"><input type="checkbox" ${s.rare?'checked':''} onchange="editSpecs[${i}].rare=this.checked;toggleSpecStory(${i},this.checked)"> One-off / a medida (pieza especial)</label>
       <div class="field spec-story" id="specstory-${i}" style="${s.rare?'':'display:none'}"><label>Título de la historia (para Rarezas)</label><input value="${esc(s.storyTitle||'')}" oninput="editSpecs[${i}].storyTitle=this.value" placeholder="ej. El único en este color" style="margin-bottom:8px"><label>Historia / deep-dive (para Rarezas)</label><textarea oninput="editSpecs[${i}].story=this.value" placeholder="Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…">${esc(s.story||'')}</textarea></div>
       <div class="specthumbs">${(s.images||[]).map((im,j)=>`<div class="spthumb ${im===editCoverImg?'cover':''}">
           <img src="${esc(im)}" title="Poner de portada" onclick="setCoverImg(${i},${j})">
@@ -1741,7 +1988,7 @@ function renderSpecs(){
           <button type="button" class="rm" title="Quitar" onclick="removeSpecImg(${i},${j})">×</button>
         </div>`).join("")||'<span style="color:var(--ink-faint);font-size:12px">Sin fotos en esta versión</span>'}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn sm" type="button" onclick="document.getElementById('specfile-${i}').click()">📷 Añadir foto(s)</button>
+        <button class="btn sm" type="button" onclick="document.getElementById('specfile-${i}').click()">Añadir foto(s)</button>
         ${editSpecs.length>1?`<button class="btn sm ghost" type="button" style="color:var(--accent)" onclick="removeSpec(${i})">Quitar versión</button>`:''}
         <input type="file" id="specfile-${i}" accept="image/*" multiple hidden onchange="addSpecImgs(${i},this.files)">
       </div>
@@ -1847,8 +2094,8 @@ function openImportChoice(){
     <div class="mb">
       <p style="color:var(--ink-dim);font-size:14px;margin:0">Ya tienes ${cars.length} coches. ¿Cómo quieres importar el archivo?</p>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <button class="btn" onclick="pickImport('merge')">➕ Añadir a mi garage actual <span style="color:var(--ink-faint);font-weight:400;margin-left:auto">conserva los actuales</span></button>
-        <button class="btn" onclick="pickImport('replace')" style="border-color:var(--accent)">♻ Reemplazar todo <span style="color:var(--ink-faint);font-weight:400;margin-left:auto">borra los actuales</span></button>
+        <button class="btn" onclick="pickImport('merge')">Añadir a mi garage actual <span style="color:var(--ink-faint);font-weight:400;margin-left:auto">conserva los actuales</span></button>
+        <button class="btn" onclick="pickImport('replace')" style="border-color:var(--accent)">Reemplazar todo <span style="color:var(--ink-faint);font-weight:400;margin-left:auto">borra los actuales</span></button>
       </div>
       <p style="color:var(--ink-faint);font-size:12px;margin:0">Funciona con exportaciones viejas (4 calificaciones, sin tags) y con respaldos completos.</p>
     </div>`;
@@ -1923,7 +2170,7 @@ function renderFive(){
     if(!id) return `<div class="slot"><span class="n">${i+1}</span>${fiveReal&&fiveRoles[i]?`<div class="cap" style="background:var(--accent2);color:#1a1a1a">${fiveRoles[i]}</div>`:''}</div>`;
     const c=cars.find(x=>x.id===id); const img=firstImg(c);
     return `<div class="slot full">
-      ${img?`<img src="${img}">`:`<div class="noimg" style="display:flex;align-items:center;justify-content:center;height:100%;font-size:28px;color:var(--ink-faint)">🚗</div>`}
+      ${img?`<img src="${img}">`:`<div class="noimg" style="display:flex;align-items:center;justify-content:center;height:100%;font-size:28px;color:var(--ink-faint)"></div>`}
       <button class="rm" onclick="fiveRemove(${i})">×</button>
       <div class="cap">${c.brand||""} ${c.name||""}</div></div>`;
   }).join("");
@@ -1940,7 +2187,7 @@ function renderFive(){
     if(!dis&&fiveReal){const nextSlot=fivePick.filter(Boolean).length;const req=fiveRoles[nextSlot];if(req&&!(c.tags||[]).includes(req)){dis=true;why="necesitas: "+req;}}
     const img=firstImg(c);
     return `<div class="pickrow ${dis?'dis':''}" onclick="fiveAdd('${c.id}')" title="${why}">
-      ${img?`<img src="${img}">`:`<div class="pn">🚗</div>`}
+      ${img?`<img src="${img}">`:`<div class="pn"></div>`}
       <div class="info"><div class="t">${c.brand||""} ${c.name||""}</div>
         <div class="s">${c.year||""} · ${money(c)} · ★${avg(c).toFixed(1)}${(c.tags||[]).length?' · '+c.tags.slice(0,2).join(', '):''}</div></div>
     </div>`;
@@ -1965,7 +2212,7 @@ function renderFive(){
       <span style="font-size:13px;font-weight:700;color:${overBudget?'var(--accent)':'var(--ink)'}">$${totalVal.toLocaleString("en-US")}${fiveBudget?` / $${fiveBudget.toLocaleString("en-US")}`:''}</span>
     </div>
     ${fiveReal?`<div style="background:var(--bg2);border:1px solid var(--accent2);border-radius:10px;padding:12px;margin-bottom:14px">
-      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--accent2);margin-bottom:8px">⚙ Modo realista — categoría requerida por posición</div>
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--accent2);margin-bottom:8px">Modo realista — categoría requerida por posición</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         ${Array.from({length:fiveN},(_,i)=>`<label style="font-size:12px;color:var(--ink-dim);display:flex;flex-direction:column;gap:3px">Coche ${i+1}
           <select class="ctrl" onchange="fiveRoles[${i}]=this.value;renderFive()">
@@ -1980,8 +2227,8 @@ function renderFive(){
         <div class="slots">${slots}</div>
         <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
           <input id="comboName" class="ctrl" style="flex:1;min-width:140px" placeholder="Nombre del combo (p.ej. 'Fin de semana italiano')">
-          <button class="btn primary" onclick="saveCombo()" ${fivePick.filter(Boolean).length<1?'disabled style=opacity:.5':''}>💾 Guardar combo</button>
-          <button class="btn ghost" onclick="shareCombo()">🔗 Compartir</button>
+          <button class="btn primary" onclick="saveCombo()" ${fivePick.filter(Boolean).length<1?'disabled style=opacity:.5':''}>Guardar combo</button>
+          <button class="btn ghost" onclick="shareCombo()">Compartir</button>
           <button class="btn ghost sm" onclick="fivePick=[];renderFive()">Limpiar</button>
         </div>
       </div>
@@ -2024,7 +2271,7 @@ function tierFilteredCars(){
 }
 function tierChip(c){
   const im=firstImg(c);
-  return `<div class="poolcar ${tierSel===c.id?'sel':''}" draggable="true" ondragstart="tierDragId='${c.id}';event.dataTransfer.effectAllowed='move'" onclick="tierTap('${c.id}')">${im?`<img src="${im}">`:`<div class="pn">🚗</div>`}${c.brand||""} ${c.name||""}</div>`;
+  return `<div class="poolcar ${tierSel===c.id?'sel':''}" draggable="true" ondragstart="tierDragId='${c.id}';event.dataTransfer.effectAllowed='move'" onclick="tierTap('${c.id}')">${im?`<img src="${im}">`:`<div class="pn"></div>`}${c.brand||""} ${c.name||""}</div>`;
 }
 function renderTier(){
   const v=$("#actView");
@@ -2051,12 +2298,12 @@ function renderTier(){
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
       <span style="font-size:13px;color:var(--ink-dim)">Filtrar:</span>${filterSel}
       ${tierSel?`<span style="font-size:12px;color:var(--accent2);font-weight:700">● seleccionado — toca un nivel</span>`:""}
-      <button class="btn sm ghost" style="margin-left:auto" onclick="autoTier()">⚡ Autollenar por promedio</button>
+      <button class="btn sm ghost" style="margin-left:auto" onclick="autoTier()">Autollenar por promedio</button>
       <button class="btn sm ghost" style="color:var(--accent)" onclick="clearTier()">Vaciar</button>
     </div>
     ${rows}
     <div class="unranked"><h4>Sin clasificar — toca uno y luego un nivel (o aquí para quitarlo)</h4>
-      <div class="tierdrop" onclick="if(tierSel)tierPlace('')" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="tierDrop(event,'')" style="min-height:54px">${unranked.map(tierChip).join("")||'<span style="color:var(--ink-faint);font-size:12px;align-self:center">Todos clasificados 🎉</span>'}</div>
+      <div class="tierdrop" onclick="if(tierSel)tierPlace('')" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="tierDrop(event,'')" style="min-height:54px">${unranked.map(tierChip).join("")||'<span style="color:var(--ink-faint);font-size:12px;align-self:center">Todos clasificados </span>'}</div>
     </div>
   </div>`;
 }
@@ -2079,7 +2326,7 @@ function brkStart(){
 function renderBracket(){
   const v=$("#actView");
   if(cars.length<2){v.innerHTML=`<div class="panel"><h3>Torneo</h3><p class="lead">Necesitas al menos 2 coches.</p></div>`;return;}
-  if(!brk){v.innerHTML=`<div class="panel"><h3>Torneo — bracket</h3><p class="lead">Eliminatorias por rondas; al final, podio 🥇🥈🥉 con ranking completo.</p><button class="btn primary" onclick="brkStart()">▶ Empezar torneo</button></div>`;return;}
+  if(!brk){v.innerHTML=`<div class="panel"><h3>Torneo — bracket</h3><p class="lead">Eliminatorias por rondas; al final, podio con ranking completo.</p><button class="btn primary" onclick="brkStart()">Empezar torneo</button></div>`;return;}
   if(brk.round.length>1 && brk.match+1>=brk.round.length){
     if(brk.match<brk.round.length){brk.next.push(brk.round[brk.match]);
       brk.history.push({size:brk.round.length,a:brk.round[brk.match],b:null,winner:brk.round[brk.match],bye:true});}
@@ -2090,7 +2337,7 @@ function renderBracket(){
   const b=cars.find(x=>x.id===brk.round[brk.match+1]);
   const totalMatches=Math.floor(brk.round.length/2);
   const roundName=brk.round.length<=2?"Final":brk.round.length<=4?"Semifinal":brk.round.length<=8?"Cuartos":"Ronda "+brk.roundNo;
-  const card=(c,i)=>{const img=firstImg(c);return `<div class="vscard" onclick="brkPick(${i})"><div class="ph">${img?`<img src="${img}">`:`<div class="noimg">🚗</div>`}</div><div class="cap"><div class="t">${c.brand||""} ${c.name||""}</div><div class="s">${c.year||""} · ★${avg(c).toFixed(1)} · ${money(c)}</div></div></div>`;};
+  const card=(c,i)=>{const img=firstImg(c);return `<div class="vscard" onclick="brkPick(${i})"><div class="ph">${img?`<img src="${img}">`:`<div class="noimg"></div>`}</div><div class="cap"><div class="t">${c.brand||""} ${c.name||""}</div><div class="s">${c.year||""} · ★${avg(c).toFixed(1)} · ${money(c)}</div></div></div>`;};
   v.innerHTML=`<div class="panel"><h3>Torneo · ${roundName}</h3>
     <p class="lead">Partido ${Math.floor(brk.match/2)+1} de ${totalMatches} · ${brk.round.length} coches en esta ronda</p>
     <div class="vs">${card(a,0)}<div class="vsmid">VS</div>${card(b,1)}</div>
@@ -2110,13 +2357,13 @@ function brkPodium(v){
   const sizes=[...new Set(brk.history.map(h=>h.size))].sort((a,b)=>b-a);
   const roundLabel=s=>s<=2?"Final":s<=4?"Semifinal":s<=8?"Cuartos":s<=16?"Octavos":`Ronda de ${s}`;
   const mini=id=>{const c=cars.find(x=>x.id===id);return {c,im:c?firstImg(c):null};};
-  const row=(m,win)=>m?`<div class="bm-row ${win?'win':'lose'}">${m.im?`<img src="${m.im}">`:`<span class="pn">🚗</span>`}<span class="bm-nm">${m.c?(m.c.brand||"")+" "+(m.c.name||""):""}</span>${win?'<span class="bm-ck">✓</span>':''}</div>`:`<div class="bm-row bye">pasa directo</div>`;
+  const row=(m,win)=>m?`<div class="bm-row ${win?'win':'lose'}">${m.im?`<img src="${m.im}">`:`<span class="pn"></span>`}<span class="bm-nm">${m.c?(m.c.brand||"")+" "+(m.c.name||""):""}</span>${win?'<span class="bm-ck">✓</span>':''}</div>`:`<div class="bm-row bye">pasa directo</div>`;
   const matchCard=h=>{const A=mini(h.a),B=h.b?mini(h.b):null;return `<div class="bmatch">${row(A,h.winner===h.a)}${B?row(B,h.winner===h.b):row(null)}</div>`;};
   const cols=sizes.map(s=>`<div class="bcol"><div class="bcol-h">${roundLabel(s)}</div>${brk.history.filter(h=>h.size===s).map(matchCard).join("")}</div>`).join("");
   const cc=cars.find(x=>x.id===champ);const cim=cc?firstImg(cc):null;
   v.innerHTML=`<div class="panel">
-    <h3 style="text-align:center">🏆 Campeón del torneo</h3>
-    <div style="max-width:320px;margin:12px auto"><div class="vscard" style="cursor:default"><div class="ph">${cim?`<img src="${cim}">`:`<div class="noimg">🚗</div>`}</div><div class="cap"><div class="t">${cc.brand||""} ${cc.name||""}</div><div class="s">${cc.year||""} · ★${avg(cc).toFixed(1)}</div></div></div></div>
+    <h3 style="text-align:center">Campeón del torneo</h3>
+    <div style="max-width:320px;margin:12px auto"><div class="vscard" style="cursor:default"><div class="ph">${cim?`<img src="${cim}">`:`<div class="noimg"></div>`}</div><div class="cap"><div class="t">${cc.brand||""} ${cc.name||""}</div><div class="s">${cc.year||""} · ★${avg(cc).toFixed(1)}</div></div></div></div>
     <h4 style="text-transform:uppercase;letter-spacing:1px;color:var(--ink-faint);font-size:12px;margin:18px 0 10px">El camino — quién eliminó a quién</h4>
     <div class="bracket">${cols||'<span style="color:var(--ink-faint)">—</span>'}</div>
     <div style="text-align:center;margin-top:16px"><button class="btn primary" onclick="brkStart()">↻ Otro torneo</button></div>
@@ -2125,7 +2372,7 @@ function brkPodium(v){
 function shareCombo(){
   const picks=fivePick.filter(Boolean).map(id=>{const c=cars.find(x=>x.id===id);return `${c.brand||""} ${c.name||""}`.trim();});
   if(!picks.length){toast("Arma un combo primero");return;}
-  const txt=`🅿️ Mi Garage de 5:\n`+picks.map((p,i)=>`${i+1}. ${p}`).join("\n");
+  const txt=`Mi Garage de 5:\n`+picks.map((p,i)=>`${i+1}. ${p}`).join("\n");
   if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>toast("Copiado al portapapeles"));}
   else toast(txt);
 }
@@ -2134,12 +2381,12 @@ function renderTop100(){
   const v=$("#actView");
   const ranked=cars.filter(c=>top100[c.id]).sort((a,b)=>top100[a.id]-top100[b.id]);
   const unranked=cars.filter(c=>!top100[c.id]);
-  const medal=p=>p===1?"🥇":p===2?"🥈":p===3?"🥉":"";
+  const medal=p=>p===1?"":p===2?"":p===3?"":"";
   v.innerHTML=`<div class="panel">
     <h3>Top 100</h3>
     <p class="lead">Tu ranking definitivo. Asigna una posición a cada coche (1 = el mejor). Edita el número para reordenar.</p>
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-      <button class="btn sm" onclick="autoFillTop()">⚡ Autollenar por promedio</button>
+      <button class="btn sm" onclick="autoFillTop()">Autollenar por promedio</button>
       <button class="btn sm ghost" onclick="clearTop()" style="color:var(--accent)">Vaciar ranking</button>
     </div>
     <div class="t100">
@@ -2148,7 +2395,7 @@ function renderTop100(){
         return `<div class="t100row">
           <span class="pos"><input type="number" min="1" max="100" value="${p}" onchange="setTop('${c.id}',this.value)"></span>
           <span class="medal">${medal(p)}</span>
-          ${img?`<img src="${img}">`:`<div class="pn">🚗</div>`}
+          ${img?`<img src="${img}">`:`<div class="pn"></div>`}
           <div class="info"><div class="t">${c.brand||""} ${c.name||""}</div>
             <div class="s">${c.year||""} · ★${avg(c).toFixed(1)} · ${money(c)}</div></div>
           <button class="btn sm ghost" style="color:var(--accent)" onclick="setTop('${c.id}','')">Quitar</button>
@@ -2157,7 +2404,7 @@ function renderTop100(){
     </div>
     ${unranked.length?`<div class="unranked"><h4>Sin posición — toca para añadir al final</h4>
       <div class="pool">${unranked.map(c=>{const im=firstImg(c);return `<div class="poolcar" onclick="addToTop('${c.id}')">
-        ${im?`<img src="${im}">`:`<div class="pn">🚗</div>`}${c.brand||""} ${c.name||""}</div>`;}).join("")}</div></div>`:""}
+        ${im?`<img src="${im}">`:`<div class="pn"></div>`}${c.brand||""} ${c.name||""}</div>`;}).join("")}</div></div>`:""}
   </div>`;
 }
 function setTop(id,val){
@@ -2185,17 +2432,17 @@ function renderTourney(){
   if(!tourState){
     v.innerHTML=`<div class="panel"><h3>Duelos — rey de la colina</h3>
       <p class="lead">Elige tu preferido entre dos. El ganador se queda y enfrenta al siguiente coche, uno por uno, hasta tu favorito definitivo.</p>
-      <button class="btn primary" onclick="startTour()">▶ Empezar</button></div>`;
+      <button class="btn primary" onclick="startTour()">Empezar</button></div>`;
     return;
   }
   if(!tourState.queue.length){
     const winner=cars.find(c=>c.id===tourState.champion);
     const img=winner?firstImg(winner):null;
     v.innerHTML=`<div class="panel" style="text-align:center">
-      <h3>🏆 Tu favorito</h3>
+      <h3>Tu favorito</h3>
       <div style="max-width:340px;margin:14px auto">
         <div class="vscard" style="cursor:default">
-          <div class="ph">${img?`<img src="${img}">`:`<div class="noimg">🚗</div>`}</div>
+          <div class="ph">${img?`<img src="${img}">`:`<div class="noimg"></div>`}</div>
           <div class="cap"><div class="t">${winner.brand||""} ${winner.name||""}</div>
             <div class="s">${winner.year||""} · ★${avg(winner).toFixed(1)}</div></div>
         </div>
@@ -2208,7 +2455,7 @@ function renderTourney(){
   const pct=Math.round(tourState.duel/tourState.total*100);
   const card=(c,which,champ)=>{const img=firstImg(c);return `<div class="vscard" onclick="tourPick('${which}')" style="position:relative">
     ${champ?`<div style="position:absolute;top:8px;left:8px;z-index:3;background:var(--good);color:#0a0a0a;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:2px 8px;border-radius:6px">★ Campeón</div>`:''}
-    <div class="ph">${img?`<img src="${img}">`:`<div class="noimg">🚗</div>`}</div>
+    <div class="ph">${img?`<img src="${img}">`:`<div class="noimg"></div>`}</div>
     <div class="cap"><div class="t">${c.brand||""} ${c.name||""}</div><div class="s">${c.year||""} · ★${avg(c).toFixed(1)}</div></div></div>`;};
   v.innerHTML=`<div class="panel"><h3>¿Cuál prefieres? · Duelo ${tourState.duel+1} de ${tourState.total}</h3>
     <div class="tourbar"><div class="f" style="width:${pct}%"></div></div>
@@ -2245,13 +2492,13 @@ function renderIrl(){
   $("#irlCount").textContent=`${list.length} ${list.length===1?'coche manejado':'coches manejados'}`;
   const view=$("#irlView");
   if(!irlCars.length){
-    view.innerHTML=`<div class="empty"><div class="big">🚙💨</div>
+    view.innerHTML=`<div class="empty"><div class="big"></div>
       <h2>Aún no registras manejos</h2>
       <p>Apunta los coches que has manejado en la vida real, con su propia calificación de experiencia.</p>
       <button class="btn primary" onclick="openIrlEdit()">＋ Registrar manejo</button></div>`;
     return;
   }
-  if(!list.length){view.innerHTML=`<div class="empty"><div class="big">🔍</div><h2>Sin resultados</h2></div>`;return;}
+  if(!list.length){view.innerHTML=`<div class="empty"><div class="big"></div><h2>Sin resultados</h2></div>`;return;}
   const showRank=s!=="name"&&s!=="recent";
   view.innerHTML=`<div class="grid">${list.map((c,i)=>{
     const img=c.image||null; const a=irlAvg(c);
@@ -2264,14 +2511,14 @@ function renderIrl(){
     const logline=[log.place,log.date].filter(Boolean).join(" · ");
     return `<article class="car">
       <div class="ph" onclick="openIrlDetail('${c.id}')">
-        ${img?`<img src="${img}" alt="">`:`<div class="noimg">🚗</div>`}
+        ${img?`<img src="${img}" alt="">`:`<div class="noimg"></div>`}
         ${showRank?`<div class="rankbadge">#${i+1}</div>`:""}
         ${a?`<div class="avgbadge">★ ${a.toFixed(1)}</div>`:""}
       </div>
       <div class="body">
         <div class="nm" style="cursor:pointer" onclick="openIrlDetail('${c.id}')">${c.name||"Sin nombre"}</div>
         <div class="meta"><b>${c.brand||"—"}</b> <span>${c.year||""}</span></div>
-        ${logline?`<div class="meta" style="color:var(--ink-dim)">📍 ${logline}</div>`:""}
+        ${logline?`<div class="meta" style="color:var(--ink-dim)">${logline}</div>`:""}
         <div class="bars">${bars}</div>
         <div class="acts">
           <button class="btn ghost sm" onclick="openIrlEdit('${c.id}')">✎ Editar</button>
@@ -2372,7 +2619,7 @@ function openIrlDetail(id){
         <div style="display:flex;flex-direction:column;gap:14px">
           <div class="bars">${bars}</div>
           ${(log.place||log.date)?`<div><div style="color:var(--ink-faint);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Bitácora</div>
-            <div style="font-size:14px">📍 ${[log.place,log.date].filter(Boolean).join(" · ")||"—"}</div></div>`:""}
+            <div style="font-size:14px">${[log.place,log.date].filter(Boolean).join(" · ")||"—"}</div></div>`:""}
           ${log.note?`<div style="font-size:14px;color:var(--ink-dim)">${log.note}</div>`:""}
         </div>
       </div>
@@ -2395,7 +2642,7 @@ function renderRare(){
   const items=[];
   (cars||[]).forEach(c=>(c.specs||[]).forEach((s,si)=>{ if(s&&s.rare) items.push({c,s,si}); }));
   v.innerHTML=`<div class="toolbar" style="justify-content:space-between;align-items:center">
-      <h2 style="font-family:var(--display);font-size:26px;letter-spacing:.8px;margin:0">💎 Rarezas</h2>
+      <h2 style="font-family:var(--display);font-size:26px;letter-spacing:.8px;margin:0">Rarezas</h2>
       <span style="color:var(--ink-faint);font-size:13px">${items.length} <span>pieza(s)</span></span>
     </div>
     <p style="color:var(--ink-dim);font-size:13px;margin:0 0 16px"><span>Specs especiales: one-of-one y pedidos a medida.</span>${readOnly?"":' <span>Marca una versión como “One-off / a medida” al editar un coche para que aparezca aquí.</span>'}</p>
@@ -2404,16 +2651,16 @@ function renderRare(){
       const stitle=s.storyTitle||s.title||"";
       const teaser=s.story?(esc(s.story.slice(0,170))+(s.story.length>170?"…":"")):"";
       return `<article class="rare-item" onclick="openRareArticle('${c.id}',${si})">
-        <div class="ri-ph">${cover?`<img src="${esc(cover)}" loading="lazy" alt="">`:`<div class="noimg">💎</div>`}<span class="rare-tag">One-off</span></div>
+        <div class="ri-ph">${cover?`<img src="${esc(cover)}" loading="lazy" alt="">`:`<div class="noimg"></div>`}<span class="rare-tag">One-off</span></div>
         <div class="ri-body">
           ${stitle?`<div class="ri-title">${esc(stitle)}</div>`:""}
           <div class="ri-name">${esc(c.year||"")} <b>${esc(c.brand||"")}</b> ${esc(c.name||"")}</div>
-          ${s.color?`<div class="rare-color">🎨 ${esc(s.color)}</div>`:""}
+          ${s.color?`<div class="rare-color">${esc(s.color)}</div>`:""}
           ${teaser?`<div class="ri-teaser">${teaser}</div>`:""}
           <div class="ri-more"><span>Leer la historia</span> →</div>
         </div></article>`;
     }).join("")}</div>`
-    :`<div class="empty"><div class="big">💎</div><h2>Aún no hay rarezas</h2><p>${readOnly?"Esta colección no tiene piezas marcadas como one-off.":"Edita un coche y activa “One-off / a medida” en una versión especial."}</p></div>`}`;
+    :`<div class="empty"><div class="big"></div><h2>Aún no hay rarezas</h2><p>${readOnly?"Esta colección no tiene piezas marcadas como one-off.":"Edita un coche y activa “One-off / a medida” en una versión especial."}</p></div>`}`;
 }
 let rareTimer=null;
 function openRareArticle(carId,si){
@@ -2423,16 +2670,16 @@ function openRareArticle(carId,si){
   if(imgs.length<2){ const all=allImgs(c); if(all.length>imgs.length) imgs=all; }
   const stitle=s.storyTitle||s.title||"";
   $("#detailModal").innerHTML=`
-    <div class="mh"><h3>💎 ${esc(c.name||"Rareza")}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mh"><h3>${esc(c.name||"Rareza")}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
     <div class="mb rare-art">
       ${imgs.length?`<div class="rare-carousel"><img id="rareImg" src="${esc(imgs[0])}" alt="" onclick="stBig(this.src)">
-        <span class="rare-badge2">💎 One-off / a medida</span>
+        <span class="rare-badge2">One-off / a medida</span>
         ${imgs.length>1?`<div class="rare-dots" id="rareDots">${imgs.map((_,i)=>`<span class="${i===0?'on':''}"></span>`).join("")}</div>`:""}</div>`
        :`<div class="dropimg" style="height:220px">Sin fotos</div>`}
       <div class="rare-headline">
         ${stitle?`<div class="rare-storytitle">${esc(stitle)}</div>`:""}
         <div class="rare-name">${esc(c.year||"")} <span style="color:var(--accent)">${esc(c.brand||"")}</span> ${esc(c.name||"")}</div>
-        ${s.color?`<div class="rare-color">🎨 ${esc(s.color)}</div>`:""}
+        ${s.color?`<div class="rare-color">${esc(s.color)}</div>`:""}
       </div>
       <div class="rare-body">
         <div class="rare-story">
@@ -2515,20 +2762,20 @@ function renderAuthUI(){
   const el=$("#authArea"); if(!el)return;
   if(viewing){
     const fb=(session&&viewing.userId&&viewing.userId!==session.user.id)
-      ? `<button class="btn sm" onclick="toggleFriend()">${viewing.isFriend?'✓ Amigo':'➕ Agregar amigo'}</button>` : '';
-    el.innerHTML=`<span class="authuser">👁 Viendo <b>@${viewing.username}</b></span>${fb}
+      ? `<button class="btn sm" onclick="toggleFriend()">${viewing.isFriend?'✓ Amigo':'Agregar amigo'}</button>` : '';
+    el.innerHTML=`<span class="authuser">Viendo <b>@${viewing.username}</b></span>${fb}
       <button class="btn sm" onclick="goHome()">← Volver a mi garage</button>`;
     return;
   }
   if(session){
     const u=myProfile?myProfile.username:"…", pub=myProfile?myProfile.is_public:true;
-    el.innerHTML=`<button class="btn sm" onclick="openFriends()">👥 Amigos</button>
+    el.innerHTML=`<button class="btn sm" onclick="openFriends()">Amigos</button>
       <span class="authuser">@${u}</span>
-      <button class="btn sm" onclick="togglePublic()">${pub?"🌐 Público":"🔒 Privado"}</button>
-      <button class="btn sm" onclick="copyMyLink()">🔗 Mi enlace</button>
+      <button class="btn sm" onclick="togglePublic()">${pub?"Público":"Privado"}</button>
+      <button class="btn sm" onclick="copyMyLink()">Mi enlace</button>
       <button class="btn sm ghost" onclick="doLogout()">Salir</button>`;
   } else {
-    el.innerHTML=`<button class="btn primary sm" onclick="openAuth('login')">☁ Iniciar sesión</button>`;
+    el.innerHTML=`<button class="btn primary sm" onclick="openAuth('login')">Iniciar sesión</button>`;
   }
 }
 async function routeAndLoad(){
@@ -2588,10 +2835,10 @@ async function doAuth(signup){
   try{
     const res = signup ? await supa.auth.signUp({email,password:pass})
                        : await supa.auth.signInWithPassword({email,password:pass});
-    if(res.error){ msg.textContent="⚠ "+res.error.message; return; }
+    if(res.error){ msg.textContent=""+res.error.message; return; }
     if(signup && !res.data.session){ msg.innerHTML="✓ Cuenta creada. Revisa tu correo, confirma el enlace y luego inicia sesión."; return; }
     closeAll(); await routeAndLoad(); toast("¡Bienvenido!");
-  }catch(e){ msg.textContent="⚠ Error de conexión."; }
+  }catch(e){ msg.textContent="Error de conexión."; }
 }
 async function doLogout(){ try{ await supa.auth.signOut(); }catch(e){} session=null; myProfile=null; await loadAll(); applyAfterLoad(); toast("Sesión cerrada"); }
 /* ---- onboarding: elegir usuario ---- */
@@ -2614,11 +2861,11 @@ async function saveUsername(){
   try{
     const isPub=$("#up-public").checked;
     const { error } = await supa.from("profiles").insert({user_id:session.user.id, username:name, is_public:isPub});
-    if(error){ msg.textContent=/duplicate|unique/i.test(error.message)?"Ese usuario ya existe, prueba otro.":"⚠ "+error.message; return; }
+    if(error){ msg.textContent=/duplicate|unique/i.test(error.message)?"Ese usuario ya existe, prueba otro.":""+error.message; return; }
     myProfile={user_id:session.user.id, username:name, is_public:isPub};
     await saveAll();
     closeAll(); renderAuthUI(); toast("¡Perfil creado!");
-  }catch(e){ msg.textContent="⚠ Error."; }
+  }catch(e){ msg.textContent="Error."; }
 }
 async function togglePublic(){
   if(!myProfile)return;
@@ -2634,7 +2881,7 @@ function copyMyLink(){
 /* ---- descubrir / buscar ---- */
 function openDiscover(){
   $("#promptModal").innerHTML=`
-    <div class="mh"><h3>🔎 Descubrir garages</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mh"><h3>Descubrir garages</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
     <div class="mb">
       <div class="field"><input id="dc-q" placeholder="Buscar usuario…" oninput="searchUsers(this.value)"></div>
       <div id="dc-res" style="display:flex;flex-direction:column;gap:6px"><p style="color:var(--ink-faint);font-size:13px">Escribe para buscar usuarios con garage público.</p></div>
@@ -2652,7 +2899,7 @@ function searchUsers(q){
     try{
       const { data } = await supa.from("profiles").select("username,is_public").ilike("username","%"+q+"%").eq("is_public",true).limit(20);
       if(!data||!data.length){ box.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Sin resultados públicos.</p>'; return; }
-      box.innerHTML=data.map(p=>`<button class="btn" style="justify-content:flex-start" onclick="closeAll();location.hash='u/${p.username}'">👤 @${p.username}</button>`).join("");
+      box.innerHTML=data.map(p=>`<button class="btn" style="justify-content:flex-start" onclick="closeAll();location.hash='u/${p.username}'">@${p.username}</button>`).join("");
     }catch(e){ box.innerHTML='<p style="color:var(--accent);font-size:13px">Error al buscar.</p>'; }
   },250);
 }
@@ -2687,12 +2934,12 @@ function renderDiscoverCards(arr){
   const box=$("#dc-tab-res"); if(!box)return;
   if(!arr.length){ box.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Sin resultados.</p>'; return; }
   box.innerHTML=arr.map(d=>`<article class="car" style="cursor:pointer" onclick="location.hash='u/${d.username}'">
-    <div class="ph">${d.img?`<img src="${esc(d.img)}" loading="lazy">`:`<div class="noimg">👤</div>`}</div>
+    <div class="ph">${d.img?`<img src="${esc(d.img)}" loading="lazy">`:`<div class="noimg"></div>`}</div>
     <div class="body">
       <div class="nm">@${esc(d.username)}</div>
       <div class="meta" style="display:flex;flex-direction:column;gap:3px;margin-top:6px;font-size:13px">
-        <span>🚗 ${d.count} coche(s)</span>
-        <span>💲 ${d.totalVal?("$"+d.totalVal.toLocaleString("en-US")):"—"}</span>
+        <span>${d.count} coche(s)</span>
+        <span>${d.totalVal?("$"+d.totalVal.toLocaleString("en-US")):"—"}</span>
         <span>★ ${d.avgRating?d.avgRating.toFixed(1):"—"} promedio</span>
       </div>
     </div>
@@ -2790,7 +3037,7 @@ async function upsertCatalog(c){
 function seedCatalog(){ cars.forEach(c=>upsertCatalog(c)); }
 function openMarket(){
   $("#promptModal").innerHTML=`
-    <div class="mh"><h3>🏪 Marketplace</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mh"><h3>Marketplace</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
     <div class="mb">
       <p style="color:var(--ink-dim);font-size:13px;margin:0">Coches que la gente ha agregado. Añádelos a tu garage y ponles tus calificaciones.</p>
       <div class="field"><input id="mk-q" placeholder="Buscar marca o modelo…" oninput="loadMarket(this.value)"></div>
@@ -2812,11 +3059,11 @@ function loadMarket(q){
       const {data}=await query; mkData=data||[];
       if(!mkData.length){ box.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Sin coches todavía. ¡Agrega el primero!</p>'; return; }
       box.innerHTML=mkData.map((e,i)=>`<article class="car">
-        <div class="ph">${e.image?`<img src="${esc(e.image)}" loading="lazy">`:`<div class="noimg">🚗</div>`}${catStrip(e)}</div>
+        <div class="ph">${e.image?`<img src="${esc(e.image)}" loading="lazy">`:`<div class="noimg"></div>`}${catStrip(e)}</div>
         <div class="body"><div class="nm">${esc(e.name||"")}</div>
           <div class="meta"><b>${esc(e.brand||"")}</b> <span>${esc(e.year||"")}</span></div>
-          <div class="acts"><button class="btn primary sm" style="flex:1;justify-content:center" onclick="addFromCatalog(${i})">➕ A mi garage</button>
-            ${adminUnlocked?`<button class="btn ghost sm" style="color:var(--accent)" title="Borrar del marketplace" onclick="adminDeleteCatalog(${i})">🗑</button>`:''}</div>
+          <div class="acts"><button class="btn primary sm" style="flex:1;justify-content:center" onclick="addFromCatalog(${i})">A mi garage</button>
+            ${adminUnlocked?`<button class="btn ghost sm" style="color:var(--accent)" title="Borrar del marketplace" onclick="adminDeleteCatalog(${i})">Borrar</button>`:''}</div>
         </div></article>`).join("");
     }catch(e){ box.innerHTML='<p style="color:var(--accent);font-size:13px">Error al cargar.</p>'; }
   },250);
@@ -2864,17 +3111,17 @@ function renderCatPicker(){
   if(!catPickCtx)return; const e=catPickCtx.e, variants=catPickCtx.variants;
   $("#promptModal").innerHTML=`<div class="mh"><h3>Agregar ${esc(e.brand||"")} ${esc(e.name||"")}</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
     <div class="mb">
-      <p style="color:var(--ink-dim);font-size:13px;margin:0">${variants.length?"Elige la versión / color que quieres. Si ya tienes este coche, se añade como otra versión.":"Este coche aún no tiene fotos; se añadirá sin imagen (puedes ponerle la tuya después)."}${adminUnlocked?' <b style="color:var(--accent2)">· Admin: 🗑 quita versiones.</b>':''}</p>
+      <p style="color:var(--ink-dim);font-size:13px;margin:0">${variants.length?"Elige la versión / color que quieres. Si ya tienes este coche, se añade como otra versión.":"Este coche aún no tiene fotos; se añadirá sin imagen (puedes ponerle la tuya después)."}${adminUnlocked?' <b style="color:var(--accent2)">· Admin: quita versiones.</b>':''}</p>
       <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr))">
         ${variants.map((v,k)=>`<div class="car">
           <div class="ph" style="cursor:pointer" onclick="pickCatalog(${k})"><img src="${esc(v.image)}"></div>
           <div class="body" style="padding:7px 9px">
-            <div class="meta">${v.color?`🎨 <b style="color:var(--accent2)">${esc(v.color)}</b>`:'Sin color'}${v.title?` · ${esc(v.title)}`:''}</div>
+            <div class="meta">${v.color?`<b style="color:var(--accent2)">${esc(v.color)}</b>`:'Sin color'}${v.title?` · ${esc(v.title)}`:''}</div>
             <div class="acts"><button class="btn primary sm" style="flex:1;justify-content:center" onclick="pickCatalog(${k})">Elegir</button>
-              ${adminUnlocked?`<button class="btn ghost sm" style="color:var(--accent)" title="Quitar versión del marketplace" onclick="adminRemoveVariant(${k})">🗑</button>`:''}</div>
+              ${adminUnlocked?`<button class="btn ghost sm" style="color:var(--accent)" title="Quitar versión del marketplace" onclick="adminRemoveVariant(${k})">Borrar</button>`:''}</div>
           </div>
         </div>`).join("")}
-        <div class="car" style="cursor:pointer" onclick="pickCatalog(-1)"><div class="ph"><div class="noimg" style="flex-direction:column">🚗<span style="font-size:11px">Sin imagen</span></div></div></div>
+        <div class="car" style="cursor:pointer" onclick="pickCatalog(-1)"><div class="ph"><div class="noimg" style="flex-direction:column"><span style="font-size:11px">Sin imagen</span></div></div></div>
       </div>
     </div>`;
 }
@@ -2905,7 +3152,7 @@ function renderMarketTab(){
   const v=$("#tab-market"); if(!v)return;
   v.innerHTML=`
     <div class="toolbar"><input class="ctrl grow" id="mk-q" placeholder="Buscar marca o modelo…" oninput="loadMarket(this.value)">
-      ${isAdmin()?`<button class="btn sm ${adminUnlocked?'primary':'ghost'}" onclick="adminToggle()">${adminUnlocked?'🔧 Admin activo':'🔧 Modo admin'}</button>`:''}
+      ${isAdmin()?`<button class="btn sm ${adminUnlocked?'primary':'ghost'}" onclick="adminToggle()">${adminUnlocked?'Admin activo':'Modo admin'}</button>`:''}
     </div>
     <p style="color:var(--ink-dim);font-size:13px;margin:0 0 12px">Coches que la comunidad ha agregado. Añádelos a tu garage y ponles tus calificaciones.${adminUnlocked?' <b style="color:var(--accent2)">· Admin: puedes borrar coches o versiones.</b>':''}</p>
     <div id="mk-res" class="grid"><p style="color:var(--ink-faint)">Cargando…</p></div>`;
@@ -2960,9 +3207,9 @@ async function battleLoadSpec(item){
 function battleColumn(side){
   const s=battlePick[side], tag=side===0?"A":"B";
   if(!s) return `<div style="border:1.5px dashed var(--line);border-radius:14px;padding:28px 12px;text-align:center;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">
-      <div style="font-size:34px">🚗</div>
+      <div style="font-size:34px"></div>
       <button class="btn primary" onclick="openBattlePicker(${side})">＋ Elegir spec</button>
-      <button class="btn ghost sm" onclick="battleRandomOne(${side})">🎲 Random</button></div>`;
+      <button class="btn ghost sm" onclick="battleRandomOne(${side})">Random</button></div>`;
   const priceStr=(s.price!=null&&s.price!=="")?((CURR[s.currency]||"$")+Number(s.price).toLocaleString("en-US")):"";
   return `<div class="battlecar">
     <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px">
@@ -2970,12 +3217,12 @@ function battleColumn(side){
         <div style="display:flex;align-items:center;gap:8px"><span class="tag" style="background:var(--accent);color:#fff;font-weight:700">${tag}</span>
           <div style="font-family:var(--display);font-size:23px;line-height:.95">${esc(s.year||"")} <span style="color:var(--accent)">${esc(s.brand||"")}</span></div></div>
         <div style="font-family:var(--display);font-size:18px;color:var(--ink-dim)">${esc(s.name||"")}</div>
-        ${(s.color||s.title)?`<div style="margin-top:5px">${s.color?`<span class="tag">🎨 ${esc(s.color)}</span> `:""}${s.title?`<span class="tag">${esc(s.title)}</span>`:""}</div>`:""}
+        ${(s.color||s.title)?`<div style="margin-top:5px">${s.color?`<span class="tag">${esc(s.color)}</span> `:""}${s.title?`<span class="tag">${esc(s.title)}</span>`:""}</div>`:""}
         ${priceStr?`<div style="font-size:14px;color:var(--ink-dim);margin-top:4px">${priceStr}</div>`:""}
         <div style="font-size:12px;color:var(--ink-faint);margin-top:2px">${s.images.length} foto(s)</div>
-        ${(battleWins[specKey(s)]||0)?`<div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:2px">🏆 ${battleWins[specKey(s)]} victoria(s)</div>`:""}
+        ${(battleWins[specKey(s)]||0)?`<div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:2px">${battleWins[specKey(s)]} victoria(s)</div>`:""}
       </div>
-      <div style="margin-left:auto;display:flex;gap:6px"><button class="btn ghost sm" title="Random" onclick="battleRandomOne(${side})">🎲</button><button class="btn ghost sm" onclick="openBattlePicker(${side})">Cambiar</button></div>
+      <div style="margin-left:auto;display:flex;gap:6px"><button class="btn ghost sm" title="Random" onclick="battleRandomOne(${side})">Azar</button><button class="btn ghost sm" onclick="openBattlePicker(${side})">Cambiar</button></div>
     </div>
     ${s.images.length?`<div class="gallery">${s.images.map((im,idx)=>`<img src="${esc(im)}" style="cursor:pointer" onclick="battleBig(${side},${idx})">`).join("")}</div>`:'<span style="color:var(--ink-faint)">Sin fotos</span>'}
   </div>`;
@@ -2984,10 +3231,10 @@ function renderBattle(){
   const v=$("#tab-battle"); if(!v)return;
   const both=battlePick[0]&&battlePick[1];
   v.innerHTML=`<div class="panel">
-    <h3>⚔️ Spec Battle</h3>
+    <h3>Spec Battle</h3>
     <p class="lead">Elige dos specs (o sortéalos), compara sus fotos y elige al ganador. El campeón se queda y entra un retador nuevo.</p>
     <div style="text-align:center;margin-bottom:14px">
-      <button class="btn primary" onclick="battleRandom()" ${battleBusy?'disabled':''}>🎲 Batalla aleatoria</button>
+      <button class="btn primary" onclick="battleRandom()" ${battleBusy?'disabled':''}>Batalla aleatoria</button>
     </div>
     <div class="battlegrid" style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start">
       <div>${battleColumn(0)}</div>
@@ -2995,8 +3242,8 @@ function renderBattle(){
       <div>${battleColumn(1)}</div>
     </div>
     ${both?`<div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap">
-        <button class="btn primary" onclick="battleWinner(0)">🏆 Gana A</button>
-        <button class="btn primary" onclick="battleWinner(1)">🏆 Gana B</button>
+        <button class="btn primary" onclick="battleWinner(0)">Gana A</button>
+        <button class="btn primary" onclick="battleWinner(1)">Gana B</button>
       </div>`:""}
     ${(battlePick[0]||battlePick[1])?`<div style="text-align:center;margin-top:12px"><button class="btn ghost sm" onclick="battlePick=[null,null];renderBattle()">Limpiar</button></div>`:""}
   </div>`;
@@ -3007,7 +3254,7 @@ async function randomSpecItem(exclude){
   return pool.length?pool[Math.floor(Math.random()*pool.length)]:null;
 }
 async function battleRandom(){
-  if(battleBusy)return; battleBusy=true; toast("🎲 Sorteando duelo…"); renderBattle();
+  if(battleBusy)return; battleBusy=true; toast("Sorteando duelo…"); renderBattle();
   try{
     const a=await randomSpecItem([]);
     if(!a){ toast("No hay specs en el catálogo"); battleBusy=false; renderBattle(); return; }
@@ -3020,7 +3267,7 @@ async function battleRandom(){
 async function battleRandomOne(side){
   if(battleBusy)return;
   const other=battlePick[side===0?1:0];
-  toast("🎲 Sorteando…");
+  toast("Sorteando…");
   const item=await randomSpecItem(other?[specKey(other)]:[]);
   if(!item){ toast("No hay specs en el catálogo"); return; }
   battlePick[side]=await battleLoadSpec(item);
@@ -3031,7 +3278,7 @@ async function battleWinner(side){
   battleWins[specKey(w)]=(battleWins[specKey(w)]||0)+1;
   // rey de la colina: el ganador pasa al lado A y entra un retador nuevo en B
   battlePick[0]=w; battlePick[1]=null;
-  toast("🏆 Ganó "+(w.brand||"")+" "+(w.name||""));
+  toast("Ganó "+(w.brand||"")+" "+(w.name||""));
   renderBattle();
   battleBusy=true; renderBattle();
   try{ const ch=await randomSpecItem([specKey(w)]); if(ch) battlePick[1]=await battleLoadSpec(ch); }catch(e){}
@@ -3062,10 +3309,10 @@ function battleSearch(q){
     btSpecs = qq ? all.filter(s=>((s.brand+" "+s.name+" "+s.color+" "+s.title+" "+s.year).toLowerCase().includes(qq))) : all;
     if(!btSpecs.length){ box.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Sin specs todavía.</p>'; return; }
     box.innerHTML=btSpecs.map((s,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:6px;border:1px solid var(--line);border-radius:10px;cursor:pointer;background:var(--card)" onclick="pickBattle(${i})">
-      <div style="width:66px;height:46px;flex:none;border-radius:8px;overflow:hidden;background:var(--card2);display:flex;align-items:center;justify-content:center">${s.image?`<img src="${esc(s.image)}" loading="lazy" style="width:100%;height:100%;object-fit:cover">`:`🚗`}</div>
+      <div style="width:66px;height:46px;flex:none;border-radius:8px;overflow:hidden;background:var(--card2);display:flex;align-items:center;justify-content:center">${s.image?`<img src="${esc(s.image)}" loading="lazy" style="width:100%;height:100%;object-fit:cover">`:``}</div>
       <div style="min-width:0">
         <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.brand)} ${esc(s.name)}</div>
-        <div style="font-size:12px;color:var(--ink-dim)">${s.color?`🎨 ${esc(s.color)}`:(s.title?esc(s.title):"—")}${s.year?` · ${esc(s.year)}`:""} · ${s.images.length}📷</div>
+        <div style="font-size:12px;color:var(--ink-dim)">${s.color?`${esc(s.color)}`:(s.title?esc(s.title):"—")}${s.year?` · ${esc(s.year)}`:""} · ${s.images.length} fotos</div>
       </div>
     </div>`).join("");
   },200);
@@ -3088,16 +3335,16 @@ async function toggleFriend(){
   }catch(e){ toast("No se pudo"); }
 }
 async function openFriends(){
-  $("#promptModal").innerHTML=`<div class="mh"><h3>👥 Mis amigos</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+  $("#promptModal").innerHTML=`<div class="mh"><h3>Mis amigos</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
     <div class="mb"><div id="fr-res"><p style="color:var(--ink-faint);font-size:13px">Cargando…</p></div></div>`;
   $("#promptScrim").classList.add("show");
   try{
     const {data:fl}=await supa.from("follows").select("following_id").eq("follower_id",session.user.id);
     const ids=(fl||[]).map(r=>r.following_id);
     const box=$("#fr-res"); if(!box)return;
-    if(!ids.length){ box.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Aún no agregas amigos. Entra a un garage público (🔎 Descubrir) y pulsa "➕ Agregar amigo".</p>'; return; }
+    if(!ids.length){ box.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Aún no agregas amigos. Entra a un garage público (Descubrir) y pulsa "Agregar amigo".</p>'; return; }
     const {data:profs}=await supa.from("profiles").select("user_id,username").in("user_id",ids);
-    box.innerHTML=(profs&&profs.length)?profs.map(p=>`<button class="btn" style="justify-content:flex-start;width:100%;margin-bottom:6px" onclick="closeAll();location.hash='u/${p.username}'">👤 @${esc(p.username)}</button>`).join(""):'<p style="color:var(--ink-faint);font-size:13px">Tus amigos pusieron su garage en privado.</p>';
+    box.innerHTML=(profs&&profs.length)?profs.map(p=>`<button class="btn" style="justify-content:flex-start;width:100%;margin-bottom:6px" onclick="closeAll();location.hash='u/${p.username}'">@${esc(p.username)}</button>`).join(""):'<p style="color:var(--ink-faint);font-size:13px">Tus amigos pusieron su garage en privado.</p>';
   }catch(e){ const box=$("#fr-res"); if(box)box.innerHTML='<p style="color:var(--accent)">Error.</p>'; }
 }
 /* ---- Historia (feed de historias / datos curiosos) ---- */
@@ -3119,7 +3366,7 @@ async function toggleLike(id){
   }catch(e){ toast("No se pudo"); }
 }
 async function openComments(storyId){
-  $("#promptModal").innerHTML=`<div class="mh"><h3>💬 Comentarios</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+  $("#promptModal").innerHTML=`<div class="mh"><h3>Comentarios</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
     <div class="mb"><div id="cm-list" style="max-height:50vh;overflow:auto"><p style="color:var(--ink-faint)">Cargando…</p></div>
     ${session?`<div style="display:flex;gap:8px;margin-top:8px"><input id="cm-input" class="ctrl" style="flex:1" placeholder="Escribe un comentario…" onkeydown="if(event.key==='Enter')postComment('${storyId}')"><button class="btn primary" onclick="postComment('${storyId}')">Enviar</button></div>`:`<button class="btn primary" onclick="openAuth('login')">Inicia sesión para comentar</button>`}
     </div>`;
@@ -3146,34 +3393,35 @@ async function delComment(id,storyId){ try{ await supa.from("comments").delete()
 async function renderHistoria(){
   const v=$("#tab-historia"); if(!v)return;
   v.innerHTML=`<div class="toolbar" style="justify-content:space-between;align-items:center">
-      <h2 style="font-family:var(--display);font-size:26px;letter-spacing:.8px;margin:0">📖 Historias y datos curiosos</h2>
+      <h2 class="tab-title">Historias y datos curiosos</h2>
       ${session?`<button class="btn primary" onclick="openStoryForm()">＋ Nueva historia</button>`:`<button class="btn primary" onclick="openAuth('login')">Inicia sesión para publicar</button>`}
     </div>
     <div id="st-feed"><p style="color:var(--ink-faint)">Cargando…</p></div>`;
   try{
     const {data}=await supa.from("stories").select("*").order("created_at",{ascending:false}).limit(60);
     storiesCache=data||[]; const feed=$("#st-feed");
-    if(!storiesCache.length){ feed.innerHTML=`<div class="empty"><div class="big">📖</div><h2>Aún no hay historias</h2><p>Sé el primero en compartir la historia o un dato curioso de un coche.</p></div>`; return; }
+    if(!storiesCache.length){ feed.innerHTML=`<div class="empty"><div class="big"></div><h2>Aún no hay historias</h2><p>Sé el primero en compartir la historia o un dato curioso de un coche.</p></div>`; return; }
     await loadSocial(storiesCache.map(s=>s.id));
     feed.innerHTML=storiesCache.map(storyCard).join("");
   }catch(e){ const f=$("#st-feed"); if(f)f.innerHTML='<p style="color:var(--accent)">Error al cargar.</p>'; }
 }
 function storyCard(s){
-  const imgs=(s.images||[]).map((im,i)=>`<img src="${im}" style="cursor:pointer" onclick="storyLightbox('${s.id}',${i})">`).join("");
+  const all=s.images||[];
+  const plates=all.slice(1).map((im,i)=>`<img src="${im}" loading="lazy" alt="" onclick="storyLightbox('${s.id}',${i+1})">`).join("");
   const mine=session&&s.user_id===session.user.id;
   const d=s.created_at?new Date(s.created_at).toLocaleDateString():"";
-  return `<article class="panel" style="margin-bottom:14px">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
-      <span style="font-family:var(--display);font-size:22px;letter-spacing:.5px">${esc(s.title||"Sin título")}</span>
-      ${s.car?`<span class="tag">${esc(s.car)}</span>`:''}
-      ${mine?`<button class="btn sm ghost" style="margin-left:auto;color:var(--accent)" onclick="delStory('${s.id}')">Eliminar</button>`:''}
-    </div>
-    <div style="font-size:12px;color:var(--ink-faint);margin-bottom:8px">por @${esc(s.username||"anónimo")} · ${d}</div>
-    ${s.body?`<div style="font-size:14px;color:var(--ink-dim);white-space:pre-wrap;line-height:1.55">${esc(s.body)}</div>`:''}
-    ${imgs?`<div class="gallery" style="margin-top:10px">${imgs}</div>`:''}
+  return `<article class="st-article">
+    ${all[0]?`<figure class="st-cover"><img src="${all[0]}" loading="lazy" alt="" onclick="storyLightbox('${s.id}',0)"></figure>`:''}
+    <header class="st-head">
+      <div class="st-kick">${s.car?`<span class="tag">${esc(s.car)}</span>`:''}<span>por @${esc(s.username||"anónimo")}</span><span>${d}</span>
+        ${mine?`<button class="btn sm ghost st-del" onclick="delStory('${s.id}')">Eliminar</button>`:''}</div>
+      <h2 class="st-h">${esc(s.title||"Sin título")}</h2>
+    </header>
+    ${s.body?`<div class="st-text">${esc(s.body)}</div>`:''}
+    ${plates?`<div class="st-plates">${plates}</div>`:''}
     <div class="story-actions">
-      <button class="btn sm ghost" onclick="toggleLike('${s.id}')">${myLikes.has(s.id)?'❤️':'🤍'} ${likeMap[s.id]||0}</button>
-      <button class="btn sm ghost" onclick="openComments('${s.id}')">💬 ${commentCount[s.id]||0}</button>
+      <button class="btn sm ghost" onclick="toggleLike('${s.id}')">${myLikes.has(s.id)?'♥︎':'♡︎'} ${likeMap[s.id]||0}</button>
+      <button class="btn sm ghost" onclick="openComments('${s.id}')">Comentarios ${commentCount[s.id]||0}</button>
     </div>
   </article>`;
 }
@@ -3188,7 +3436,7 @@ function openStoryForm(){
       <div class="field"><label>Historia / dato curioso</label><textarea id="sf-body" style="min-height:130px" placeholder="Cuenta la historia, el dato curioso, una anécdota…"></textarea></div>
       <div class="field"><label>Imágenes (opcional)</label>
         <div id="sf-thumbs" class="specthumbs" style="margin-bottom:8px"></div>
-        <button class="btn sm" type="button" onclick="document.getElementById('sf-file').click()">📷 Añadir imagen(es)</button>
+        <button class="btn sm" type="button" onclick="document.getElementById('sf-file').click()">Añadir imagen(es)</button>
         <input type="file" id="sf-file" accept="image/*" multiple hidden onchange="addStoryImgs(this.files)">
       </div>
       <div id="sf-msg" style="font-size:13px;color:var(--ink-dim)"></div>
@@ -3204,9 +3452,9 @@ async function saveStory(){
   msg.textContent="Publicando…";
   try{
     const {error}=await supa.from("stories").insert({user_id:session.user.id, username:(myProfile?myProfile.username:""), title, body, car, images:storyImgs});
-    if(error){ msg.textContent="⚠ "+error.message; return; }
+    if(error){ msg.textContent=""+error.message; return; }
     storyImgs=[]; closeAll(); toast("✓ Historia publicada"); renderHistoria();
-  }catch(e){ msg.textContent="⚠ Error de conexión."; }
+  }catch(e){ msg.textContent="Error de conexión."; }
 }
 async function delStory(id){ if(!confirm("¿Eliminar tu historia?"))return; try{ await supa.from("stories").delete().eq("id",id); renderHistoria(); }catch(e){} }
 /* ======================================================================
@@ -3249,14 +3497,14 @@ async function renderHome(){
       <div id="home-market" class="mv-wrap"></div>
     </div>
     <div class="home-sec">
-      <div class="home-sechead"><h2>🍀 Trifoglio Podcast</h2><a href="https://www.youtube.com/@TrifoglioPodcast" target="_blank" rel="noopener noreferrer">Ver el canal →</a></div>
+      <div class="home-sechead"><h2>Trifoglio Podcast</h2><a href="https://www.youtube.com/@TrifoglioPodcast" target="_blank" rel="noopener noreferrer">Ver el canal →</a></div>
       <div class="podcast-wrap">
         <div class="pod-embed"><iframe src="https://www.youtube-nocookie.com/embed/videoseries?list=UUQlYk6kGVgBBQlusZYBkGYA" title="Trifoglio Podcast" loading="lazy" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
         <div class="pod-side">
-          <div class="pod-mark">🍀</div>
+          <div class="pod-mark"></div>
           <div class="pod-name">Trifoglio Podcast</div>
           <div class="pod-desc">Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.</div>
-          <a class="btn primary" href="https://www.youtube.com/@TrifoglioPodcast?sub_confirmation=1" target="_blank" rel="noopener noreferrer">▶ Suscríbete en YouTube</a>
+          <a class="btn primary" href="https://www.youtube.com/@TrifoglioPodcast?sub_confirmation=1" target="_blank" rel="noopener noreferrer">Suscríbete en YouTube</a>
           <a class="btn ghost sm" href="https://www.instagram.com/trifoglio.pod" target="_blank" rel="noopener noreferrer" style="justify-content:center">@trifoglio.pod</a>
         </div>
       </div>
@@ -3264,10 +3512,10 @@ async function renderHome(){
     <div class="home-sec">
       <div class="home-sechead"><h2>Explora</h2></div>
       <div class="home-tiles">
-        <button class="home-tile" onclick="showTab('battle')"><span class="ic">⚔️</span><span class="t">Spec Battle</span><span class="d">Enfrenta dos coches y elige al ganador.</span></button>
-        <button class="home-tile" onclick="showTab('market')"><span class="ic">🏪</span><span class="t">Marketplace</span><span class="d">Añade coches que la comunidad publicó.</span></button>
-        <button class="home-tile" onclick="showTab('discover')"><span class="ic">🔎</span><span class="t">Descubrir</span><span class="d">Colecciones de la comunidad.</span></button>
-        <button class="home-tile" onclick="showTab('activities')"><span class="ic">🏆</span><span class="t">Actividades</span><span class="d">Tier lists, torneos y tu Top 100.</span></button>
+        <button class="home-tile" onclick="showTab('battle')"><span class="ic"></span><span class="t">Spec Battle</span><span class="d">Enfrenta dos coches y elige al ganador.</span></button>
+        <button class="home-tile" onclick="showTab('market')"><span class="ic"></span><span class="t">Marketplace</span><span class="d">Añade coches que la comunidad publicó.</span></button>
+        <button class="home-tile" onclick="showTab('discover')"><span class="ic"></span><span class="t">Descubrir</span><span class="d">Colecciones de la comunidad.</span></button>
+        <button class="home-tile" onclick="showTab('activities')"><span class="ic"></span><span class="t">Actividades</span><span class="d">Tier lists, torneos y tu Top 100.</span></button>
       </div>
     </div>`;
   if(window.initHeroShowroom) window.initHeroShowroom();
@@ -3277,7 +3525,7 @@ async function renderHome(){
     const {data}=await supa.from("catalog").select("key,brand,name,year,image,variants").order("created_at",{ascending:false}).limit(12);
     homeCars=data||[]; const box=$("#home-cars");
     if(box) box.innerHTML = homeCars.length ? homeCars.map((e,i)=>`<article class="car" style="cursor:pointer" onclick="openHomeCar(${i})">
-        <div class="ph">${e.image?`<img src="${esc(e.image)}" loading="lazy">`:`<div class="noimg">🚗</div>`}${adminUnlocked?`<button class="admin-del" title="Borrar (admin)" onclick="adminDeleteHomeCar(event,${i})">🗑</button>`:''}${catStrip(e)}</div>
+        <div class="ph">${e.image?`<img src="${esc(e.image)}" loading="lazy">`:`<div class="noimg"></div>`}${adminUnlocked?`<button class="admin-del" title="Borrar (admin)" onclick="adminDeleteHomeCar(event,${i})">Borrar</button>`:''}${catStrip(e)}</div>
         <div class="body"><div class="nm">${esc(e.name||"")}</div>
           <div class="meta"><b>${esc(e.brand||"")}</b> <span>${esc(e.year||"")}</span></div></div>
       </article>`).join("") : '<p style="color:var(--ink-faint);font-size:13px">Aún no hay coches. ¡Sé el primero en publicar!</p>';
@@ -3345,7 +3593,7 @@ function renderStoryShow(){
   const multi=arr.length>1;
   box.innerHTML=`<div class="story-show">
     <div class="ss-slide" ${cover?`style="background-image:url('${esc(cover)}')"`:''} onclick="openStoryView('${s.id}')">
-      ${cover?'':'<div class="ss-noimg">📖</div>'}
+      ${cover?'':'<div class="ss-noimg"></div>'}
       <div class="ss-grad"></div>
       ${multi?`<button class="ss-arrow l" onclick="event.stopPropagation();storyShowNav(-1)" aria-label="Anterior">‹</button>
                <button class="ss-arrow r" onclick="event.stopPropagation();storyShowNav(1)" aria-label="Siguiente">›</button>`:''}
@@ -3404,9 +3652,9 @@ function showInstall(kind){
   if(pwaStandalone()) return;
   try{ if(localStorage.getItem("pwaHide")) return; }catch(e){}
   if(kind==="android"){
-    bar.innerHTML='<span>📲 Instala <b>Mi Garage</b> en tu pantalla</span><button class="btn primary sm" id="pwaInstall">Instalar</button><button class="btn sm ghost" id="pwaClose">×</button>';
+    bar.innerHTML='<span>Instala <b>Mi Garage</b> en tu pantalla</span><button class="btn primary sm" id="pwaInstall">Instalar</button><button class="btn sm ghost" id="pwaClose">×</button>';
   }else{
-    bar.innerHTML='<span>📲 Instálala: toca <b>Compartir</b> y “<b>Agregar a inicio</b>”</span><button class="btn sm ghost" id="pwaClose">×</button>';
+    bar.innerHTML='<span>Instálala: toca <b>Compartir</b> y “<b>Agregar a inicio</b>”</span><button class="btn sm ghost" id="pwaClose">×</button>';
   }
   bar.style.display="flex";
   const ib=document.getElementById("pwaInstall");

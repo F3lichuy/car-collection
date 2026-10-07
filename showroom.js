@@ -119,7 +119,9 @@ export function mountShowroom(container, opts = {}) {
     renderer.domElement.style.width = "100%";
     renderer.domElement.style.height = "100%";
     camera.aspect = width / height;
-    camera.fov = width / height < 1 ? 36 : 30;
+    // en contenedores angostos abrimos el campo de visión para que el coche quepa completo
+    const aspect = width / height;
+    camera.fov = aspect >= 1.6 ? 30 : Math.min(54, 30 * (1.6 / aspect));
     camera.updateProjectionMatrix();
   }
   const ro = new ResizeObserver(resize);

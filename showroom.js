@@ -121,6 +121,7 @@ export function mountShowroom(container, opts = {}) {
     scene.background.copy(c);
     scene.fog.color.copy(c);
     floor.material.color.copy(c);
+    renderer.render(scene, camera);   // redibuja al momento aunque la animación esté en pausa
   });
   themeObserver.observe(document.body, { attributes: true, attributeFilter: ["data-theme"] });
 

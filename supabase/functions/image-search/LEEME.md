@@ -1,29 +1,34 @@
-# Búsqueda de imágenes en la web
+# Búsqueda de imágenes en la web (gratis)
 
-La página busca fotos en la web a través de esta función de Supabase. La llave del buscador se guarda
-como secreto en Supabase y nunca aparece en el código público de la página.
+La página busca fotos en la web a través de esta función de Supabase. Por defecto usa **Bing Imágenes**,
+que es gratis y no necesita llave ni tarjeta. Las funciones de Supabase también son gratis en el plan actual.
 
-## Activarla (una sola vez)
+- En tu computadora (`node design-lab/serve.mjs` → http://localhost:5500) ya funciona sin hacer nada:
+  el servidor local hace la búsqueda.
+- En carcollection.app hace falta publicar la función una vez.
 
-1. Crea una llave en **Brave Search API** (https://brave.com/search/api/). El plan gratuito incluye
-   USD 5 de crédito al mes (unas 1,000 búsquedas).
-   - Alternativa: **SerpApi** (https://serpapi.com/, Google Imágenes, 250 búsquedas gratis al mes).
-2. Desde la carpeta del proyecto, en una terminal:
+## Publicarla (una sola vez)
 
-   ```bash
-   npx supabase login
-   npx supabase link --project-ref tayybbmbhsqxocugwzji
-   npx supabase secrets set BRAVE_API_KEY=tu_llave
-   npx supabase functions deploy image-search
-   ```
+Desde la carpeta del proyecto, en una terminal:
 
-   Con SerpApi, en el paso 3 usa `SERPAPI_KEY=tu_llave` en su lugar.
+```bash
+npx supabase login
+npx supabase link --project-ref tayybbmbhsqxocugwzji
+npx supabase functions deploy image-search
+```
 
-3. Listo: en la página, "Investigar → Fotos → Web" ya muestra resultados de la web.
-   Mientras no esté activada, la página usa Wikimedia Commons como respaldo.
+## Opcional: proveedores oficiales
+
+Bing se lee de su página de resultados (no es una API oficial); si algún día cambia el formato, la búsqueda
+puede dejar de traer resultados y la página usará Wikimedia Commons como respaldo. Para algo más estable:
+
+```bash
+npx supabase secrets set BRAVE_API_KEY=tu_llave     # Brave Search API (USD 5 de crédito gratis al mes)
+npx supabase secrets set SERPAPI_KEY=tu_llave       # o SerpApi (Google Imágenes, 250 gratis al mes)
+```
 
 ## Qué hace
 
-- Solo responde a usuarios con sesión iniciada (protege la cuota del buscador).
+- Solo responde a usuarios con sesión iniciada.
 - `{ q }` busca imágenes; `{ action: "save", url }` descarga la foto elegida (solo imágenes, máx. 8 MB)
   y guarda una copia en el bucket `images`, en la carpeta del usuario.

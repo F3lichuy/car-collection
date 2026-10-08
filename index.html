@@ -3384,8 +3384,16 @@ async function commonsSearchRaw(q,limit){
   }).filter(x=>x.url&&x.w>=800&&!/\.(svg|tif|tiff|pdf)$/i.test(x.title));
 }
 /* ---------- Imágenes de la web (función image-search en Supabase) ---------- */
-let webImg="unknown";   // unknown | ok | off (sin función o sin llave: se usa Commons)
+let webImg="unknown";   // unknown | ok | off (sin función: se usa Commons)
+// en la computadora (localhost) el servidor de desarrollo hace la búsqueda; en el sitio, la función de Supabase
+const DEV_LOCAL=/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 async function webImageSearch(q,count){
+  if(DEV_LOCAL){
+    const r=await fetch("/dev/image-search",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({q,count:count||30})});
+    if(!r.ok){ webImg="off"; throw new Error("dev"); }
+    webImg="ok";
+    return ((await r.json()).results||[]).map(x=>({ url:x.url, thumb:x.thumb, title:x.title||"", page:x.page||"", w:0, h:0, author:x.source||"", license:"", web:true, text:[x.title,x.source,x.page].join(" ") }));
+  }
   if(webImg==="off"||typeof supa==="undefined"||!supa) throw new Error("web-off");
   if(!session) throw new Error("web-auth");
   const {data,error}=await supa.functions.invoke("image-search",{body:{q,count:count||30}});
@@ -3402,6 +3410,10 @@ async function imageSearch(q,count,prefer){
 }
 // copia una foto de la web al almacenamiento propio (los enlaces externos suelen romperse)
 async function saveWebImage(url){
+  if(DEV_LOCAL){   // descarga vía el servidor local y sube con tu sesión (igual que una foto subida a mano)
+    const r=await fetch("/dev/image?url="+encodeURIComponent(url)); if(!r.ok) throw new Error("save");
+    const up=await uploadImage(await r.blob()); if(!up) throw new Error("upload"); return up;
+  }
   const {data,error}=await supa.functions.invoke("image-search",{body:{action:"save",url}});
   if(error||!data?.url) throw new Error("save");
   return data.url;

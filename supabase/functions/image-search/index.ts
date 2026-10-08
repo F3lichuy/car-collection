@@ -1,7 +1,8 @@
 // Supabase Edge Function: búsqueda de imágenes en la web + copia de la foto elegida al almacenamiento.
 // La llave del buscador vive aquí como secreto (nunca en el código público de la página).
 //
-//   Proveedores (usa el primero que tenga llave):
+//   Proveedores:
+//     (por defecto, gratis, sin llave) → Bing Imágenes
 //     BRAVE_API_KEY   → Brave Search API (imágenes)      https://brave.com/search/api/
 //     SERPAPI_KEY     → SerpApi, Google Imágenes          https://serpapi.com/
 //
@@ -59,6 +60,32 @@ async function searchSerpApi(q: string, count: number, key: string): Promise<Res
   }));
 }
 
+// Gratis y sin llave: resultados de Bing Imágenes (se leen de su página; si Bing cambia el formato, hay que ajustar esto)
+async function searchBing(q: string, count: number): Promise<Result[]> {
+  const u = new URL("https://www.bing.com/images/async");
+  u.searchParams.set("q", q);
+  u.searchParams.set("first", "0");
+  u.searchParams.set("count", String(Math.min(count, 60)));
+  u.searchParams.set("adlt", "strict");
+  u.searchParams.set("mmasync", "1");
+  const r = await fetch(u, { headers: {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36",
+    "Accept-Language": "es-MX,es;q=0.9,en;q=0.8",
+  } });
+  if (!r.ok) throw new Error("bing " + r.status);
+  const html = await r.text();
+  const out: Result[] = [];
+  for (const m of html.matchAll(/ m="(\{[^"]+\})"/g)) {
+    try {
+      const j = JSON.parse(m[1].replace(/&quot;/g, '"').replace(/&amp;/g, "&"));
+      if (!j.murl) continue;
+      let source = ""; try { source = new URL(j.purl || j.murl).hostname.replace(/^www\./, ""); } catch { /* sin fuente */ }
+      out.push({ url: j.murl, thumb: j.turl || j.murl, title: [j.t, j.desc].filter(Boolean).join(" · "), page: j.purl || "", source, w: 0, h: 0 });
+    } catch { /* entrada mal formada: se omite */ }
+  }
+  return out.slice(0, count);
+}
+
 // evita que la función se use para pedir direcciones internas (SSRF)
 function safeImageUrl(raw: string): URL | null {
   try {
@@ -114,8 +141,8 @@ Deno.serve(async (req) => {
   const count = Math.max(6, Math.min(Number(body?.count) || 30, 60));
   try {
     const brave = Deno.env.get("BRAVE_API_KEY"), serp = Deno.env.get("SERPAPI_KEY");
-    const results = brave ? await searchBrave(q, count, brave) : serp ? await searchSerpApi(q, count, serp) : null;
-    if (!results) return json({ error: "no_provider" }, 503, origin);
+    // con llave se usa el proveedor oficial; sin llave, Bing (gratis)
+    const results = brave ? await searchBrave(q, count, brave) : serp ? await searchSerpApi(q, count, serp) : await searchBing(q, count);
     return json({ results: results.filter(r => r.url && r.thumb) }, 200, origin);
   } catch (e) {
     return json({ error: "provider", detail: String(e) }, 502, origin);

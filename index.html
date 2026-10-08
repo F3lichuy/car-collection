@@ -1301,6 +1301,184 @@
   .zq-next{align-self:flex-start}
   .zq-keys{font-size:12px;color:var(--ink-faint);margin:18px 0 0}
   @media(max-width:760px){ .zq-body{grid-template-columns:1fr;gap:16px} .zq-keys{display:none} }
+  /* ---------- Juegos de actividades ---------- */
+  .gm-panel{position:relative;overflow:hidden}
+  .gm-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+  .gm-head .lead{max-width:62ch}
+  .gm-modes{flex-shrink:0}
+  .gm-start{margin-top:22px;border:1px solid var(--line);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;gap:16px;max-width:640px;background:var(--bg2)}
+  .gm-start-k{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+  .gm-steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;color:var(--ink-dim);font-size:14px}
+  .gm-start-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .gm-lab{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-dim)}
+  .gm-note{font-size:12px;color:var(--ink-faint);margin:0}
+  .gm-go{align-self:flex-start;padding:14px 26px;font-size:15px}
+  .gm-best{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint)}
+  .gm-best b{color:var(--accent2);font-weight:600;font-size:13px;margin-left:4px}
+  .gm-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+  .gm-round{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:12px}
+  .gm-round b{color:var(--ink);font-size:14px}
+  .gm-key{position:absolute;top:10px;left:10px;font-family:var(--mono);font-size:11px;color:#f3efe6;background:rgba(6,8,7,.55);padding:3px 8px;border-radius:var(--radius)}
+  .gm-warn{font-size:11px;color:var(--accent);margin-top:4px;font-weight:600}
+
+  /* draft */
+  .gm-draft{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:28px;margin-top:22px;align-items:start}
+  .gm-brief{border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:14px;background:var(--bg2);position:sticky;top:80px}
+  .gm-bv{font-family:var(--display);font-size:20px;margin-bottom:6px;color:var(--ink-dim)}
+  .gm-bv span{color:var(--ink);font-size:26px}
+  .gm-budget .meter{height:8px}
+  .gm-rules{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--ink-dim)}
+  .gm-rules li{display:flex;gap:10px;align-items:flex-start;line-height:1.35}
+  .gm-rules li::before{content:"";flex:0 0 14px;height:14px;border:1px solid var(--ink-faint);border-radius:50%;margin-top:2px;transition:.25s}
+  .gm-rules li.ok{color:var(--ink)}
+  .gm-rules li.ok::before{background:var(--good);border-color:var(--good);box-shadow:inset 0 0 0 3px var(--bg2)}
+  .gm-rules li.no{color:var(--accent)}
+  .gm-rules li.no::before{border-color:var(--accent);background:repeating-linear-gradient(45deg,var(--accent) 0 2px,transparent 2px 4px)}
+  .gm-slots{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  .gm-slot{aspect-ratio:1;border:1px dashed var(--line);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;color:var(--ink-faint);font-family:var(--display);font-size:18px}
+  .gm-slot.next{border-color:var(--accent2);color:var(--accent2);animation:gmPulse 1.6s ease-in-out infinite}
+  .gm-slot.full{border-style:solid;animation:gmIn .45s cubic-bezier(.16,1,.3,1)}
+  .gm-slot.full img{width:100%;height:100%;object-fit:cover}
+  .gm-slot.full span{position:absolute;inset:auto 0 0 0;font-family:var(--body,inherit);font-size:9px;line-height:1.15;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.75));padding:10px 4px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gm-offers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+  .gm-offer,.gm-vs-card{all:unset;box-sizing:border-box;cursor:pointer;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--bg2);display:flex;flex-direction:column;transition:transform .3s cubic-bezier(.16,1,.3,1),border-color .2s,opacity .3s,box-shadow .3s;animation:gmIn .5s cubic-bezier(.16,1,.3,1) backwards}
+  .gm-offer:nth-child(2){animation-delay:.07s}.gm-offer:nth-child(3){animation-delay:.14s}
+  .gm-offer:hover,.gm-vs-card:hover:not(:disabled),.gm-offer:focus-visible,.gm-vs-card:focus-visible{border-color:var(--ink);transform:translateY(-4px)}
+  .gm-offer .ph,.gm-vs-card .ph{aspect-ratio:4/3;position:relative;background:var(--card2);overflow:hidden}
+  .gm-offer .ph img,.gm-vs-card .ph img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s cubic-bezier(.16,1,.3,1)}
+  .gm-offer:hover .ph img,.gm-vs-card:hover:not(:disabled) .ph img{transform:scale(1.05)}
+  .gm-offer .cap,.gm-vs-card .cap{padding:12px 14px 14px}
+  .gm-offer .t,.gm-vs-card .t{font-family:var(--display);font-size:20px;line-height:1.15}
+  .gm-offer .s,.gm-vs-card .s{font-size:12px;color:var(--ink-faint);margin-top:3px}
+  .gm-offer.chosen{border-color:var(--accent2);transform:translateY(-8px) scale(1.02);box-shadow:0 18px 40px -20px rgba(0,0,0,.6)}
+  .gm-offer.gone{opacity:.15;transform:scale(.96)}
+  .gm-result{display:flex;gap:28px;align-items:center;flex-wrap:wrap;padding:8px 0}
+  .gm-grade{font-family:var(--display);font-size:clamp(84px,12vw,140px);line-height:.9;color:var(--accent2);min-width:1.2em;text-align:center;animation:gmPop .7s cubic-bezier(.16,1,.3,1)}
+  .gm-grade.g-S{color:var(--good)}.gm-grade.g-D{color:var(--ink-faint)}
+  .gm-res-main{flex:1;min-width:240px;display:flex;flex-direction:column;gap:12px}
+  .gm-big{font-family:var(--display);font-size:46px;line-height:1}
+  .gm-big small{font-size:18px;color:var(--ink-faint)}
+  .gm-break{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-width:420px}
+  .gm-break li{display:flex;justify-content:space-between;gap:16px;font-size:13px;color:var(--ink-dim);border-bottom:1px solid var(--line);padding-bottom:6px}
+  .gm-break li b{color:var(--ink);font-family:var(--mono);font-weight:500}
+  .gm-break li.bad,.gm-break li.bad b{color:var(--accent)}
+
+  /* tier contrarreloj */
+  .tq-play{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:28px;margin-top:22px;align-items:start}
+  .tq-stage{display:flex;flex-direction:column;gap:14px;align-items:stretch}
+  .tq-card{position:relative;aspect-ratio:16/10;border-radius:var(--radius);overflow:hidden;background:var(--card2);animation:gmDeal .45s cubic-bezier(.16,1,.3,1);transition:transform .22s ease-in,opacity .22s ease-in}
+  .tq-card img{width:100%;height:100%;object-fit:cover;display:block}
+  .tq-name{position:absolute;inset:auto 0 0 0;padding:40px 18px 14px;background:linear-gradient(transparent,rgba(0,0,0,.8));color:#f3efe6;font-family:var(--display);font-size:clamp(22px,2.6vw,32px);line-height:1.1}
+  .tq-name span{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+  .tq-name small{font-family:var(--mono);font-size:12px;opacity:.7;margin-left:10px}
+  .tq-card.out-S,.tq-card.out-A{transform:translate(-18%,-30%) scale(.5) rotate(-4deg);opacity:0}
+  .tq-card.out-B{transform:translateY(-30%) scale(.5);opacity:0}
+  .tq-card.out-C,.tq-card.out-D{transform:translate(18%,-30%) scale(.5) rotate(4deg);opacity:0}
+  .tq-card.out-miss{transform:translateY(30%) scale(.8);opacity:0}
+  .tq-timer{height:4px;background:var(--card2);border-radius:99px;overflow:hidden}
+  .tq-timer i{display:block;height:100%;width:100%;background:var(--accent2);transition:width .1s linear}
+  .tq-btns{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .tq-btns button{border:0;border-radius:var(--radius);background:var(--tc);color:#151515;font-family:var(--display);font-size:30px;padding:12px 0 8px;display:flex;flex-direction:column;align-items:center;line-height:1;transition:transform .15s,filter .15s}
+  .tq-btns button:hover{transform:translateY(-3px);filter:brightness(1.08)}
+  .tq-btns button:active{transform:scale(.96)}
+  .tq-btns small{font-family:var(--mono);font-size:10px;opacity:.6;margin-top:4px}
+  .tq-board{display:flex;flex-direction:column;gap:6px}
+  .tq-board.done{margin-top:22px}
+  .tq-row{display:flex;gap:8px;align-items:stretch;min-height:52px}
+  .tq-lab{flex:0 0 44px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:22px;color:#151515}
+  .tq-chips{flex:1;display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start;border:1px solid var(--line);border-radius:var(--radius);padding:5px;min-height:52px}
+  .tq-chip{width:54px;height:40px;border-radius:4px;overflow:hidden;animation:gmIn .4s cubic-bezier(.16,1,.3,1)}
+  .tq-chip img{width:100%;height:100%;object-fit:cover;display:block}
+  .tq-pct{font-size:clamp(70px,10vw,120px)}
+  .tq-sur{list-style:none;margin:10px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+  .tq-sur li{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:var(--radius);padding:8px}
+  .tq-sur img{width:72px;height:52px;object-fit:cover;border-radius:4px;flex-shrink:0}
+  .tq-sur b{display:block;font-size:13px}
+  .tq-sur span{font-size:12px;color:var(--ink-dim)}
+  .tq-sur i{font-style:normal;font-family:var(--display);font-size:16px;color:var(--ink)}
+
+  /* torneo, duelos y top 100 */
+  .gm-vs{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:18px;align-items:center;margin-top:18px}
+  .gm-vs-card.win{border-color:var(--good);box-shadow:0 0 0 2px var(--good);transform:scale(1.02)}
+  .gm-vs-card.lose{opacity:.35;transform:scale(.97)}
+  .gm-vs-card:disabled{cursor:default}
+  .brk-dots{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 0}
+  .brk-dots i{width:8px;height:8px;border-radius:50%;background:var(--card2);border:1px solid var(--line)}
+  .brk-dots i.done{background:var(--ink-faint);border-color:var(--ink-faint)}
+  .brk-dots i.now{background:var(--accent2);border-color:var(--accent2)}
+  .brk-flash{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%) scale(.6);font-family:var(--display);font-style:italic;font-size:clamp(40px,7vw,86px);color:var(--accent2);text-shadow:0 4px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none}
+  .brk-flash.on{animation:gmFlash .7s cubic-bezier(.16,1,.3,1) forwards}
+  .bmatch.upset{border-color:var(--accent2)}
+  .bm-up{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);padding:2px 8px 4px}
+  .podium{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:14px;align-items:end;max-width:760px;margin:22px auto 8px}
+  .pod{text-align:center;animation:gmRise .7s cubic-bezier(.16,1,.3,1) backwards}
+  .pod.p1{animation-delay:.25s}.pod.p3{animation-delay:.12s}
+  .pod .ph{aspect-ratio:4/3;border-radius:var(--radius);overflow:hidden;background:var(--card2);border:1px solid var(--line)}
+  .pod.p1 .ph{border-color:var(--accent2);box-shadow:0 20px 50px -24px rgba(0,0,0,.7)}
+  .pod .ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .pod-n{font-family:var(--display);font-size:34px;line-height:1;margin-top:10px;color:var(--ink-faint)}
+  .pod.p1 .pod-n{font-size:52px;color:var(--accent2)}
+  .pod-t{font-size:13px;color:var(--ink-dim);margin-top:4px}
+  .pod.p1 .pod-t{font-family:var(--display);font-size:20px;color:var(--ink)}
+  .t1-tag{position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#151515;background:var(--accent2);padding:3px 8px;border-radius:var(--radius)}
+  .t100row{cursor:grab}
+  .t100row.drag{opacity:.4}
+  .t100row.over{box-shadow:inset 0 2px 0 var(--accent2)}
+  .t100row>img,.t100row>.noimg{width:46px;height:46px;border-radius:8px;object-fit:cover;background:var(--card2);flex-shrink:0}
+  .t1-mv{display:flex;flex-direction:column;gap:2px}
+  .t1-mv .iconbtn{width:26px;height:20px;font-size:12px;line-height:1;padding:0}
+  .hl-bar{display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);margin-top:18px}
+  .hl-bar b{color:var(--ink);font-weight:500;margin-left:4px;font-size:13px}
+  .hl-lives{display:flex;gap:5px}
+  .hl-lives i{width:12px;height:12px;border-radius:50%;background:var(--accent)}
+  .hl-lives i.off{background:transparent;border:1px solid var(--line)}
+  .hl-q{font-family:var(--display);font-style:italic;font-size:clamp(26px,3.4vw,44px);line-height:1.1;margin:16px 0 4px;text-align:center}
+  .hl-val{position:absolute;inset:auto 0 0 0;padding:30px 14px 10px;background:linear-gradient(transparent,rgba(0,0,0,.8));color:#f3efe6;font-family:var(--display);font-size:clamp(26px,3vw,40px);text-align:center}
+  .hl-res{text-align:center;margin-top:16px;font-family:var(--display);font-size:24px;display:flex;gap:14px;justify-content:center;align-items:center}
+  .hl-res>span{color:var(--accent)}
+  .hl-res.ok>span{color:var(--good)}
+
+  .gm-confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5}
+  .gm-confetti i{position:absolute;top:-12px;width:7px;height:12px;border-radius:2px;animation:gmFall linear forwards}
+  @keyframes gmFall{to{transform:translate(var(--dx),110vh) rotate(var(--r));opacity:.2}}
+  @keyframes gmIn{from{opacity:0;transform:translateY(14px) scale(.97)}}
+  @keyframes gmDeal{from{opacity:0;transform:translateY(24px) rotate(-1.5deg) scale(.96)}}
+  @keyframes gmPop{0%{opacity:0;transform:scale(.4)}60%{transform:scale(1.08)}}
+  @keyframes gmRise{from{opacity:0;transform:translateY(40px)}}
+  @keyframes gmPulse{50%{opacity:.45}}
+  @keyframes gmFlash{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}40%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}100%{opacity:0;transform:translate(-50%,-60%) scale(1)}}
+  @media(prefers-reduced-motion:reduce){ .gm-panel *{animation:none!important;transition:none!important} }
+  @media(max-width:760px){
+    .gm-draft,.tq-play{grid-template-columns:1fr;gap:18px}
+    .gm-brief{position:static}
+    .gm-offers{grid-template-columns:1fr;gap:10px}
+    .gm-offer{flex-direction:row}
+    .gm-offer .ph{aspect-ratio:auto;width:42%;flex-shrink:0;min-height:104px}
+    .gm-offer .ph img{position:absolute;inset:0}
+    .gm-offer .t{font-size:17px}
+    .gm-vs{grid-template-columns:1fr 1fr;gap:10px}
+    .gm-vs .vsmid{display:none}
+    .gm-vs-card .t{font-size:16px}
+    .gm-key{display:none}
+    .tq-btns button{font-size:26px}
+    .podium{gap:8px}
+    .pod-t{font-size:11px}.pod.p1 .pod-t{font-size:14px}
+    .gm-start{padding:18px}
+    .t100row .btn.sm.ghost{display:none}
+  }
+
+  /* foto de perfil */
+  .av{width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid var(--line);vertical-align:middle}
+  .av-lg{width:44px;height:44px}
+  .acct summary{display:inline-flex;align-items:center;gap:8px}
+  .av-grid{display:flex;flex-direction:column;gap:16px;max-height:60vh;overflow:auto;padding-right:4px}
+  .av-car h5{margin:0 0 6px;font-size:12px;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);font-weight:500}
+  .av-imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px}
+  .av-imgs button{all:unset;cursor:pointer;aspect-ratio:1;border-radius:50%;overflow:hidden;border:2px solid transparent;transition:border-color .2s,transform .2s}
+  .av-imgs button:hover{transform:scale(1.04)}
+  .av-imgs button.on{border-color:var(--accent2)}
+  .av-imgs img{width:100%;height:100%;object-fit:cover;display:block}
+  .dc-car{font-size:11px;color:var(--ink-faint);margin-top:2px}
 </style>
 </head>
 <body data-theme="paddock">
@@ -1405,11 +1583,11 @@
   <section id="tab-activities" style="display:none">
     <div class="actnav" id="actnav">
       <button data-act="zoom" class="on"><span class="ic"></span> ¿Qué coche es? <small>adivina por un detalle</small></button>
-      <button data-act="five"><span class="ic"></span> Garaje de ensueño <small>combo con límites</small></button>
-      <button data-act="tier"><span class="ic"></span> Tier list <small>S/A/B/C/D</small></button>
-      <button data-act="bracket"><span class="ic"></span> Torneo <small>bracket + podio</small></button>
-      <button data-act="top100"><span class="ic"></span> Top 100 <small>tu ranking</small></button>
-      <button data-act="tourney"><span class="ic"></span> Duelos <small>esto o aquello</small></button>
+      <button data-act="five"><span class="ic"></span> Garaje de ensueño <small>draft con presupuesto</small></button>
+      <button data-act="tier"><span class="ic"></span> Tier list <small>contrarreloj</small></button>
+      <button data-act="bracket"><span class="ic"></span> Torneo <small>bracket y podio</small></button>
+      <button data-act="top100"><span class="ic"></span> Top 100 <small>ordénalos por duelos</small></button>
+      <button data-act="tourney"><span class="ic"></span> Duelos <small>más o menos</small></button>
     </div>
     <div id="actView"></div>
   </section>
@@ -1612,7 +1790,7 @@
     "Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…":"Tell why it’s special: bespoke order, one-of-one, story, unique specs…",
     "Aún no escribes la historia. Edita el coche y llena el campo 'Historia / deep-dive' de esta versión.":"You haven’t written the story yet. Edit the car and fill the “Story / deep-dive” field on this version.",
     "Sin historia todavía.":"No story yet.","Historia":"Story","Detalles":"Details","Valor":"Value","Rareza":"Rarity","One-off":"One-off",
-    "Trifoglio Podcast":"Trifoglio Podcast","Garage restaurado":"Garage restored","No se guardó en la nube: el garage quedaría vacío":"Not saved to the cloud: the garage would be empty","No se pudo cargar tu garage de la nube. Recarga la página; no se guardará nada mientras tanto.":"Couldn't load your garage from the cloud. Reload the page; nothing will be saved meanwhile.","¿Qué coche es?":"Which car is it?","adivina por un detalle":"guess from a detail","Un acercamiento a un detalle de un coche del catálogo, elegido al azar. Cada pista abre un poco más la imagen; adivinar antes da más puntos.":"A close-up of a detail from a random catalog car. Each hint zooms out a little; guessing earlier scores more.","Clásicos":"Classics","Pantalla completa":"Fullscreen","Más pista":"More hint","Revelar":"Reveal","Siguiente coche":"Next car","No era ese":"Not that one","La respuesta":"The answer","Puntos":"Points","Racha":"Streak","Ronda":"Round","Elegida":"Selected","Rarezas":"Rare specs","Piezas únicas y pedidos a medida de las colecciones de la comunidad.":"One-offs and bespoke builds from the community's collections.","Todas":"All","Mi colección":"My collection","Compartir":"Share","Enlace copiado":"Link copied","Esta pieza todavía no tiene historia.":"This piece doesn't have a story yet.","Leer la historia":"Read the story","Esa rareza ya no está disponible":"That rare spec is no longer available","Pronto habrá piezas únicas de la comunidad.":"Community one-offs coming soon.","Web":"Web","Libres (Commons)":"Free (Commons)","Guardando fotos…":"Saving photos…","Búsqueda web no activada: mostrando Commons":"Web search not enabled: showing Commons","Inicia sesión para buscar en la web: mostrando Commons":"Sign in to search the web: showing Commons","La búsqueda web falló: mostrando Commons":"Web search failed: showing Commons","No encontramos fotos con esa búsqueda. Prueba solo con marca y modelo.":"No photos found. Try just make and model.","Las fotos de la web pertenecen a sus autores: se guarda una copia en tu almacenamiento al agregarlas.":"Web photos belong to their authors: a copy is saved to your storage when added.","Buscar fotos de esta versión":"Find photos for this version","Agregar sugeridas":"Add suggested","Ejemplar específico":"Specific car","Versión general / única":"General / one-off version","Guardar cambios marcados":"Save marked changes","Todas las versiones del catálogo tienen fotos suficientes.":"Every catalog version has enough photos.","Se conserva":"Kept","Se quitará: no es de este ejemplar":"Will be removed: not this car","Ya guardadas de Commons":"Already saved from Commons","Sugeridas":"Suggested","Completar fotos":"Fill in photos","Completar fotos del catálogo":"Fill in catalog photos","Detener búsqueda":"Stop search","Guardar todos los seleccionados":"Save all selected","Cargando el catálogo…":"Loading the catalog…","Sin resultados en Commons":"No results on Commons","Guardado":"Saved","Búsqueda detenida.":"Search stopped.","Todos los coches del catálogo tienen más de una foto.":"Every catalog car has more than one photo.","Elige al menos una foto":"Pick at least one photo","Nada nuevo que guardar":"Nothing new to save","Investigar":"Research","Fotos":"Photos","Historia":"Story","Buscar más fotos":"Find more photos","Buscar fotos":"Find photos","Agregar fotos":"Add photos","Fotos e historia sin salir de la página":"Photos and history without leaving the page","Marca, modelo, año…":"Make, model, year…","Escribe un coche para buscar fotos e historia.":"Type a car to search photos and history.","No encontramos fotos libres con esa búsqueda. Prueba solo con marca y modelo.":"No free photos found. Try just make and model.","No se pudo conectar con Wikimedia Commons.":"Couldn't reach Wikimedia Commons.","Sin artículo en Wikipedia para esta búsqueda.":"No Wikipedia article for this search.","Leer en Wikipedia ↗":"Read on Wikipedia ↗","Otros artículos":"Other articles","Fotos con licencia libre de Wikimedia Commons; el crédito de cada una se muestra junto a la foto.":"Freely licensed photos from Wikimedia Commons; each photo shows its credit.","Este coche ya existe":"This car already exists","¿Es alguno de estos?":"Is it one of these?","Usa el nombre exacto para no crear duplicados":"Use the exact name to avoid duplicates","Usar nombre":"Use name","Agregar con fotos":"Add with photos","Nombre del catálogo aplicado":"Catalog name applied","Solo las cuentas administradoras pueden usar este modo":"Only admin accounts can use this mode","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
+    "Trifoglio Podcast":"Trifoglio Podcast","draft con presupuesto":"draft on a budget","contrarreloj":"against the clock","bracket y podio":"bracket and podium","ordénalos por duelos":"rank them by duels","más o menos":"higher or lower","Reto":"Challenge","Libre":"Free","Contrarreloj":"Against the clock","Mi tier list":"My tier list","Más o menos":"Higher or lower","Mi favorito":"My favorite","Un draft de 5 rondas con tu colección. En cada ronda te tocan 3 coches y te quedas con uno. Respeta el presupuesto y cumple el reto: el puntaje premia la calidad, las reglas cumplidas y lo que te sobre.":"A 5-round draft from your collection. Each round you get 3 cars and keep one. Stay on budget and meet the challenge: the score rewards quality, rules met and money left over.","Necesitas al menos 8 coches con foto para jugar.":"You need at least 8 cars with photos to play.","Cómo se juega":"How to play","Te damos un presupuesto y 2 reglas al azar.":"You get a budget and 2 random rules.","5 rondas: eliges 1 de 3 coches. Tienes un cambio de opciones.":"5 rounds: pick 1 of 3 cars. You get one reshuffle.","Calidad media ×10 + 15 por regla + bono por lo que te sobre. Pasarte cuesta 40.":"Average quality ×10 + 15 per rule + a bonus for what's left. Going over costs 40.","Normal":"Normal","A ciegas":"Blind","Precios y calificaciones ocultos hasta el final.":"Prices and ratings hidden until the end.","Ves precio y calificación de cada coche.":"You see each car's price and rating.","Empezar el reto":"Start the challenge","Tu récord":"Your record","¡Nuevo récord!":"New record!","El reto":"The challenge","sin precio":"no price","Te pasarías del presupuesto":"You'd go over budget","Cambiar opciones (1)":"Reshuffle (1)","Cambiar opciones (0)":"Reshuffle (0)","Abandonar":"Quit","Calidad media":"Average quality","Te pasaste del presupuesto":"You went over budget","Bono por lo que sobró":"Leftover bonus","Otro reto":"Another challenge","Guardar como combo":"Save as combo","Tus coches no tienen precios suficientes: este reto no tiene presupuesto.":"Your cars don't have enough prices: this challenge has no budget.","Al menos un clásico de antes de 1975":"At least one classic from before 1975","Coches de 3 épocas distintas":"Cars from 3 different eras","Máximo 2 coches de la misma marca":"At most 2 cars of the same brand","Uno con calificación de 9 o más":"One rated 9 or higher","Un coche de menos de $250 K":"One car under $250K","4 marcas distintas o más":"4 or more different brands","Ningún coche de después de 2015":"No cars from after 2015","Prepara la ronda":"Set up the round","Toda la colección":"Whole collection","Con reloj":"Timed","Sin reloj":"Untimed","Empezar":"Start","Tu mejor coincidencia":"Your best match","Tu instinto contra tus calificaciones":"Your instinct vs your ratings","Clasificados":"Ranked","Tiempo medio por coche":"Average time per car","Se te acabó el tiempo":"Time ran out","Las mayores sorpresas":"The biggest surprises","Otra ronda":"Another round","Guardar en mi tier list":"Save to my tier list","Cambiar ajustes":"Change settings","Guardado en tu tier list":"Saved to your tier list","Eliminación directa, duelo por duelo. Al final: podio, el camino completo y las sorpresas (cuando un coche con menos calificación elimina a uno mejor).":"Single elimination, duel by duel. At the end: podium, the full path and the upsets (when a lower-rated car knocks out a better one).","Arma el cuadro":"Build the bracket","Todos":"All","Mi colección":"My collection","Catálogo de la comunidad":"Community catalog","Empezar torneo":"Start tournament","Reiniciar":"Restart","Final":"Final","Semifinal":"Semifinal","Cuartos de final":"Quarterfinals","Octavos de final":"Round of 16","El campeón":"The champion","El camino":"The path","Otro torneo":"Another tournament","Cambiar cuadro":"Change bracket","¡Sorpresa!":"Upset!","sorpresa":"upset","pasa directo":"bye","¿Cuál va más arriba?":"Which one ranks higher?","Terminar aquí":"Stop here","Nuevo":"New","Tu ranking definitivo. Coloca tus coches con duelos: te preguntamos “¿cuál va más arriba?” y cada coche encuentra su lugar en pocas preguntas. Arrastra para ajustar.":"Your definitive ranking. Place your cars with duels: we ask \"which ranks higher?\" and each car finds its spot in a few questions. Drag to fine-tune.","Autollenar por promedio":"Autofill by average","Vaciar ranking":"Clear ranking","Quitar":"Remove","Aún no has rankeado ningún coche. Empieza con los duelos o usa autollenar.":"You haven't ranked any car yet. Start with duels or use autofill.","Sin posición — toca para añadir al final":"Unranked — tap to add at the end","Tu Top 100 ya está lleno":"Your Top 100 is full","Todos tus coches ya tienen posición":"All your cars already have a position","Más o menos: dos coches de la colección y una pregunta — ¿cuál es más antiguo, cuál vale más, cuál tiene mejor calificación? Tienes 3 vidas. Con racha de 5, cada acierto vale doble.":"Higher or lower: two cars from the collection and one question — which is older, which is worth more, which is rated higher? You have 3 lives. On a streak of 5, each hit counts double.","Necesitas al menos 4 coches con foto.":"You need at least 4 cars with photos.","Tranquilo":"Relaxed","Jugar":"Play","Fin del juego":"Game over","Otra vez":"Again","Ajustes":"Settings","¿Cuál es más antiguo?":"Which one is older?","¿Cuál vale más?":"Which one is worth more?","¿Cuál tiene mejor calificación?":"Which one is rated higher?","Récord":"Record","Siguiente":"Next","¡Correcto!":"Correct!","¡Correcto! Racha doble":"Correct! Double streak","No":"No","Se acabó el tiempo":"Time's up","Foto de perfil":"Profile photo","Elige un coche de tu colección. Todos verán esta foto en Descubrir y en tu garage.":"Pick a car from your collection. Everyone will see this photo in Discover and on your garage.","Quitar foto":"Remove photo","Agrega coches con foto primero.":"Add cars with photos first.","Foto de perfil actualizada":"Profile photo updated","Foto de perfil quitada":"Profile photo removed","Un acercamiento a un detalle de un coche elegido al azar, del catálogo o de los grandes íconos. Cada pista abre un poco más la imagen; adivinar antes da más puntos.":"A close-up of a detail from a random car, from the catalog or the great icons. Each hint zooms out a little; guessing earlier scores more.","Copiado al portapapeles":"Copied to clipboard","Combo guardado":"Combo saved","Contrarreloj: los coches aparecen uno por uno y tienes 6 segundos para mandarlos a S, A, B, C o D. Al final comparamos tu instinto con tus propias calificaciones.":"Against the clock: cars appear one by one and you have 6 seconds to send them to S, A, B, C or D. At the end we compare your instinct with your own ratings.","Teclado:":"Keyboard:","para elegir.":"to pick.","o":"or","Si se acaba el tiempo, el coche se queda sin clasificar.":"If time runs out, the car stays unranked.","el nuevo ·":"the new one ·","el que ya estaba":"the one already there","y":"and","para responder,":"to answer,","para seguir.":"to continue.","Coches":"Cars","De":"From","Por categoría":"By category","Por época":"By era","Duelo":"Duel","pts":"pts","Garage restaurado":"Garage restored","No se guardó en la nube: el garage quedaría vacío":"Not saved to the cloud: the garage would be empty","No se pudo cargar tu garage de la nube. Recarga la página; no se guardará nada mientras tanto.":"Couldn't load your garage from the cloud. Reload the page; nothing will be saved meanwhile.","¿Qué coche es?":"Which car is it?","adivina por un detalle":"guess from a detail","Un acercamiento a un detalle de un coche del catálogo, elegido al azar. Cada pista abre un poco más la imagen; adivinar antes da más puntos.":"A close-up of a detail from a random catalog car. Each hint zooms out a little; guessing earlier scores more.","Clásicos":"Classics","Pantalla completa":"Fullscreen","Más pista":"More hint","Revelar":"Reveal","Siguiente coche":"Next car","No era ese":"Not that one","La respuesta":"The answer","Puntos":"Points","Racha":"Streak","Ronda":"Round","Elegida":"Selected","Rarezas":"Rare specs","Piezas únicas y pedidos a medida de las colecciones de la comunidad.":"One-offs and bespoke builds from the community's collections.","Todas":"All","Mi colección":"My collection","Compartir":"Share","Enlace copiado":"Link copied","Esta pieza todavía no tiene historia.":"This piece doesn't have a story yet.","Leer la historia":"Read the story","Esa rareza ya no está disponible":"That rare spec is no longer available","Pronto habrá piezas únicas de la comunidad.":"Community one-offs coming soon.","Web":"Web","Libres (Commons)":"Free (Commons)","Guardando fotos…":"Saving photos…","Búsqueda web no activada: mostrando Commons":"Web search not enabled: showing Commons","Inicia sesión para buscar en la web: mostrando Commons":"Sign in to search the web: showing Commons","La búsqueda web falló: mostrando Commons":"Web search failed: showing Commons","No encontramos fotos con esa búsqueda. Prueba solo con marca y modelo.":"No photos found. Try just make and model.","Las fotos de la web pertenecen a sus autores: se guarda una copia en tu almacenamiento al agregarlas.":"Web photos belong to their authors: a copy is saved to your storage when added.","Buscar fotos de esta versión":"Find photos for this version","Agregar sugeridas":"Add suggested","Ejemplar específico":"Specific car","Versión general / única":"General / one-off version","Guardar cambios marcados":"Save marked changes","Todas las versiones del catálogo tienen fotos suficientes.":"Every catalog version has enough photos.","Se conserva":"Kept","Se quitará: no es de este ejemplar":"Will be removed: not this car","Ya guardadas de Commons":"Already saved from Commons","Sugeridas":"Suggested","Completar fotos":"Fill in photos","Completar fotos del catálogo":"Fill in catalog photos","Detener búsqueda":"Stop search","Guardar todos los seleccionados":"Save all selected","Cargando el catálogo…":"Loading the catalog…","Sin resultados en Commons":"No results on Commons","Guardado":"Saved","Búsqueda detenida.":"Search stopped.","Todos los coches del catálogo tienen más de una foto.":"Every catalog car has more than one photo.","Elige al menos una foto":"Pick at least one photo","Nada nuevo que guardar":"Nothing new to save","Investigar":"Research","Fotos":"Photos","Historia":"Story","Buscar más fotos":"Find more photos","Buscar fotos":"Find photos","Agregar fotos":"Add photos","Fotos e historia sin salir de la página":"Photos and history without leaving the page","Marca, modelo, año…":"Make, model, year…","Escribe un coche para buscar fotos e historia.":"Type a car to search photos and history.","No encontramos fotos libres con esa búsqueda. Prueba solo con marca y modelo.":"No free photos found. Try just make and model.","No se pudo conectar con Wikimedia Commons.":"Couldn't reach Wikimedia Commons.","Sin artículo en Wikipedia para esta búsqueda.":"No Wikipedia article for this search.","Leer en Wikipedia ↗":"Read on Wikipedia ↗","Otros artículos":"Other articles","Fotos con licencia libre de Wikimedia Commons; el crédito de cada una se muestra junto a la foto.":"Freely licensed photos from Wikimedia Commons; each photo shows its credit.","Este coche ya existe":"This car already exists","¿Es alguno de estos?":"Is it one of these?","Usa el nombre exacto para no crear duplicados":"Use the exact name to avoid duplicates","Usar nombre":"Use name","Agregar con fotos":"Add with photos","Nombre del catálogo aplicado":"Catalog name applied","Solo las cuentas administradoras pueden usar este modo":"Only admin accounts can use this mode","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz.":"Three friends obsessed with cars: stories, debates and car culture.",
     "Nuevos episodios seguido, en YouTube.":"New episodes regularly, on YouTube.","Ver el canal →":"View the channel →",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.":"Three friends obsessed with cars: stories, debates and car culture. New episodes often.",
@@ -1697,6 +1875,19 @@
 
   function P(re,fn){ return [re,fn]; }
   var PAT = [
+    P(/^Ronda (\d+) de (\d+) · elige uno$/, function(m){ return "Round "+m[1]+" of "+m[2]+" · pick one"; }),
+    P(/^Coche (\d+) de (\d+)$/, function(m){ return "Car "+m[1]+" of "+m[2]; }),
+    P(/^Reglas cumplidas \((\d+) de (\d+)\)$/, function(m){ return "Rules met ("+m[1]+" of "+m[2]+")"; }),
+    P(/^(\d+) de (\d+)$/, function(m){ return m[1]+" of "+m[2]; }),
+    P(/^Duelo (\d+) de (\d+)$/, function(m){ return "Duel "+m[1]+" of "+m[2]; }),
+    P(/^Torneo de (\d+) coches( · (\d+) sorpresas?)?$/, function(m){ return "Tournament of "+m[1]+" cars"+(m[3]?" · "+m[3]+" upset"+(m[3]==="1"?"":"s"):""); }),
+    P(/^Colocando (\d+) de (\d+) · faltan ~(\d+) preguntas? para este$/, function(m){ return "Placing "+m[1]+" of "+m[2]+" · ~"+m[3]+" question"+(m[3]==="1"?"":"s")+" left for this one"; }),
+    P(/^Colocar (\d+) coches? con duelos$/, function(m){ return "Place "+m[1]+" car"+(m[1]==="1"?"":"s")+" with duels"; }),
+    P(/^Listo: (\d+) coches? colocados$/, function(m){ return "Done: "+m[1]+" car"+(m[1]==="1"?"":"s")+" placed"; }),
+    P(/^Lo pusiste en (\w), tus calificaciones dicen (\w) \(★ ([\d.]+)\)$/, function(m){ return "You put it in "+m[1]+", your ratings say "+m[2]+" (★ "+m[3]+")"; }),
+    P(/^Contrarreloj · (\d+) s$/, function(m){ return "Against the clock · "+m[1]+" s"; }),
+    P(/^También en semifinales: (.+)$/, function(m){ return "Also in the semifinals: "+m[1]; }),
+    P(/^Cambiar opciones \((\d)\)$/, function(m){ return "Reshuffle ("+m[1]+")"; }),
     P(/^(\d+) coches · filtrando: (.+)$/, function(m){ return m[1]+" cars · filtering: "+m[2]; }),
     P(/^(\d+) coche · filtrando: (.+)$/, function(m){ return m[1]+" car · filtering: "+m[2]; }),
     P(/^(\d+) coche$/, function(m){ return m[1]+" car"; }),
@@ -1941,6 +2132,7 @@ let tierDragId = null;   // arrastre en tier list
 let detailImgs = [];     // carrusel del detalle
 let detailIdx = 0;
 let tourState = null;
+let profile = null;       // foto de perfil: una foto de un coche de tu colección
 /* ---------- persistence ---------- */
 /* ---------- Protección del garage ----------
    cloudLocked: la nube no respondió al cargar → no se guarda nada en la nube (evita subir un garage vacío).
@@ -1951,7 +2143,7 @@ function localBlob(){ try{ const raw=localStorage.getItem("garage-data"); return
 function localBackup(){ try{ const raw=localStorage.getItem("garage-data-backup"); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
 async function saveAll(){
   if(readOnly) return;                       // viendo el garage de otro: no guardar
-  const blob = {cars, irlCars, categories, combos, top100, theme, tierMap};
+  const blob = {cars, irlCars, categories, combos, top100, theme, tierMap, profile};
   // respaldo local: si este guardado deja muchos menos coches que la copia anterior, se guarda la anterior aparte
   try{ const prev=localBlob(); if(nCars(prev)>nCars(blob)+2) localStorage.setItem("garage-data-backup", JSON.stringify({savedAt:Date.now(), data:prev})); }catch(e){}
   try{ localStorage.setItem("garage-data", JSON.stringify(blob)); }catch(e){}
@@ -1966,7 +2158,7 @@ function loadFromBlob(d){
   cars=(d.cars||[]).map(normalizeCar);
   irlCars=(d.irlCars||[]).map(normalizeIrl);
   categories=d.categories?.length?d.categories:[...DEFAULT_CATS];
-  combos=d.combos||[]; top100=d.top100||{}; theme=d.theme||"retro"; tierMap=d.tierMap||{};
+  combos=d.combos||[]; top100=d.top100||{}; theme=d.theme||"retro"; tierMap=d.tierMap||{}; profile=d.profile&&d.profile.img?d.profile:null;
   // nueva identidad: Paddock por defecto hasta que el usuario elija otro tema a mano
   try{ if(localStorage.getItem("cc-theme-picked")!=="1") theme="paddock"; }catch(e){}
 }
@@ -2800,6 +2992,8 @@ function renderAct(){
 }
 /* ---------- ¿QUÉ COCHE ES? (acercamiento a un detalle) ---------- */
 // niveles de acercamiento: cada pista abre más la imagen
+// Banco genérico para ¿Qué coche es?: íconos con foto de Wikimedia Commons (además del catálogo)
+const QUIZ_CARS=[["Jaguar","E-Type Series 1",1961,"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Jaguar_E-Type_Series_1_3.8_Litre_1961.jpg/1280px-Jaguar_E-Type_Series_1_3.8_Litre_1961.jpg"],["Lamborghini","Miura P400 SV",1971,"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/1971_Lamborghini_Miura_P400_SV.jpg/1280px-1971_Lamborghini_Miura_P400_SV.jpg"],["Ferrari","250 GTO",1962,"https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/1962_Ferrari_250_GTO_SP25.jpg/1280px-1962_Ferrari_250_GTO_SP25.jpg"],["Ferrari","Testarossa",1984,"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Ferrari_Testarossa_IMG_3043.jpg/1280px-Ferrari_Testarossa_IMG_3043.jpg"],["Ferrari","Dino 246 GT",1969,"https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Dino_246_GT_%2824627987921%29.jpg/1280px-Dino_246_GT_%2824627987921%29.jpg"],["Ferrari","288 GTO",1984,"https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Ferrari_288_GTO_%281%29.JPG/1280px-Ferrari_288_GTO_%281%29.JPG"],["Ferrari","Enzo",2002,"https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Orange_Enzo_Ferrari_%287191948164%29.jpg/1280px-Orange_Enzo_Ferrari_%287191948164%29.jpg"],["BMW","M1",1978,"https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/BMW_M1%2C_front_right_%28Brooklyn%29.jpg/1280px-BMW_M1%2C_front_right_%28Brooklyn%29.jpg"],["BMW","3.0 CS (E9)",1971,"https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/BMWE9CSc.jpg/1280px-BMWE9CSc.jpg"],["Lancia","Stratos HF Stradale",1974,"https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/1974_Lancia_Stratos_Stradale_at_Greenwich_2021%2C_front_left.jpg/1280px-1974_Lancia_Stratos_Stradale_at_Greenwich_2021%2C_front_left.jpg"],["Lancia","037 Rally",1982,"https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/LanciaRally037.jpg/1280px-LanciaRally037.jpg"],["Audi","Quattro",1985,"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/1985_Audi_Quattro.jpg/1280px-1985_Audi_Quattro.jpg"],["Porsche","959",1986,"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Porsche_959_%E2%80%93_Frontansicht_%282%29%2C_21._M%C3%A4rz_2013%2C_D%C3%BCsseldorf.jpg/1280px-Porsche_959_%E2%80%93_Frontansicht_%282%29%2C_21._M%C3%A4rz_2013%2C_D%C3%BCsseldorf.jpg"],["Porsche","Carrera GT",2004,"https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Porsche_Carrera_GT_-_Goodwood_Breakfast_Club_%28July_2008%29.jpg/1280px-Porsche_Carrera_GT_-_Goodwood_Breakfast_Club_%28July_2008%29.jpg"],["Porsche","356 C",1964,"https://upload.wikimedia.org/wikipedia/commons/0/07/2007-07-08_Porsche_356_C_%2801_kl_ret%29.jpg"],["Ford","GT40",1966,"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/GT40_at_Goodwood.jpg/1280px-GT40_at_Goodwood.jpg"],["Ford","Mustang",1965,"https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/1965_Ford_Mustang_2D_Hardtop_Front.jpg/1280px-1965_Ford_Mustang_2D_Hardtop_Front.jpg"],["Shelby","Cobra 427",1965,"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Shelby_AC_427_Cobra_vl_blue.jpg/1280px-Shelby_AC_427_Cobra_vl_blue.jpg"],["Chevrolet","Corvette Sting Ray (C2)",1963,"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/1963_Chevrolet_Corvette_Sting_Ray_Sport_Coupe%2C_front_left%2C_08-25-2024.jpg/1280px-1963_Chevrolet_Corvette_Sting_Ray_Sport_Coupe%2C_front_left%2C_08-25-2024.jpg"],["Dodge","Charger R/T",1969,"https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/1969_Dodge_Charger_R-T%2C_front_right_%282022_Ellwood_City_Fall_Fest_%26_Car_Cruise%29.jpg/1280px-1969_Dodge_Charger_R-T%2C_front_right_%282022_Ellwood_City_Fall_Fest_%26_Car_Cruise%29.jpg"],["Plymouth","Superbird",1970,"https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Superbird_Yellow.jpg/1280px-Superbird_Yellow.jpg"],["Toyota","2000GT",1967,"https://upload.wikimedia.org/wikipedia/commons/9/97/TOYOTA_2000GT.jpg"],["Nissan","Skyline GT-R R34",2002,"https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Nissan_Skyline_GT-R_R34_V_Spec_II.jpg/1280px-Nissan_Skyline_GT-R_R34_V_Spec_II.jpg"],["Mazda","RX-7 (FD)",1994,"https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/1994_Mazda_RX-7_R2_in_Vintage_Red%2C_front_left_%28Lime_Rock%29.jpg/1280px-1994_Mazda_RX-7_R2_in_Vintage_Red%2C_front_left_%28Lime_Rock%29.jpg"],["Honda","NSX",1990,"https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Honda_NSX_red.jpg/1280px-Honda_NSX_red.jpg"],["Nissan","Fairlady Z (S30)",1970,"https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/1970-1973_Nissan_Fairlady_Z.jpg/1280px-1970-1973_Nissan_Fairlady_Z.jpg"],["Aston Martin","DB5",1964,"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Aston_Martin_DB5_%28Skyfall%29.jpg/1280px-Aston_Martin_DB5_%28Skyfall%29.jpg"],["Lotus","Esprit V8",1999,"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/1999_Lotus_Esprit_V8_type_918.jpg/1280px-1999_Lotus_Esprit_V8_type_918.jpg"],["McLaren","F1",1996,"https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/1996_McLaren_F1_Chassis_No_63_6.1_Front.jpg/1280px-1996_McLaren_F1_Chassis_No_63_6.1_Front.jpg"],["Bugatti","Veyron 16.4",2005,"https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Bugatti_Veyron_16.4_%E2%80%93_Frontansicht_%281%29%2C_5._April_2012%2C_D%C3%BCsseldorf.jpg/1280px-Bugatti_Veyron_16.4_%E2%80%93_Frontansicht_%281%29%2C_5._April_2012%2C_D%C3%BCsseldorf.jpg"],["Bugatti","Type 57 Atalante",1936,"https://upload.wikimedia.org/wikipedia/commons/f/fa/Bugatti_Type_57_Atalante_1936.jpg"],["Mercedes-Benz","300 SLR",1955,"https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Mercedes-Benz_300_SLR_1955.jpg/1280px-Mercedes-Benz_300_SLR_1955.jpg"],["Lamborghini","Diablo SE30",1995,"https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/1995_Lamborghini_Diablo_SE_30.jpg/1280px-1995_Lamborghini_Diablo_SE_30.jpg"],["De Tomaso","Pantera GT5-S",1990,"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/1990_De_Tomaso_Pantera_GT5_S_LC23.jpg/1280px-1990_De_Tomaso_Pantera_GT5_S_LC23.jpg"],["Maserati","MC12",2004,"https://upload.wikimedia.org/wikipedia/commons/5/51/MC12._%285234528513%29.jpg"],["Fiat","500 L",1970,"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/1970_Fiat_500_L_--_2011_DC_1.jpg/1280px-1970_Fiat_500_L_--_2011_DC_1.jpg"],["Volkswagen","Golf Mk1",1976,"https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Volkswagen_Golf_1-2_%28cropped%29.jpg/1280px-Volkswagen_Golf_1-2_%28cropped%29.jpg"],["Morris","Mini-Minor",1959,"https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Morris_Mini-Minor_1959_%28621_AOK%29.jpg/1280px-Morris_Mini-Minor_1959_%28621_AOK%29.jpg"],["Renault","5 Turbo",1981,"https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/1981_Renault_5_Turbo_LC23.jpg/1280px-1981_Renault_5_Turbo_LC23.jpg"],["DeLorean","DMC-12",1981,"https://upload.wikimedia.org/wikipedia/commons/2/2c/Delorean_DMC-12_side.jpg"],["Koenigsegg","CCX",2006,"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Koenigsegg_CCX_-_Flickr_-_Alexandre_Pr%C3%A9vot_%2811%29.jpg/1280px-Koenigsegg_CCX_-_Flickr_-_Alexandre_Pr%C3%A9vot_%2811%29.jpg"],["Jaguar","XJ220",1992,"https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/JaguarXJ220.jpg/1280px-JaguarXJ220.jpg"],["Ferrari","F12berlinetta",2012,"https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Ferrari_F12berlinetta_IMG_2941.jpg/1280px-Ferrari_F12berlinetta_IMG_2941.jpg"],["Lexus","LFA",2010,"https://upload.wikimedia.org/wikipedia/commons/8/82/Lexus_LFA_001.JPG"],["Volkswagen","Beetle",1966,"https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/VW_K%C3%A4fer_Baujahr_1966.jpg/1280px-VW_K%C3%A4fer_Baujahr_1966.jpg"],["Ferrari","F40",1987,"https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/F40_Ferrari_20090509.jpg/1280px-F40_Ferrari_20090509.jpg"],["Ferrari","365 GTB/4 Daytona",1973,"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/1973_Ferrari_Daytona_365_GTB4_Blue_LC22.jpg/1280px-1973_Ferrari_Daytona_365_GTB4_Blue_LC22.jpg"],["Porsche","917K",1969,"https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/1969_Porsche_917K_Red.jpg/1280px-1969_Porsche_917K_Red.jpg"],["Alfa Romeo","Montreal",1970,"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Alfa_Romeo_Montreal_Classic-Gala_2022_1X7A0198.jpg/1280px-Alfa_Romeo_Montreal_Classic-Gala_2022_1X7A0198.jpg"],["Toyota","Corolla Levin AE86",1983,"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/1983_Toyota_Corolla_Levin.jpg/1280px-1983_Toyota_Corolla_Levin.jpg"],["Mercedes-Benz","SL (R107)",1988,"https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/1988_Mercedes_SL_280.jpg/1280px-1988_Mercedes_SL_280.jpg"],["BMW","507",1957,"https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/BMW_507.jpg/1280px-BMW_507.jpg"],["Lamborghini","Murciélago LP640",2006,"https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Lamborghini_Murci%C3%A9lago_LP-640_-_Flickr_-_Alexandre_Pr%C3%A9vot_%2840%29.jpg/1280px-Lamborghini_Murci%C3%A9lago_LP-640_-_Flickr_-_Alexandre_Pr%C3%A9vot_%2840%29.jpg"],["Aston Martin","Vanquish S",2017,"https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Aston_Martin_Vanquish_S_-_prawy_prz%C3%B3d_%28MSP17%29.jpg/1280px-Aston_Martin_Vanquish_S_-_prawy_prz%C3%B3d_%28MSP17%29.jpg"],["Porsche","911 Turbo (930)",1976,"https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/1976_Porsche_930_Turbo%2C_Emerald_Green_met%2C_front_left.jpg/1280px-1976_Porsche_930_Turbo%2C_Emerald_Green_met%2C_front_left.jpg"],["Chevrolet","Camaro RS",1968,"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Chevrolet_Camaro_RS_327_1968_%28cropped%29.jpg/1280px-Chevrolet_Camaro_RS_327_1968_%28cropped%29.jpg"],["Mercedes-Benz","SLR McLaren",2004,"https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Mercedes-Benz_SLR_McLaren_%288615164079%29.jpg/1280px-Mercedes-Benz_SLR_McLaren_%288615164079%29.jpg"]];
 const ZQ_LEVELS=[7,4.6,3,1.9,1];
 let zq={pool:null,era:"classic",car:null,img:"",focus:[50,50],level:0,options:[],answered:null,score:0,round:0,streak:0,used:new Set(),loading:false};
 async function zqPool(){
@@ -2808,6 +3002,9 @@ async function zqPool(){
   // un elemento por foto: así la misma marca/modelo aparece con distintas tomas
   const pool=[];
   cat.forEach(e=>{ const imgs=new Set([e.image,...catVariants(e).flatMap(v=>v.images||[])].filter(Boolean)); imgs.forEach(u=>pool.push({e,url:u})); });
+  // y los íconos genéricos, para que no salgan solo coches que subimos nosotros
+  const known=new Set(cat.map(e=>zqLabel(e).toLowerCase()));
+  QUIZ_CARS.forEach(([brand,name,year,image])=>{ const e={brand,name,year,image,generic:true}; if(!known.has(zqLabel(e).toLowerCase())) pool.push({e,url:image}); });
   zq.pool=pool; return pool;
 }
 const zqYear=e=>parseInt(e.year,10)||0;
@@ -2885,7 +3082,7 @@ function renderZqPanel(){
   p.innerHTML=`<div class="zq-opts">${zq.options.map(o=>{ const st=a?(o===right?"right":(o===a.label?"wrong":"")):"";
       return `<button class="zq-opt ${st}" ${a?"disabled":""} onclick="zqAnswer(${JSON.stringify(o).replace(/"/g,"&quot;")})">${esc(o)}</button>`; }).join("")}</div>
     ${a?`<div class="zq-res ${a.ok?"ok":""}"><div class="zq-k">${a.ok?"¡Correcto! +"+a.pts:(a.label?"No era ese":"La respuesta")}</div>
-        <div class="zq-ans">${esc(right)}</div><div class="zq-y">${esc(String(zq.car.year||""))}</div></div>`
+        <div class="zq-ans">${esc(right)}</div><div class="zq-y">${esc(String(zq.car.year||""))}${zq.car.generic?" · Foto: Wikimedia Commons":""}</div></div>`
       :`<div class="zq-hint"><button class="btn" onclick="zqHint()" ${zq.level>=ZQ_LEVELS.length-1?"disabled":""}>Más pista</button><button class="btn ghost" onclick="zqReveal()">Revelar</button></div>`}
     <div class="zq-score"><span>Puntos <b>${zq.score}</b></span><span>Racha <b>${zq.streak}</b></span><span>Ronda <b>${zq.round}</b></span></div>
     ${a?`<button class="btn primary zq-next" onclick="zqNext()">Siguiente coche</button>`:""}`;
@@ -2893,7 +3090,7 @@ function renderZqPanel(){
 function renderZoomQuiz(){
   const v=$("#actView"); if(!v) return;
   v.innerHTML=`<div class="panel zq">
-    <div class="zq-top"><div><h3>¿Qué coche es?</h3><p class="lead">Un acercamiento a un detalle de un coche del catálogo, elegido al azar. Cada pista abre un poco más la imagen; adivinar antes da más puntos.</p></div>
+    <div class="zq-top"><div><h3>¿Qué coche es?</h3><p class="lead">Un acercamiento a un detalle de un coche elegido al azar, del catálogo o de los grandes íconos. Cada pista abre un poco más la imagen; adivinar antes da más puntos.</p></div>
       <div class="zq-tools">
         <div class="gs-toggle" role="group"><button class="${zq.era==="classic"?"on":""}" onclick="zq.era='classic';zq.used.clear();zqNext()">Clásicos</button><button class="${zq.era==="all"?"on":""}" onclick="zq.era='all';zq.used.clear();zqNext()">Todos</button></div>
         <button class="btn sm" onclick="zqFullscreen()">Pantalla completa</button>
@@ -2918,7 +3115,7 @@ document.addEventListener("keydown",e=>{
   else if((e.key==="n"||e.key==="N")&&zq.answered) zqNext();
 });
 /* ---------- 5-CAR GARAGE ---------- */
-function renderFive(){
+function renderFiveFree(){
   const v=$("#actView");
   const slots=Array.from({length:fiveN},(_,i)=>{
     const id=fivePick[i];
@@ -2950,7 +3147,7 @@ function renderFive(){
   const eraOpts=`<option value="">Cualquier época</option>`+ERAS.map(e=>`<option value="${e.key}" ${fiveEra===e.key?'selected':''}>${e.label}</option>`).join("");
   const fiveAllTags=[...new Set([...categories,...cars.flatMap(c=>c.tags||[])])];
   v.innerHTML=`<div class="panel">
-    <h3>Garaje de ensueño</h3>
+    <div class="gm-head"><h3>Garaje de ensueño</h3>${gmModes("five",[["game","Reto"],["free","Libre"]])}</div>
     <p class="lead">Arma tu combo soñado. Ajusta cuántos coches y activa límites opcionales (modo realista = cada coche aporta una categoría distinta). Guárdalo con nombre.</p>
     <div class="budgetbar" style="gap:16px">
       <label style="font-size:13px;color:var(--ink-dim);display:flex;align-items:center;gap:6px">N° coches
@@ -3028,7 +3225,7 @@ function tierChip(c){
   const im=firstImg(c);
   return `<div class="poolcar ${tierSel===c.id?'sel':''}" draggable="true" ondragstart="tierDragId='${c.id}';event.dataTransfer.effectAllowed='move'" onclick="tierTap('${c.id}')">${im?`<img src="${im}">`:`<div class="pn"></div>`}${c.brand||""} ${c.name||""}</div>`;
 }
-function renderTier(){
+function renderTierFree(){
   const v=$("#actView");
   if(!cars.length){v.innerHTML=`<div class="panel"><h3>Tier list</h3><p class="lead">Añade coches primero.</p></div>`;return;}
   const tags=[...new Set(cars.flatMap(c=>c.tags||[]))].sort();
@@ -3048,7 +3245,7 @@ function renderTier(){
   }).join("");
   const unranked=pool.filter(c=>!TIER_DEFS.some(t=>t.k===tierMap[c.id]));
   v.innerHTML=`<div class="panel">
-    <h3>Tier list</h3>
+    <div class="gm-head"><h3>Tier list</h3>${gmModes("tier",[["game","Contrarreloj"],["free","Mi tier list"]])}</div>
     <p class="lead">Toca un coche para seleccionarlo y luego toca un nivel (S, A, B, C, D). Puedes filtrar por categoría o por época.</p>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
       <span style="font-size:13px;color:var(--ink-dim)">Filtrar:</span>${filterSel}
@@ -3072,58 +3269,6 @@ function autoTier(){
   saveAll();renderTier();toast("Clasificado por promedio");
 }
 function clearTier(){if(confirm("¿Vaciar la tier list (de los coches mostrados)?")){tierFilteredCars().forEach(c=>delete tierMap[c.id]);saveAll();renderTier();}}
-/* ---------- TORNEO (bracket) ---------- */
-function brkStart(){
-  const ids=cars.map(c=>c.id).sort(()=>Math.random()-0.5);
-  brk={round:ids,next:[],match:0,roundNo:1,podium:[],history:[],total:ids.length};
-  renderBracket();
-}
-function renderBracket(){
-  const v=$("#actView");
-  if(cars.length<2){v.innerHTML=`<div class="panel"><h3>Torneo</h3><p class="lead">Necesitas al menos 2 coches.</p></div>`;return;}
-  if(!brk){v.innerHTML=`<div class="panel"><h3>Torneo — bracket</h3><p class="lead">Eliminatorias por rondas; al final, podio con ranking completo.</p><button class="btn primary" onclick="brkStart()">Empezar torneo</button></div>`;return;}
-  if(brk.round.length>1 && brk.match+1>=brk.round.length){
-    if(brk.match<brk.round.length){brk.next.push(brk.round[brk.match]);
-      brk.history.push({size:brk.round.length,a:brk.round[brk.match],b:null,winner:brk.round[brk.match],bye:true});}
-    brk.round=brk.next;brk.next=[];brk.match=0;brk.roundNo++;
-  }
-  if(brk.round.length<=1)return brkPodium(v);
-  const a=cars.find(x=>x.id===brk.round[brk.match]);
-  const b=cars.find(x=>x.id===brk.round[brk.match+1]);
-  const totalMatches=Math.floor(brk.round.length/2);
-  const roundName=brk.round.length<=2?"Final":brk.round.length<=4?"Semifinal":brk.round.length<=8?"Cuartos":"Ronda "+brk.roundNo;
-  const card=(c,i)=>{const img=firstImg(c);return `<div class="vscard" onclick="brkPick(${i})"><div class="ph">${img?`<img src="${img}">`:`<div class="noimg"></div>`}</div><div class="cap"><div class="t">${c.brand||""} ${c.name||""}</div><div class="s">${c.year||""} · ★${avg(c).toFixed(1)} · ${money(c)}</div></div></div>`;};
-  v.innerHTML=`<div class="panel"><h3>Torneo · ${roundName}</h3>
-    <p class="lead">Partido ${Math.floor(brk.match/2)+1} de ${totalMatches} · ${brk.round.length} coches en esta ronda</p>
-    <div class="vs">${card(a,0)}<div class="vsmid">VS</div>${card(b,1)}</div>
-    <button class="btn ghost sm" onclick="brk=null;renderBracket()">✕ Reiniciar</button></div>`;
-}
-function brkPick(i){
-  const winner=i===0?brk.round[brk.match]:brk.round[brk.match+1];
-  const loser=i===0?brk.round[brk.match+1]:brk.round[brk.match];
-  brk.history.push({size:brk.round.length,a:brk.round[brk.match],b:brk.round[brk.match+1],winner});
-  brk.podium.push({id:loser,round:brk.round.length});
-  brk.next.push(winner);
-  brk.match+=2;
-  renderBracket();
-}
-function brkPodium(v){
-  const champ=brk.round[0]||brk.next[0];
-  const sizes=[...new Set(brk.history.map(h=>h.size))].sort((a,b)=>b-a);
-  const roundLabel=s=>s<=2?"Final":s<=4?"Semifinal":s<=8?"Cuartos":s<=16?"Octavos":`Ronda de ${s}`;
-  const mini=id=>{const c=cars.find(x=>x.id===id);return {c,im:c?firstImg(c):null};};
-  const row=(m,win)=>m?`<div class="bm-row ${win?'win':'lose'}">${m.im?`<img src="${m.im}">`:`<span class="pn"></span>`}<span class="bm-nm">${m.c?(m.c.brand||"")+" "+(m.c.name||""):""}</span>${win?'<span class="bm-ck">✓</span>':''}</div>`:`<div class="bm-row bye">pasa directo</div>`;
-  const matchCard=h=>{const A=mini(h.a),B=h.b?mini(h.b):null;return `<div class="bmatch">${row(A,h.winner===h.a)}${B?row(B,h.winner===h.b):row(null)}</div>`;};
-  const cols=sizes.map(s=>`<div class="bcol"><div class="bcol-h">${roundLabel(s)}</div>${brk.history.filter(h=>h.size===s).map(matchCard).join("")}</div>`).join("");
-  const cc=cars.find(x=>x.id===champ);const cim=cc?firstImg(cc):null;
-  v.innerHTML=`<div class="panel">
-    <h3 style="text-align:center">Campeón del torneo</h3>
-    <div style="max-width:320px;margin:12px auto"><div class="vscard" style="cursor:default"><div class="ph">${cim?`<img src="${cim}">`:`<div class="noimg"></div>`}</div><div class="cap"><div class="t">${cc.brand||""} ${cc.name||""}</div><div class="s">${cc.year||""} · ★${avg(cc).toFixed(1)}</div></div></div></div>
-    <h4 style="text-transform:uppercase;letter-spacing:1px;color:var(--ink-faint);font-size:12px;margin:18px 0 10px">El camino — quién eliminó a quién</h4>
-    <div class="bracket">${cols||'<span style="color:var(--ink-faint)">—</span>'}</div>
-    <div style="text-align:center;margin-top:16px"><button class="btn primary" onclick="brkStart()">↻ Otro torneo</button></div>
-  </div>`;
-}
 function shareCombo(){
   const picks=fivePick.filter(Boolean).map(id=>{const c=cars.find(x=>x.id===id);return `${c.brand||""} ${c.name||""}`.trim();});
   if(!picks.length){toast("Arma un combo primero");return;}
@@ -3132,45 +3277,6 @@ function shareCombo(){
   else toast(txt);
 }
 /* ---------- TOP 100 ---------- */
-function renderTop100(){
-  const v=$("#actView");
-  const ranked=cars.filter(c=>top100[c.id]).sort((a,b)=>top100[a.id]-top100[b.id]);
-  const unranked=cars.filter(c=>!top100[c.id]);
-  const medal=p=>p===1?"":p===2?"":p===3?"":"";
-  v.innerHTML=`<div class="panel">
-    <h3>Top 100</h3>
-    <p class="lead">Tu ranking definitivo. Asigna una posición a cada coche (1 = el mejor). Edita el número para reordenar.</p>
-    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-      <button class="btn sm" onclick="autoFillTop()">Autollenar por promedio</button>
-      <button class="btn sm ghost" onclick="clearTop()" style="color:var(--accent)">Vaciar ranking</button>
-    </div>
-    <div class="t100">
-      ${ranked.length?ranked.map(c=>{
-        const p=top100[c.id]; const img=firstImg(c);
-        return `<div class="t100row">
-          <span class="pos"><input type="number" min="1" max="100" value="${p}" onchange="setTop('${c.id}',this.value)"></span>
-          <span class="medal">${medal(p)}</span>
-          ${img?`<img src="${img}">`:`<div class="pn"></div>`}
-          <div class="info"><div class="t">${c.brand||""} ${c.name||""}</div>
-            <div class="s">${c.year||""} · ★${avg(c).toFixed(1)} · ${money(c)}</div></div>
-          <button class="btn sm ghost" style="color:var(--accent)" onclick="setTop('${c.id}','')">Quitar</button>
-        </div>`;
-      }).join(""):'<p style="color:var(--ink-faint)">Aún no has rankeado ningún coche. Toca uno abajo o usa autollenar.</p>'}
-    </div>
-    ${unranked.length?`<div class="unranked"><h4>Sin posición — toca para añadir al final</h4>
-      <div class="pool">${unranked.map(c=>{const im=firstImg(c);return `<div class="poolcar" onclick="addToTop('${c.id}')">
-        ${im?`<img src="${im}">`:`<div class="pn"></div>`}${c.brand||""} ${c.name||""}</div>`;}).join("")}</div></div>`:""}
-  </div>`;
-}
-function setTop(id,val){
-  if(val===""||val==null){delete top100[id];}
-  else top100[id]=Math.max(1,Math.min(100,Number(val)));
-  saveAll(); renderTop100();
-}
-function addToTop(id){
-  const max=Math.max(0,...Object.values(top100));
-  top100[id]=max+1; saveAll(); renderTop100();
-}
 function autoFillTop(){
   const sorted=[...cars].sort((a,b)=>avg(b)-avg(a));
   top100={}; sorted.forEach((c,i)=>{if(i<100)top100[c.id]=i+1;});
@@ -3178,14 +3284,14 @@ function autoFillTop(){
 }
 function clearTop(){if(confirm("¿Vaciar todo el Top 100?")){top100={};saveAll();renderTop100();}}
 /* ---------- DUELOS (tournament) ---------- */
-function renderTourney(){
+function renderTourneyFav(){
   const v=$("#actView");
   if(cars.length<2){
     v.innerHTML=`<div class="panel"><h3>Duelos</h3><p class="lead">Necesitas al menos 2 coches para jugar.</p></div>`;
     return;
   }
   if(!tourState){
-    v.innerHTML=`<div class="panel"><h3>Duelos — rey de la colina</h3>
+    v.innerHTML=`<div class="panel"><div class="gm-head"><h3>Duelos — rey de la colina</h3>${gmModes("tourney",[["game","Más o menos"],["fav","Mi favorito"]])}</div>
       <p class="lead">Elige tu preferido entre dos. El ganador se queda y enfrenta al siguiente coche, uno por uno, hasta tu favorito definitivo.</p>
       <button class="btn primary" onclick="startTour()">Empezar</button></div>`;
     return;
@@ -3226,6 +3332,619 @@ function tourPick(which){
   tourState.queue.shift();
   tourState.duel++;
   renderTourney();
+}
+/* ======================================================================
+   JUEGOS — retos para las actividades (draft, contrarreloj, torneo, duelos)
+   ====================================================================== */
+let actMode={five:"game",tier:"game",tourney:"game"};
+function gmModes(key,labels){
+  return `<div class="gs-toggle gm-modes" role="group">${labels.map(([k,l])=>`<button class="${actMode[key]===k?"on":""}" onclick="actMode.${key}='${k}';renderAct()">${l}</button>`).join("")}</div>`;
+}
+function gmBest(key,val){
+  let b=0;
+  try{ b=Number(localStorage.getItem("cc-best-"+key))||0;
+    if(val!=null&&val>b){ localStorage.setItem("cc-best-"+key,String(val)); return {best:val,isNew:b>0}; } }catch(e){}
+  return {best:b,isNew:false};
+}
+function gmShuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+const gmCalm=()=>{ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } };
+function gmConfetti(host){
+  if(gmCalm()) return;
+  host=host||document.body;
+  const box=document.createElement("div"); box.className="gm-confetti";
+  const cols=["var(--accent)","var(--accent2)","var(--good)","var(--ink)"];
+  for(let i=0;i<46;i++){
+    const s=document.createElement("i");
+    s.style.left=(Math.random()*100)+"%"; s.style.background=cols[i%cols.length];
+    s.style.animationDelay=(Math.random()*.35)+"s"; s.style.animationDuration=(1.4+Math.random()*1.2)+"s";
+    s.style.setProperty("--dx",(Math.random()*160-80)+"px"); s.style.setProperty("--r",(Math.random()*720-360)+"deg");
+    box.appendChild(s);
+  }
+  host.appendChild(box); setTimeout(()=>box.remove(),3200);
+}
+function gmCount(el,to,fmt,ms){
+  if(!el) return; fmt=fmt||(v=>String(Math.round(v)));
+  if(gmCalm()){ el.textContent=fmt(to); return; }
+  const t0=performance.now(), dur=ms||700;
+  const step=t=>{ const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3); el.textContent=fmt(to*e); if(k<1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+const gmUsd=n=>{ n=Number(n)||0; return n>=1e6?"$"+(n/1e6).toFixed(n>=1e7?0:1)+" M":n>=1e3?"$"+Math.round(n/1e3)+" K":"$"+Math.round(n); };
+const gmName=c=>((c.brand||"")+" "+(c.name||"")).trim();
+const gmPh=(im,cls)=>im?`<img src="${esc(im)}" alt="" loading="lazy" draggable="false"${cls?` class="${cls}"`:""}>`:`<div class="noimg"></div>`;
+function gmTyping(){ return /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||""); }
+function gmActive(act){ return currentAct===act && $("#tab-activities")?.style.display!=="none" && !document.querySelector(".scrim.show"); }
+
+/* ---------- GARAJE DE ENSUEÑO: draft con presupuesto ---------- */
+let draft=null, draftHard=false;
+const DRAFT_RULES=[
+  {t:"Al menos un clásico de antes de 1975", ok:p=>p.some(c=>parseInt(c.year,10)<1975)},
+  {t:"Coches de 3 épocas distintas", ok:p=>new Set(p.map(eraOf).filter(Boolean)).size>=3},
+  {t:"Máximo 2 coches de la misma marca", ok:p=>{ const m={}; p.forEach(c=>{ const b=(c.brand||"").toLowerCase(); m[b]=(m[b]||0)+1; }); return Object.values(m).every(n=>n<=2); }, keep:true},
+  {t:"Uno con calificación de 9 o más", ok:p=>p.some(c=>avg(c)>=9)},
+  {t:"Un coche de menos de $250 K", ok:p=>p.some(c=>Number(c.price)>0&&Number(c.price)<250000)},
+  {t:"4 marcas distintas o más", ok:p=>new Set(p.map(c=>(c.brand||"").toLowerCase())).size>=4},
+  {t:"Ningún coche de después de 2015", ok:p=>p.every(c=>!(parseInt(c.year,10)>2015)), keep:true},
+];
+const niceRound=n=>{ const p=Math.pow(10,Math.floor(Math.log10(n))-1); return Math.round(n/p)*p; };
+function draftStart(){
+  const pool=cars.filter(c=>firstImg(c));
+  const priced=pool.filter(c=>Number(c.price)>0);
+  let budget=0;
+  if(priced.length>=8){
+    const ps=priced.map(c=>Number(c.price)).sort((a,b)=>a-b);
+    budget=niceRound(ps[Math.floor(ps.length*.5)]*5*(.8+Math.random()*.6));
+  }
+  draft={n:5,picks:[],offers:[],budget,rules:gmShuffle(DRAFT_RULES).slice(0,2),rerolls:1,deck:gmShuffle(pool.map(c=>c.id)),done:false,hard:draftHard};
+  draftDeal(); renderFive();
+}
+function draftDeal(){
+  const d=draft; let deck=d.deck.filter(id=>!d.picks.includes(id));
+  if(deck.length<3) deck=gmShuffle(cars.filter(c=>firstImg(c)&&!d.picks.includes(c.id)).map(c=>c.id));
+  d.offers=deck.slice(0,3); d.deck=deck.slice(3);
+}
+function draftPick(id){
+  const d=draft; if(!d||d.done||d._busy||!d.offers.includes(id)) return; d._busy=true;
+  const el=document.querySelector(`.gm-offer[data-id="${id}"]`);
+  if(el){ el.classList.add("chosen"); document.querySelectorAll(".gm-offer").forEach(o=>{ if(o!==el) o.classList.add("gone"); }); }
+  setTimeout(()=>{
+    d._busy=false; d.picks.push(id);
+    if(d.picks.length>=d.n){ d.done=true; d.offers=[]; renderFive(); draftReveal(); }
+    else { draftDeal(); renderFive(); }
+  },gmCalm()?0:320);
+}
+function draftReroll(){ const d=draft; if(!d||d.rerolls<1||d.done) return; d.rerolls--; d.deck=[...d.deck,...d.offers]; draftDeal(); renderFive(); }
+function draftScore(d){
+  const p=d.picks.map(id=>cars.find(c=>c.id===id)).filter(Boolean);
+  const base=p.length?Math.round(p.reduce((s,c)=>s+avg(c),0)/p.length*10):0;
+  const met=d.rules.filter(r=>r.ok(p)).length;
+  const spent=p.reduce((s,c)=>s+(Number(c.price)||0),0);
+  const over=!!d.budget&&spent>d.budget;
+  const left=d.budget&&!over?Math.round((1-spent/d.budget)*10):0;
+  const total=Math.max(0,base+met*15+left-(over?40:0));
+  const grade=total>=125?"S":total>=110?"A":total>=95?"B":total>=75?"C":"D";
+  return {p,base,met,spent,over,left,total,grade};
+}
+function draftReveal(){
+  const s=draftScore(draft), rec=gmBest("draft",s.total);
+  draft.result={...s,best:rec.best,isNew:rec.isNew};
+  renderFive();
+  gmCount($("#gmDraftPts"),s.total);
+  if(rec.isNew||s.grade==="S"||s.grade==="A") gmConfetti($("#actView .gm-panel"));
+}
+function draftSave(){
+  if(!draft) return;
+  const name=`Reto ${new Date().toLocaleDateString()} · ${draft.result?draft.result.total+" pts":""}`;
+  combos.push({name,cars:[...draft.picks]}); saveAll(); toast("Combo guardado");
+}
+function draftShare(){
+  if(!draft||!draft.result) return;
+  const r=draft.result;
+  const txt=`Mi garaje de ensueño — ${r.total} pts (${r.grade})\n`+r.p.map((c,i)=>`${i+1}. ${gmName(c)}`).join("\n")+(draft.budget?`\nPresupuesto ${gmUsd(draft.budget)} · gastado ${gmUsd(r.spent)}`:"");
+  if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>toast("Copiado al portapapeles")); else toast(txt);
+}
+function renderFiveGame(){
+  const v=$("#actView");
+  const head=`<div class="gm-head"><div><h3>Garaje de ensueño</h3>
+      <p class="lead">Un draft de 5 rondas con tu colección. En cada ronda te tocan 3 coches y te quedas con uno. Respeta el presupuesto y cumple el reto: el puntaje premia la calidad, las reglas cumplidas y lo que te sobre.</p></div>
+      ${gmModes("five",[["game","Reto"],["free","Libre"]])}</div>`;
+  if(cars.filter(c=>firstImg(c)).length<8){ v.innerHTML=`<div class="panel gm-panel">${head}<p class="lead">Necesitas al menos 8 coches con foto para jugar.</p></div>`; return; }
+  if(!draft){
+    const b=gmBest("draft").best;
+    v.innerHTML=`<div class="panel gm-panel">${head}
+      <div class="gm-start">
+        <div class="gm-start-k">Cómo se juega</div>
+        <ol class="gm-steps"><li>Te damos un presupuesto y 2 reglas al azar.</li><li>5 rondas: eliges 1 de 3 coches. Tienes un cambio de opciones.</li><li>Calidad media ×10 + 15 por regla + bono por lo que te sobre. Pasarte cuesta 40.</li></ol>
+        <div class="gm-start-row">
+          <div class="gs-toggle" role="group"><button class="${!draftHard?"on":""}" onclick="draftHard=false;renderFive()">Normal</button><button class="${draftHard?"on":""}" onclick="draftHard=true;renderFive()">A ciegas</button></div>
+          <span class="gm-note">${draftHard?"Precios y calificaciones ocultos hasta el final.":"Ves precio y calificación de cada coche."}</span>
+        </div>
+        <button class="btn primary gm-go" onclick="draftStart()">Empezar el reto</button>
+        ${b?`<div class="gm-best">Tu récord <b>${b}</b> pts</div>`:""}
+      </div></div>`;
+    return;
+  }
+  const d=draft, p=d.picks.map(id=>cars.find(c=>c.id===id)).filter(Boolean);
+  const spent=p.reduce((s,c)=>s+(Number(c.price)||0),0);
+  const pct=d.budget?Math.min(100,spent/d.budget*100):0, over=d.budget&&spent>d.budget;
+  const showMoney=!d.hard||d.done;
+  const rules=d.rules.map(r=>{ const ok=r.ok(p); const st=d.done?(ok?"ok":"no"):(r.keep?(ok?"ok":"no"):(ok?"ok":"")); return `<li class="${st}">${esc(r.t)}</li>`; }).join("");
+  const slots=Array.from({length:d.n},(_,i)=>{ const c=p[i];
+    return c?`<div class="gm-slot full">${gmPh(firstImg(c))}<span>${esc(gmName(c))}</span></div>`:`<div class="gm-slot${i===p.length&&!d.done?" next":""}"><b>${i+1}</b></div>`; }).join("");
+  const card=(id,i)=>{ const c=cars.find(x=>x.id===id); if(!c) return "";
+    const after=spent+(Number(c.price)||0), bust=d.budget&&after>d.budget;
+    return `<button class="gm-offer" data-id="${c.id}" onclick="draftPick('${c.id}')">
+      <div class="ph">${gmPh(firstImg(c))}<span class="gm-key">${i+1}</span></div>
+      <div class="cap"><div class="t">${esc(gmName(c))}</div>
+        <div class="s">${esc(String(c.year||""))}${showMoney?` · ${c.price?gmUsd(c.price):"—"} · ★ ${avg(c).toFixed(1)}`:""}</div>
+        ${showMoney&&bust?`<div class="gm-warn">Te pasarías del presupuesto</div>`:""}</div></button>`; };
+  let body="";
+  if(!d.done){
+    body=`<div class="gm-round">Ronda ${p.length+1} de ${d.n} · elige uno</div>
+      <div class="gm-offers">${d.offers.map(card).join("")}</div>
+      <div class="gm-actions"><button class="btn ghost sm" onclick="draftReroll()" ${d.rerolls<1?"disabled":""}>Cambiar opciones (${d.rerolls})</button>
+        <button class="btn ghost sm" onclick="draft=null;renderFive()">Abandonar</button></div>`;
+  } else {
+    const r=d.result||draftScore(d);
+    body=`<div class="gm-result">
+        <div class="gm-grade g-${r.grade}">${r.grade}</div>
+        <div class="gm-res-main"><div class="gm-big"><span id="gmDraftPts">${r.total}</span> <small>pts</small></div>
+          <ul class="gm-break">
+            <li><span>Calidad media</span><b>${r.base}</b></li>
+            <li><span>Reglas cumplidas (${r.met} de ${d.rules.length})</span><b>+${r.met*15}</b></li>
+            ${d.budget?(r.over?`<li class="bad"><span>Te pasaste del presupuesto</span><b>−40</b></li>`:`<li><span>Bono por lo que sobró</span><b>+${r.left}</b></li>`):""}
+          </ul>
+          <div class="gm-best">${r.isNew?"¡Nuevo récord!":"Tu récord"} <b>${r.best||r.total}</b> pts</div>
+        </div></div>
+      <div class="gm-actions"><button class="btn primary" onclick="draftStart()">Otro reto</button>
+        <button class="btn" onclick="draftSave()">Guardar como combo</button>
+        <button class="btn ghost" onclick="draftShare()">Compartir</button></div>`;
+  }
+  v.innerHTML=`<div class="panel gm-panel">${head}
+    <div class="gm-draft">
+      <aside class="gm-brief"><div class="gm-start-k">El reto</div>
+        ${d.budget?`<div class="gm-budget"><div class="gm-bv"><span>${showMoney?gmUsd(spent):"?"}</span> / ${gmUsd(d.budget)}</div>
+          <div class="meter"><div class="f ${showMoney&&over?"over":""}" style="width:${showMoney?pct:0}%"></div></div></div>`:`<p class="gm-note">Tus coches no tienen precios suficientes: este reto no tiene presupuesto.</p>`}
+        <ul class="gm-rules">${rules}</ul>
+        <div class="gm-slots">${slots}</div>
+      </aside>
+      <div class="gm-main">${body}</div>
+    </div></div>`;
+}
+document.addEventListener("keydown",e=>{
+  if(!gmActive("five")||actMode.five!=="game"||!draft||draft.done||gmTyping()) return;
+  if(/^[1-3]$/.test(e.key)){ const id=draft.offers[Number(e.key)-1]; if(id) draftPick(id); }
+});
+
+/* ---------- TIER LIST: contrarreloj ---------- */
+let tq=null, tqSize=15, tqTimed=true;
+const TQ_SECS=6;
+function tqStart(){
+  const pool=gmShuffle(tierFilteredCars().filter(c=>firstImg(c)));
+  const list=(tqSize?pool.slice(0,tqSize):pool).map(c=>c.id);
+  if(list.length<3){ toast("Necesitas al menos 3 coches con foto"); return; }
+  tq={list,i:0,placed:{},timed:tqTimed,missed:[],times:[],t0:Date.now(),done:false};
+  renderTier();
+}
+function tqTick(){
+  clearInterval(tqTick.t);
+  if(!tq||tq.done||!tq.timed) return;
+  tq.t0=Date.now();
+  tqTick.t=setInterval(()=>{
+    if(!tq||tq.done||currentAct!=="tier"){ clearInterval(tqTick.t); return; }
+    const left=Math.max(0,TQ_SECS-(Date.now()-tq.t0)/1000), bar=$("#tqBar");
+    if(bar) bar.style.width=(left/TQ_SECS*100)+"%";
+    if(left<=0){ clearInterval(tqTick.t); tqPlace(null); }
+  },100);
+}
+function tqPlace(k){
+  if(!tq||tq.done||tq._busy) return;
+  const id=tq.list[tq.i]; if(!id) return; tq._busy=true;
+  clearInterval(tqTick.t);
+  tq.times.push((Date.now()-tq.t0)/1000);
+  if(k) tq.placed[id]=k; else tq.missed.push(id);
+  const card=$("#tqCard");
+  if(card){ card.classList.add(k?"out-"+k:"out-miss"); }
+  setTimeout(()=>{ if(!tq) return; tq._busy=false; tq.i++; if(tq.i>=tq.list.length){ tq.done=true; tqFinish(); } renderTier(); },gmCalm()?0:220);
+}
+function tqExpected(){
+  // el nivel que te "tocaría" según tus calificaciones, con el mismo reparto que el autollenado
+  const ids=tq.list.slice().sort((a,b)=>avg(cars.find(c=>c.id===b))-avg(cars.find(c=>c.id===a)));
+  const n=ids.length||1, out={};
+  ids.forEach((id,i)=>{ const q=i/n; out[id]=q<0.2?"S":q<0.4?"A":q<0.6?"B":q<0.8?"C":"D"; });
+  return out;
+}
+function tqFinish(){
+  const exp=tqExpected(), K="SABCD";
+  let pts=0, n=0; const diffs=[];
+  Object.entries(tq.placed).forEach(([id,k])=>{ const dd=Math.abs(K.indexOf(k)-K.indexOf(exp[id])); n++; pts+=dd===0?1:dd===1?.5:0; diffs.push({id,k,e:exp[id],dd}); });
+  tq.match=n?Math.round(pts/n*100):0;
+  tq.surprises=diffs.filter(x=>x.dd>=2).sort((a,b)=>b.dd-a.dd).slice(0,3);
+  tq.avgT=tq.times.length?tq.times.reduce((a,b)=>a+b,0)/tq.times.length:0;
+  const rec=gmBest("tier-match",tq.match); tq.best=rec.best; tq.isNew=rec.isNew;
+  setTimeout(()=>{ gmCount($("#tqPct"),tq.match,v=>Math.round(v)+"%"); if(tq.isNew||tq.match>=80) gmConfetti($("#actView .gm-panel")); },30);
+}
+function tqApply(){
+  if(!tq) return;
+  Object.entries(tq.placed).forEach(([id,k])=>tierMap[id]=k);
+  saveAll(); toast("Guardado en tu tier list"); actMode.tier="free"; tq=null; renderAct();
+}
+function renderTierGame(){
+  const v=$("#actView");
+  const head=`<div class="gm-head"><div><h3>Tier list</h3>
+      <p class="lead">Contrarreloj: los coches aparecen uno por uno y tienes ${TQ_SECS} segundos para mandarlos a S, A, B, C o D. Al final comparamos tu instinto con tus propias calificaciones.</p></div>
+      ${gmModes("tier",[["game","Contrarreloj"],["free","Mi tier list"]])}</div>`;
+  if(!cars.length){ v.innerHTML=`<div class="panel gm-panel">${head}<p class="lead">Añade coches primero.</p></div>`; return; }
+  const tags=[...new Set(cars.flatMap(c=>c.tags||[]))].sort();
+  const eras=ERAS.filter(e=>cars.some(c=>eraOf(c)===e.key));
+  if(!tq){
+    const b=gmBest("tier-match").best;
+    v.innerHTML=`<div class="panel gm-panel">${head}
+      <div class="gm-start">
+        <div class="gm-start-k">Prepara la ronda</div>
+        <div class="gm-start-row">
+          <label class="gm-lab">Coches <select class="ctrl" onchange="tqSize=Number(this.value);">${[[10,"10"],[15,"15"],[25,"25"],[0,"Todos"]].map(([n,l])=>`<option value="${n}" ${tqSize===n?"selected":""}>${l}</option>`).join("")}</select></label>
+          <label class="gm-lab">De <select class="ctrl" onchange="tierFilter=this.value">
+            <option value="all" ${tierFilter==="all"?"selected":""}>Toda la colección</option>
+            ${tags.length?`<optgroup label="Por categoría">${tags.map(t=>`<option value="tag:${esc(t)}" ${tierFilter==="tag:"+t?"selected":""}>${esc(t)}</option>`).join("")}</optgroup>`:""}
+            ${eras.length?`<optgroup label="Por época">${eras.map(e=>`<option value="era:${e.key}" ${tierFilter==="era:"+e.key?"selected":""}>${e.label}</option>`).join("")}</optgroup>`:""}
+          </select></label>
+          <div class="gs-toggle" role="group"><button class="${tqTimed?"on":""}" onclick="tqTimed=true;renderTier()">Con reloj</button><button class="${!tqTimed?"on":""}" onclick="tqTimed=false;renderTier()">Sin reloj</button></div>
+        </div>
+        <p class="gm-note">Teclado: <b>S A B C D</b> o <b>1–5</b>. Si se acaba el tiempo, el coche se queda sin clasificar.</p>
+        <button class="btn primary gm-go" onclick="tqStart()">Empezar</button>
+        ${b?`<div class="gm-best">Tu mejor coincidencia <b>${b}%</b></div>`:""}
+      </div></div>`;
+    return;
+  }
+  const board=TIER_DEFS.map(t=>{ const ids=Object.keys(tq.placed).filter(id=>tq.placed[id]===t.k);
+    return `<div class="tq-row"><span class="tq-lab" style="background:${t.c}">${t.k}</span><div class="tq-chips">${ids.map(id=>{ const c=cars.find(x=>x.id===id); return c?`<span class="tq-chip" title="${esc(gmName(c))}">${gmPh(firstImg(c))}</span>`:""; }).join("")}</div></div>`; }).join("");
+  if(!tq.done){
+    const c=cars.find(x=>x.id===tq.list[tq.i]);
+    v.innerHTML=`<div class="panel gm-panel">${head}
+      <div class="tq-play">
+        <div class="tq-stage">
+          <div class="gm-round">Coche ${tq.i+1} de ${tq.list.length}</div>
+          <div class="tq-card" id="tqCard">${gmPh(firstImg(c))}<div class="tq-name"><span>${esc(c.brand||"")}</span>${esc(c.name||"")}<small>${esc(String(c.year||""))}</small></div></div>
+          ${tq.timed?`<div class="tq-timer"><i id="tqBar"></i></div>`:""}
+          <div class="tq-btns">${TIER_DEFS.map((t,i)=>`<button style="--tc:${t.c}" onclick="tqPlace('${t.k}')">${t.k}<small>${i+1}</small></button>`).join("")}</div>
+          <button class="btn ghost sm" onclick="tq=null;clearInterval(tqTick.t);renderTier()">Abandonar</button>
+        </div>
+        <div class="tq-board">${board}</div>
+      </div></div>`;
+    tqTick();
+    return;
+  }
+  const sur=(tq.surprises||[]).map(x=>{ const c=cars.find(y=>y.id===x.id); return c?`<li>${gmPh(firstImg(c))}<div><b>${esc(gmName(c))}</b><span>Lo pusiste en ${x.k}, tus calificaciones dicen ${x.e} (★ ${avg(c).toFixed(1)})</span></div></li>`:""; }).join("");
+  v.innerHTML=`<div class="panel gm-panel">${head}
+    <div class="gm-result">
+      <div class="gm-grade tq-pct" id="tqPct">${tq.match}%</div>
+      <div class="gm-res-main"><div class="gm-start-k">Tu instinto contra tus calificaciones</div>
+        <ul class="gm-break">
+          <li><span>Clasificados</span><b>${Object.keys(tq.placed).length} de ${tq.list.length}</b></li>
+          ${tq.timed?`<li><span>Tiempo medio por coche</span><b>${tq.avgT.toFixed(1)} s</b></li>`:""}
+          ${tq.missed.length?`<li class="bad"><span>Se te acabó el tiempo</span><b>${tq.missed.length}</b></li>`:""}
+        </ul>
+        <div class="gm-best">${tq.isNew?"¡Nuevo récord!":"Tu récord"} <b>${tq.best||tq.match}%</b></div>
+      </div></div>
+    ${sur?`<div class="gm-start-k" style="margin-top:22px">Las mayores sorpresas</div><ul class="tq-sur">${sur}</ul>`:""}
+    <div class="tq-board done">${board}</div>
+    <div class="gm-actions"><button class="btn primary" onclick="tqStart()">Otra ronda</button>
+      <button class="btn" onclick="tqApply()">Guardar en mi tier list</button>
+      <button class="btn ghost" onclick="tq=null;renderTier()">Cambiar ajustes</button></div>
+  </div>`;
+}
+document.addEventListener("keydown",e=>{
+  if(!gmActive("tier")||actMode.tier!=="game"||!tq||tq.done||gmTyping()||e.ctrlKey||e.metaKey||e.altKey) return;
+  const k=e.key.toUpperCase(), K="SABCD";
+  if(K.includes(k)&&k.length===1){ e.preventDefault(); tqPlace(k); }
+  else if(/^[1-5]$/.test(e.key)){ e.preventDefault(); tqPlace(K[Number(e.key)-1]); }
+});
+
+/* ---------- TORNEO: bracket en vivo ---------- */
+let brkSize=16, brkSrc="garage";
+async function brkStart(){
+  let items={};
+  if(brkSrc==="catalog"){
+    let cat=[]; try{ cat=await loadCatalogIndex(); }catch(e){}
+    cat.filter(e=>e.image).forEach((e,i)=>{ items["c"+i]={brand:e.brand,name:e.name,year:e.year,img:e.image,score:null}; });
+  } else cars.filter(c=>firstImg(c)).forEach(c=>{ items[c.id]={brand:c.brand,name:c.name,year:c.year,img:firstImg(c),score:avg(c)}; });
+  let ids=gmShuffle(Object.keys(items));
+  if(brkSize) ids=ids.slice(0,brkSize);
+  if(ids.length<2){ toast("Necesitas al menos 2 coches con foto"); return; }
+  brk={round:ids,next:[],match:0,roundNo:1,podium:[],history:[],total:ids.length,items,played:0,matches:ids.length-1,upsets:0};
+  renderBracket();
+}
+const brkItem=id=>(brk&&brk.items&&brk.items[id])||(()=>{ const c=cars.find(x=>x.id===id); return c?{brand:c.brand,name:c.name,year:c.year,img:firstImg(c),score:avg(c)}:null; })();
+const brkRoundName=n=>n<=2?"Final":n<=4?"Semifinal":n<=8?"Cuartos de final":n<=16?"Octavos de final":"Ronda de "+n;
+function renderBracket(){
+  const v=$("#actView");
+  if(!brk){
+    v.innerHTML=`<div class="panel gm-panel"><div class="gm-head"><div><h3>Torneo</h3>
+        <p class="lead">Eliminación directa, duelo por duelo. Al final: podio, el camino completo y las sorpresas (cuando un coche con menos calificación elimina a uno mejor).</p></div></div>
+      <div class="gm-start">
+        <div class="gm-start-k">Arma el cuadro</div>
+        <div class="gm-start-row">
+          <div class="gs-toggle" role="group">${[[8,"8"],[16,"16"],[32,"32"],[0,"Todos"]].map(([n,l])=>`<button class="${brkSize===n?"on":""}" onclick="brkSize=${n};renderBracket()">${l}</button>`).join("")}</div>
+          <div class="gs-toggle" role="group"><button class="${brkSrc==="garage"?"on":""}" onclick="brkSrc='garage';renderBracket()">Mi colección</button><button class="${brkSrc==="catalog"?"on":""}" onclick="brkSrc='catalog';renderBracket()">Catálogo de la comunidad</button></div>
+        </div>
+        <p class="gm-note">Teclado: <b>←</b> y <b>→</b> para elegir.</p>
+        <button class="btn primary gm-go" onclick="brkStart()">Empezar torneo</button>
+      </div></div>`;
+    return;
+  }
+  if(brk.round.length>1 && brk.match+1>=brk.round.length){
+    if(brk.match<brk.round.length){ brk.next.push(brk.round[brk.match]);
+      brk.history.push({size:brk.round.length,a:brk.round[brk.match],b:null,winner:brk.round[brk.match],bye:true}); }
+    brk.round=brk.next; brk.next=[]; brk.match=0; brk.roundNo++;
+  }
+  if(brk.round.length<=1) return brkPodium(v);
+  const A=brkItem(brk.round[brk.match]), B=brkItem(brk.round[brk.match+1]);
+  const totalMatches=Math.floor(brk.round.length/2), mNo=Math.floor(brk.match/2)+1;
+  const pct=Math.round((brk.played||0)/Math.max(1,brk.matches)*100);
+  const dots=Array.from({length:totalMatches},(_,i)=>`<i class="${i<mNo-1?"done":i===mNo-1?"now":""}"></i>`).join("");
+  const card=(it,i)=>`<button class="gm-vs-card" id="brk${i}" onclick="brkPick(${i})">
+      <div class="ph">${gmPh(it.img)}<span class="gm-key">${i?"→":"←"}</span></div>
+      <div class="cap"><div class="t">${esc(gmName(it))}</div><div class="s">${esc(String(it.year||""))}${it.score?` · ★ ${it.score.toFixed(1)}`:""}</div></div></button>`;
+  v.innerHTML=`<div class="panel gm-panel">
+    <div class="gm-head"><div><div class="gm-start-k">${brkRoundName(brk.round.length)}</div><h3>Duelo ${mNo} de ${totalMatches}</h3></div>
+      <button class="btn ghost sm" onclick="if(confirm('¿Reiniciar el torneo?')){brk=null;renderBracket()}">Reiniciar</button></div>
+    <div class="tourbar"><div class="f" style="width:${pct}%"></div></div>
+    <div class="brk-dots">${dots}</div>
+    <div class="gm-vs">${card(A,0)}<div class="vsmid">VS</div>${card(B,1)}</div>
+    <div id="brkFlash" class="brk-flash"></div>
+  </div>`;
+}
+function brkPick(i){
+  if(!brk||brk._busy) return;
+  const a=brk.round[brk.match], b=brk.round[brk.match+1];
+  const winner=i===0?a:b, loser=i===0?b:a;
+  const W=brkItem(winner), L=brkItem(loser);
+  const upset=W&&L&&W.score!=null&&L.score!=null&&L.score-W.score>=0.5;
+  brk.history.push({size:brk.round.length,a,b,winner,upset});
+  brk.podium.push({id:loser,round:brk.round.length});
+  brk.next.push(winner); brk.match+=2; brk.played=(brk.played||0)+1; if(upset) brk.upsets++;
+  const wEl=$("#brk"+i), lEl=$("#brk"+(1-i));
+  if(wEl) wEl.classList.add("win"); if(lEl) lEl.classList.add("lose");
+  if(upset){ const f=$("#brkFlash"); if(f){ f.textContent="¡Sorpresa!"; f.classList.add("on"); } }
+  brk._busy=true;
+  setTimeout(()=>{ brk._busy=false; renderBracket(); },gmCalm()?0:(upset?700:330));
+}
+function brkPodium(v){
+  const champ=brk.round[0]||brk.next[0];
+  const final=brk.history.filter(h=>h.size===2&&!h.bye).pop();
+  const second=final?(final.winner===final.a?final.b:final.a):null;
+  const thirds=brk.history.filter(h=>h.size>2&&h.size<=4&&!h.bye).map(h=>h.winner===h.a?h.b:h.a);
+  const sizes=[...new Set(brk.history.map(h=>h.size))].sort((a,b)=>b-a);
+  const row=(id,win)=>{ const it=id?brkItem(id):null; return it?`<div class="bm-row ${win?"win":"lose"}">${it.img?`<img src="${esc(it.img)}" alt="">`:`<span class="pn"></span>`}<span class="bm-nm">${esc(gmName(it))}</span>${win?'<span class="bm-ck">✓</span>':""}</div>`:`<div class="bm-row bye">pasa directo</div>`; };
+  const matchCard=h=>`<div class="bmatch${h.upset?" upset":""}">${row(h.a,h.winner===h.a)}${h.b?row(h.b,h.winner===h.b):row(null)}${h.upset?'<span class="bm-up">sorpresa</span>':""}</div>`;
+  const cols=sizes.map(s=>`<div class="bcol"><div class="bcol-h">${brkRoundName(s)}</div>${brk.history.filter(h=>h.size===s).map(matchCard).join("")}</div>`).join("");
+  const step=(id,place,cls)=>{ const it=id?brkItem(id):null; if(!it) return ""; return `<div class="pod ${cls}"><div class="ph">${gmPh(it.img)}</div><div class="pod-n">${place}</div><div class="pod-t">${esc(gmName(it))}</div></div>`; };
+  v.innerHTML=`<div class="panel gm-panel">
+    <div class="gm-head"><div><div class="gm-start-k">Torneo de ${brk.total} coches${brk.upsets?` · ${brk.upsets} sorpresa${brk.upsets>1?"s":""}`:""}</div><h3>El campeón</h3></div></div>
+    <div class="podium">${step(second,"2","p2")}${step(champ,"1","p1")}${thirds.length?step(thirds[0],"3","p3"):""}</div>
+    ${thirds[1]?`<p class="gm-note" style="text-align:center">También en semifinales: ${esc(gmName(brkItem(thirds[1])||{}))}</p>`:""}
+    <div class="gm-start-k" style="margin:26px 0 10px">El camino</div>
+    <div class="bracket">${cols||'<span style="color:var(--ink-faint)">—</span>'}</div>
+    <div class="gm-actions" style="justify-content:center"><button class="btn primary" onclick="brkStart()">Otro torneo</button>
+      <button class="btn" onclick="brk=null;renderBracket()">Cambiar cuadro</button>
+      <button class="btn ghost" onclick="brkShare()">Compartir</button></div>
+  </div>`;
+  if(!brk.cheered){ brk.cheered=true; setTimeout(()=>gmConfetti($("#actView .gm-panel")),60); }
+}
+function brkShare(){
+  if(!brk) return;
+  const champ=brk.round[0]||brk.next[0], it=brkItem(champ);
+  const txt=`Mi torneo de ${brk.total} coches — campeón: ${it?gmName(it):""}`;
+  if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>toast("Copiado al portapapeles")); else toast(txt);
+}
+document.addEventListener("keydown",e=>{
+  if(!gmActive("bracket")||!brk||brk.round.length<=1||gmTyping()) return;
+  if(e.key==="ArrowLeft"){ e.preventDefault(); brkPick(0); } else if(e.key==="ArrowRight"){ e.preventDefault(); brkPick(1); }
+});
+
+/* ---------- TOP 100: ordenar por duelos ---------- */
+let t1=null, t1Drag=null;
+const t1Ranked=()=>cars.filter(c=>top100[c.id]).sort((a,b)=>top100[a.id]-top100[b.id]).map(c=>c.id);
+function t1Renumber(ids){ top100={}; ids.slice(0,100).forEach((id,i)=>top100[id]=i+1); }
+function t1Start(){
+  const queue=gmShuffle(cars.filter(c=>!top100[c.id]).map(c=>c.id));
+  if(!queue.length){ toast("Todos tus coches ya tienen posición"); return; }
+  t1={queue,ranked:t1Ranked(),placed:0,asked:0};
+  t1Next();
+}
+function t1Next(){
+  if(!t1) return;
+  if(!t1.queue.length){ t1Renumber(t1.ranked); saveAll(); const n=t1.placed; t1=null; renderTop100(); toast(`Listo: ${n} coche${n===1?"":"s"} colocados`); return; }
+  t1.cur=t1.queue.shift(); t1.lo=0; t1.hi=t1.ranked.length;
+  if(t1.hi===0){ t1.ranked.push(t1.cur); t1.placed++; return t1Next(); }
+  renderTop100();
+}
+function t1Answer(curWins){
+  if(!t1) return;
+  const mid=(t1.lo+t1.hi)>>1; t1.asked++;
+  if(curWins) t1.hi=mid; else t1.lo=mid+1;
+  if(t1.lo>=t1.hi){
+    t1.ranked.splice(t1.lo,0,t1.cur); t1.placed++;
+    t1Renumber(t1.ranked); saveAll();
+    t1Next();
+  } else renderTop100();
+}
+function t1Stop(){ if(t1){ t1Renumber(t1.ranked); saveAll(); } t1=null; renderTop100(); }
+function t1Move(id,delta){
+  const ids=t1Ranked(), i=ids.indexOf(id), j=i+delta; if(i<0||j<0||j>=ids.length) return;
+  [ids[i],ids[j]]=[ids[j],ids[i]]; t1Renumber(ids); saveAll(); renderTop100();
+}
+function t1Drop(e,targetId){
+  e.preventDefault(); const id=t1Drag; t1Drag=null; if(!id||id===targetId) return;
+  const ids=t1Ranked().filter(x=>x!==id); const j=ids.indexOf(targetId); ids.splice(j<0?ids.length:j,0,id);
+  t1Renumber(ids); saveAll(); renderTop100();
+}
+function renderTop100(){
+  const v=$("#actView");
+  if(t1&&t1.cur){
+    const c=cars.find(x=>x.id===t1.cur), o=cars.find(x=>x.id===t1.ranked[(t1.lo+t1.hi)>>1]);
+    const left=Math.ceil(Math.log2(Math.max(1,t1.hi-t1.lo)+1));
+    const card=(x,i,tag)=>`<button class="gm-vs-card" onclick="t1Answer(${i===0})">
+      <div class="ph">${gmPh(firstImg(x))}<span class="gm-key">${i?"→":"←"}</span>${tag?`<span class="t1-tag">${tag}</span>`:""}</div>
+      <div class="cap"><div class="t">${esc(gmName(x))}</div><div class="s">${esc(String(x.year||""))} · ★ ${avg(x).toFixed(1)}</div></div></button>`;
+    v.innerHTML=`<div class="panel gm-panel">
+      <div class="gm-head"><div><div class="gm-start-k">Colocando ${t1.placed+1} de ${t1.placed+1+t1.queue.length} · faltan ~${left} pregunta${left===1?"":"s"} para este</div><h3>¿Cuál va más arriba?</h3></div>
+        <button class="btn ghost sm" onclick="t1Stop()">Terminar aquí</button></div>
+      <div class="gm-vs">${card(c,0,"Nuevo")}<div class="vsmid">VS</div>${card(o,1,"#"+(((t1.lo+t1.hi)>>1)+1))}</div>
+      <p class="gm-note" style="text-align:center">Teclado: <b>←</b> el nuevo · <b>→</b> el que ya estaba</p>
+    </div>`;
+    return;
+  }
+  const ranked=t1Ranked().map(id=>cars.find(c=>c.id===id));
+  const unranked=cars.filter(c=>!top100[c.id]);
+  const pod=ranked.slice(0,3);
+  const step=(c,place,cls)=>c?`<div class="pod ${cls}"><div class="ph">${gmPh(firstImg(c))}</div><div class="pod-n">${place}</div><div class="pod-t">${esc(gmName(c))}</div></div>`:"";
+  v.innerHTML=`<div class="panel gm-panel">
+    <div class="gm-head"><div><h3>Top 100</h3>
+      <p class="lead">Tu ranking definitivo. Coloca tus coches con duelos: te preguntamos “¿cuál va más arriba?” y cada coche encuentra su lugar en pocas preguntas. Arrastra para ajustar.</p></div></div>
+    ${pod.length?`<div class="podium">${step(pod[1],"2","p2")}${step(pod[0],"1","p1")}${step(pod[2],"3","p3")}</div>`:""}
+    <div class="gm-actions" style="margin:6px 0 18px">
+      ${unranked.length?`<button class="btn primary" onclick="t1Start()">Colocar ${unranked.length} coche${unranked.length===1?"":"s"} con duelos</button>`:""}
+      <button class="btn sm" onclick="autoFillTop()">Autollenar por promedio</button>
+      ${ranked.length?`<button class="btn sm ghost" onclick="clearTop()" style="color:var(--accent)">Vaciar ranking</button>`:""}
+    </div>
+    <div class="t100">
+      ${ranked.length?ranked.map((c,i)=>`<div class="t100row" draggable="true" ondragstart="t1Drag='${c.id}';this.classList.add('drag')" ondragend="this.classList.remove('drag')" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="this.classList.remove('over');t1Drop(event,'${c.id}')">
+          <span class="pos"><input type="number" min="1" max="100" value="${i+1}" onchange="setTop('${c.id}',this.value)" aria-label="Posición"></span>
+          ${gmPh(firstImg(c))}
+          <div class="info"><div class="t">${esc(gmName(c))}</div><div class="s">${esc(String(c.year||""))} · ★${avg(c).toFixed(1)} · ${money(c)}</div></div>
+          <span class="t1-mv"><button class="iconbtn" onclick="t1Move('${c.id}',-1)" aria-label="Subir" ${i===0?"disabled":""}>↑</button><button class="iconbtn" onclick="t1Move('${c.id}',1)" aria-label="Bajar" ${i===ranked.length-1?"disabled":""}>↓</button></span>
+          <button class="btn sm ghost" style="color:var(--accent)" onclick="setTop('${c.id}','')">Quitar</button>
+        </div>`).join(""):'<p style="color:var(--ink-faint)">Aún no has rankeado ningún coche. Empieza con los duelos o usa autollenar.</p>'}
+    </div>
+    ${unranked.length?`<div class="unranked"><h4>Sin posición — toca para añadir al final</h4>
+      <div class="pool">${unranked.map(c=>{ const im=firstImg(c); return `<div class="poolcar" onclick="addToTop('${c.id}')">${im?`<img src="${esc(im)}" alt="">`:`<div class="pn"></div>`}${esc(gmName(c))}</div>`; }).join("")}</div></div>`:""}
+  </div>`;
+}
+function setTop(id,val){
+  const ids=t1Ranked().filter(x=>x!==id);
+  if(val!==""&&val!=null){ const p=Math.max(1,Math.min(100,Number(val)||1)); ids.splice(Math.min(p-1,ids.length),0,id); }
+  t1Renumber(ids); saveAll(); renderTop100();
+}
+function addToTop(id){ const ids=t1Ranked(); if(ids.length>=100){ toast("Tu Top 100 ya está lleno"); return; } ids.push(id); t1Renumber(ids); saveAll(); renderTop100(); }
+document.addEventListener("keydown",e=>{
+  if(!gmActive("top100")||!t1||!t1.cur||gmTyping()) return;
+  if(e.key==="ArrowLeft"){ e.preventDefault(); t1Answer(true); } else if(e.key==="ArrowRight"){ e.preventDefault(); t1Answer(false); }
+});
+
+/* ---------- DUELOS: más o menos ---------- */
+let hl=null, hlTimed=false;
+const HL_SECS=8;
+const HL_Q=[
+  {k:"year", q:"¿Cuál es más antiguo?", val:c=>parseInt(c.year,10), win:(a,b)=>a<b, fmt:v=>String(Math.round(v)), ok:c=>parseInt(c.year,10)>1880},
+  {k:"price",q:"¿Cuál vale más?", val:c=>Number(c.price), win:(a,b)=>a>b, fmt:v=>gmUsd(v), ok:c=>Number(c.price)>0},
+  {k:"avg",  q:"¿Cuál tiene mejor calificación?", val:c=>avg(c), win:(a,b)=>a>b, fmt:v=>"★ "+v.toFixed(1), ok:c=>avg(c)>0},
+];
+function hlStart(){ hl={score:0,lives:3,streak:0,best:gmBest("duel").best,round:0,timed:hlTimed,over:false}; hlDeal(); }
+function hlDeal(){
+  const pool=cars.filter(c=>firstImg(c));
+  const qs=HL_Q.filter(q=>pool.filter(q.ok).length>=2);
+  if(!qs.length){ hl.over=true; renderTourney(); return; }
+  for(let tries=0;tries<60;tries++){
+    const q=qs[Math.floor(Math.random()*qs.length)], el=gmShuffle(pool.filter(q.ok));
+    const a=el[0], b=el.find(x=>x.id!==a.id&&q.val(x)!==q.val(a)&&!(q.k==="avg"&&Math.abs(q.val(x)-q.val(a))<0.1));
+    if(a&&b){ Object.assign(hl,{q,a:a.id,b:b.id,ans:null,round:hl.round+1}); break; }
+  }
+  renderTourney(); hlTick();
+}
+function hlTick(){
+  clearInterval(hlTick.t);
+  if(!hl||!hl.timed||hl.ans||hl.over) return;
+  const t0=Date.now();
+  hlTick.t=setInterval(()=>{
+    if(!hl||hl.ans||hl.over||currentAct!=="tourney"){ clearInterval(hlTick.t); return; }
+    const left=Math.max(0,HL_SECS-(Date.now()-t0)/1000), bar=$("#hlBar");
+    if(bar) bar.style.width=(left/HL_SECS*100)+"%";
+    if(left<=0){ clearInterval(hlTick.t); hlAnswer(-1); }
+  },100);
+}
+function hlAnswer(i){
+  if(!hl||hl.ans||hl.over) return;
+  clearInterval(hlTick.t);
+  const A=cars.find(c=>c.id===hl.a), B=cars.find(c=>c.id===hl.b), va=hl.q.val(A), vb=hl.q.val(B);
+  const right=hl.q.win(va,vb)?0:1, ok=i===right;
+  hl.ans={i,right,ok};
+  if(ok){ hl.score+=1+(hl.streak>=4?1:0); hl.streak++; } else { hl.lives--; hl.streak=0; }
+  renderTourney();
+  gmCount($("#hlV0"),va,hl.q.fmt,650); gmCount($("#hlV1"),vb,hl.q.fmt,650);
+  if(hl.lives<=0){
+    const rec=gmBest("duel",hl.score); hl.best=rec.best; hl.isNew=rec.isNew;
+    setTimeout(()=>{ hl.over=true; renderTourney(); if(hl.isNew) gmConfetti($("#actView .gm-panel")); },1500);
+  }
+}
+function hlNext(){ if(hl&&hl.ans&&!hl.over) hlDeal(); }
+function renderTourneyGame(){
+  const v=$("#actView");
+  const head=`<div class="gm-head"><div><h3>Duelos</h3>
+      <p class="lead">Más o menos: dos coches de la colección y una pregunta — ¿cuál es más antiguo, cuál vale más, cuál tiene mejor calificación? Tienes 3 vidas. Con racha de 5, cada acierto vale doble.</p></div>
+      ${gmModes("tourney",[["game","Más o menos"],["fav","Mi favorito"]])}</div>`;
+  if(cars.filter(c=>firstImg(c)).length<4){ v.innerHTML=`<div class="panel gm-panel">${head}<p class="lead">Necesitas al menos 4 coches con foto.</p></div>`; return; }
+  if(!hl){
+    const b=gmBest("duel").best;
+    v.innerHTML=`<div class="panel gm-panel">${head}
+      <div class="gm-start">
+        <div class="gm-start-row"><div class="gs-toggle" role="group"><button class="${!hlTimed?"on":""}" onclick="hlTimed=false;renderTourney()">Tranquilo</button><button class="${hlTimed?"on":""}" onclick="hlTimed=true;renderTourney()">Contrarreloj · ${HL_SECS} s</button></div></div>
+        <p class="gm-note">Teclado: <b>←</b> y <b>→</b> para responder, <b>Enter</b> para seguir.</p>
+        <button class="btn primary gm-go" onclick="hlStart()">Jugar</button>
+        ${b?`<div class="gm-best">Tu récord <b>${b}</b></div>`:""}
+      </div></div>`;
+    return;
+  }
+  if(hl.over){
+    v.innerHTML=`<div class="panel gm-panel">${head}
+      <div class="gm-result"><div class="gm-grade">${hl.score}</div>
+        <div class="gm-res-main"><div class="gm-start-k">Fin del juego</div>
+          <div class="gm-best">${hl.isNew?"¡Nuevo récord!":"Tu récord"} <b>${hl.best||hl.score}</b></div>
+          <div class="gm-actions"><button class="btn primary" onclick="hlStart()">Otra vez</button><button class="btn ghost" onclick="hl=null;renderTourney()">Ajustes</button></div>
+        </div></div></div>`;
+    return;
+  }
+  const A=cars.find(c=>c.id===hl.a), B=cars.find(c=>c.id===hl.b), a=hl.ans;
+  const card=(c,i)=>{ const st=a?(i===a.right?"win":(i===a.i?"lose":"")):"";
+    return `<button class="gm-vs-card ${st}" onclick="hlAnswer(${i})" ${a?"disabled":""}>
+      <div class="ph">${gmPh(firstImg(c))}<span class="gm-key">${i?"→":"←"}</span>${a?`<span class="hl-val" id="hlV${i}">${hl.q.fmt(0)}</span>`:""}</div>
+      <div class="cap"><div class="t">${esc(gmName(c))}</div><div class="s">${hl.q.k==="year"?"":esc(String(c.year||""))}</div></div></button>`; };
+  v.innerHTML=`<div class="panel gm-panel">${head}
+    <div class="hl-bar"><span class="hl-lives">${"<i></i>".repeat(Math.max(0,hl.lives))}${"<i class='off'></i>".repeat(3-Math.max(0,hl.lives))}</span>
+      <span>Puntos <b>${hl.score}</b></span><span>Racha <b>${hl.streak}</b></span><span>Récord <b>${Math.max(hl.best||0,hl.score)}</b></span></div>
+    <div class="hl-q">${esc(hl.q.q)}</div>
+    ${hl.timed&&!a?`<div class="tq-timer"><i id="hlBar"></i></div>`:""}
+    <div class="gm-vs">${card(A,0)}<div class="vsmid">VS</div>${card(B,1)}</div>
+    ${a?`<div class="hl-res ${a.ok?"ok":""}"><span>${a.i<0?"Se acabó el tiempo":a.ok?(hl.streak>=5?"¡Correcto! Racha doble":"¡Correcto!"):"No"}</span>${hl.lives>0?` <button class="btn primary sm" onclick="hlNext()">Siguiente</button>`:""}</div>`:""}
+  </div>`;
+}
+document.addEventListener("keydown",e=>{
+  if(!gmActive("tourney")||actMode.tourney!=="game"||!hl||hl.over||gmTyping()) return;
+  if(!hl.ans&&e.key==="ArrowLeft"){ e.preventDefault(); hlAnswer(0); }
+  else if(!hl.ans&&e.key==="ArrowRight"){ e.preventDefault(); hlAnswer(1); }
+  else if(hl.ans&&(e.key==="Enter"||e.key===" ")){ e.preventDefault(); hlNext(); }
+});
+
+/* ---------- despachadores: reto o modo libre ---------- */
+function renderFive(){ if(actMode.five==="free") renderFiveFree(); else renderFiveGame(); }
+function renderTier(){ if(actMode.tier==="free") renderTierFree(); else renderTierGame(); }
+function renderTourney(){ if(actMode.tourney==="fav") renderTourneyFav(); else renderTourneyGame(); }
+/* ---------- FOTO DE PERFIL: un coche de tu colección ---------- */
+function avatarUrl(){ return (profile&&profile.img)||""; }
+function openAvatarPicker(){
+  const list=cars.map(c=>({c,imgs:allImgs(c)})).filter(x=>x.imgs.length);
+  $("#promptModal").innerHTML=`<div class="mh"><h3>Foto de perfil</h3><button class="iconbtn" onclick="closeAll()">×</button></div>
+    <div class="mb"><p style="color:var(--ink-dim);font-size:13px;margin:0">Elige un coche de tu colección. Todos verán esta foto en Descubrir y en tu garage.</p>
+      ${list.length?`<div class="av-grid">${list.map(x=>`<div class="av-car"><h5>${esc(gmName(x.c))}</h5><div class="av-imgs">${x.imgs.slice(0,6).map(u=>`<button class="${avatarUrl()===u?"on":""}" data-u="${esc(u)}" onclick="setAvatar('${x.c.id}',this.dataset.u)" title="${esc(gmName(x.c))}"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join("")}</div></div>`).join("")}</div>`:`<p style="color:var(--ink-faint)">Agrega coches con foto primero.</p>`}
+      ${profile?`<button class="btn ghost sm" onclick="setAvatar(null)">Quitar foto</button>`:""}
+    </div>`;
+  $("#promptScrim").classList.add("show");
+}
+function setAvatar(carId,url){
+  const c=carId&&cars.find(x=>x.id===carId);
+  profile=c?{img:url,carId,car:gmName(c)}:null;
+  saveAll(); renderAuthUI(); closeAll(); toast(c?"Foto de perfil actualizada":"Foto de perfil quitada");
 }
 /* ======================================================================
    COCHES MANEJADOS IRL — independent ranking + experience params + log
@@ -4031,15 +4750,16 @@ function renderAuthUI(){
   if(viewing){
     const fb=(session&&viewing.userId&&viewing.userId!==session.user.id)
       ? `<button class="btn sm" onclick="toggleFriend()">${viewing.isFriend?'✓ Amigo':'Agregar amigo'}</button>` : '';
-    el.innerHTML=`<span class="authuser">Viendo <b>@${viewing.username}</b></span>${fb}
+    el.innerHTML=`${avatarUrl()?`<img class="av" src="${esc(avatarUrl())}" alt="">`:""}<span class="authuser">Viendo <b>@${viewing.username}</b></span>${fb}
       <button class="btn sm" onclick="goHome()">← Volver a mi garage</button>`;
     return;
   }
   if(session){
     const u=myProfile?myProfile.username:"…", pub=myProfile?myProfile.is_public:true;
     el.innerHTML=`<details class="acct">
-        <summary class="btn sm"><span class="authuser">@${u}</span></summary>
+        <summary class="btn sm">${avatarUrl()?`<img class="av" src="${esc(avatarUrl())}" alt="">`:""}<span class="authuser">@${u}</span></summary>
         <div class="acct-menu" role="menu">
+          <button role="menuitem" onclick="openAvatarPicker()">Foto de perfil</button>
           <button role="menuitem" onclick="openFriends()">Amigos</button>
           <button role="menuitem" onclick="togglePublic()">${pub?"Público":"Privado"}</button>
           <button role="menuitem" onclick="copyMyLink()">Mi enlace</button>
@@ -4218,7 +4938,8 @@ async function renderDiscover(){
       const totalVal=cars.reduce((s,c)=>s+(Number(c.price)||0),0);
       const rated=cars.map(c=>avg(c)).filter(n=>n>0);
       const avgRating=rated.length?(rated.reduce((a,b)=>a+b,0)/rated.length):0;
-      return {username:p.username, count:cars.length, totalVal, avgRating, img:(cars.map(firstImg).find(Boolean)||"")};
+      const pr=gmap[p.user_id]&&gmap[p.user_id].profile;
+      return {username:p.username, count:cars.length, totalVal, avgRating, img:((pr&&pr.img)||cars.map(firstImg).find(Boolean)||""), av:(pr&&pr.img)||"", car:(pr&&pr.car)||""};
     }).sort((a,b)=>b.count-a.count);
     renderDiscoverCards(discoverData);
   }catch(e){ box.innerHTML='<p style="color:var(--accent)">Error al cargar.</p>'; }
@@ -4229,7 +4950,7 @@ function renderDiscoverCards(arr){
   box.innerHTML=arr.map(d=>`<article class="car" style="cursor:pointer" onclick="location.hash='u/${d.username}'">
     <div class="ph">${d.img?`<img src="${esc(d.img)}" loading="lazy">`:`<div class="noimg"></div>`}</div>
     <div class="body">
-      <div class="nm">@${esc(d.username)}</div>
+      <div class="nm" style="display:flex;align-items:center;gap:10px">${d.av?`<img class="av av-lg" src="${esc(d.av)}" alt="">`:""}<span>@${esc(d.username)}${d.car?`<span class="dc-car" style="display:block">${esc(d.car)}</span>`:""}</span></div>
       <div class="meta" style="display:flex;flex-direction:column;gap:3px;margin-top:6px;font-size:13px">
         <span>${d.count} coche(s)</span>
         <span>${d.totalVal?("$"+d.totalVal.toLocaleString("en-US")):"—"}</span>

@@ -606,8 +606,11 @@
   #introOverlay{
     position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
     background:radial-gradient(120% 120% at 50% 30%, var(--bg2), var(--bg));
-    animation:introOut .55s ease 1.15s forwards;
   }
+  /* la intro se retira cuando el estudio 3D está listo (ver script de la intro) */
+  #introOverlay.out{animation:introOut .6s ease forwards}
+  #introOverlay.wait .intro-line{animation:introBreath 1.6s ease-in-out infinite}
+  @keyframes introBreath{0%,100%{opacity:1}50%{opacity:.35}}
   #introOverlay .intro-wm{
     font-family:var(--display);font-size:clamp(46px,11vw,120px);letter-spacing:2px;line-height:.9;
     text-align:center;position:relative;opacity:0;transform:translateY(14px);
@@ -1305,16 +1308,21 @@
   <div class="intro-wm">MI <b>GARAGE</b><span class="intro-line"></span><span class="intro-sub">colección personal</span></div>
 </div>
 <script>
-/* Intro: se muestra una vez por sesión; se quita al terminar la animación */
+/* Intro: aparece en cada carga y se queda hasta que el estudio 3D está listo
+   (mínimo 1.8 s para que se lea, máximo 5 s para no hacer esperar). */
 (function(){
   var ov=document.getElementById("introOverlay"); if(!ov) return;
-  var seen=false; try{ seen=sessionStorage.getItem("mg-intro")==="1"; }catch(e){}
   var reduce=false; try{ reduce=window.matchMedia("(prefers-reduced-motion:reduce)").matches; }catch(e){}
-  if(seen||reduce){ ov.parentNode&&ov.parentNode.removeChild(ov); return; }
-  try{ sessionStorage.setItem("mg-intro","1"); }catch(e){}
+  if(reduce){ ov.parentNode&&ov.parentNode.removeChild(ov); return; }
+  var t0=Date.now(), MIN=1800, MAX=5000, leaving=false;
   var kill=function(){ if(ov&&ov.parentNode){ ov.parentNode.removeChild(ov); ov=null; } };
+  var leave=function(){ if(leaving||!ov) return; leaving=true;
+    setTimeout(function(){ if(ov) ov.classList.add("out"); }, Math.max(0, MIN-(Date.now()-t0))); };
   ov.addEventListener("animationend",function(e){ if(e.animationName==="introOut") kill(); });
-  setTimeout(kill,2200); // respaldo por si el evento no dispara
+  setTimeout(function(){ if(ov&&!leaving) ov.classList.add("wait"); },1300);   // la línea "respira" mientras carga
+  // con un enlace directo (rareza, garage) no hay estudio que esperar
+  if(/^#(rare|\/?u)\//i.test(location.hash)) leave(); else window.addEventListener("hero-ready",leave,{once:true});
+  setTimeout(leave,MAX); setTimeout(kill,MAX+2500);   // respaldo
 })();
 </script>
 <a class="skip" href="#main">Saltar al contenido</a>
@@ -5051,7 +5059,7 @@ async function init(){
   const stage = document.getElementById("heroStage"); if(!stage || stage === stageEl) return;
   if(room){ room.dispose(); room = null; }
   stageEl = stage;
-  try{ lib = lib || await import("./showroom.js"); }catch(e){ return; }   // sin 3D: queda la imagen fija
+  try{ lib = lib || await import("./showroom.js"); }catch(e){ dispatchEvent(new Event("hero-ready")); return; }   // sin 3D: queda la imagen fija
   const { mountShowroom, CLASSICS } = lib;
   const car = CLASSICS.find(c => c.ready); if(!car) return;
   const veil = document.getElementById("heroLoading");
@@ -5061,8 +5069,8 @@ async function init(){
   const credit = document.getElementById("footCredit"); if(credit) credit.innerHTML = 'Modelo 3D: <a href="' + car.credit.url + '" target="_blank" rel="noopener">' + car.credit.title + '</a> por ' + car.credit.author + ', <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>';
   room = mountShowroom(stage, { exposure: 0.9 });
   // la imagen fija se retira cuando el 3D ya se dibujó en pantalla (dos cuadros después de cargar)
-  try{ await room.show(car); requestAnimationFrame(()=>requestAnimationFrame(()=>veil.classList.add("off"))); }
-  catch(e){ veil.classList.add("fallback"); }   // se queda la imagen fija del estudio
+  try{ await room.show(car); requestAnimationFrame(()=>requestAnimationFrame(()=>{ veil.classList.add("off"); dispatchEvent(new Event("hero-ready")); })); }
+  catch(e){ veil.classList.add("fallback"); dispatchEvent(new Event("hero-ready")); }   // se queda la imagen fija del estudio
 }
 window.initHeroShowroom = init;
 init();

@@ -1171,6 +1171,23 @@
   .enr-none{font-size:12px;color:var(--ink-faint)}
   .enr-ok{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--good)}
   @media(max-width:700px){ .enr-row{grid-template-columns:1fr} }
+
+  /* --- sugerencias dentro de cada versión (ficha) --- */
+  .spec-sug{display:contents}
+  .ss-c{width:54px;height:54px;padding:0;border:1px dashed var(--accent);border-radius:var(--radius);overflow:hidden;background:var(--card);opacity:.55;cursor:pointer;transition:opacity .2s}
+  .ss-c img{width:100%;height:100%;object-fit:cover;display:block}
+  .ss-c[aria-pressed="true"]{opacity:1;border-style:solid}
+  .ss-add{align-self:center}
+  .spec-find{align-self:flex-start;background:none;border:0;padding:0;color:var(--ink-dim);font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+  .spec-find:hover{color:var(--accent)}
+  /* --- admin por versión --- */
+  .enr-kind{display:inline-block;margin-top:4px;font-style:normal;font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);border:1px solid var(--line);border-radius:var(--radius);padding:1px 6px}
+  .enr-kind.sp{color:var(--accent);border-color:var(--accent)}
+  .enr-cands{flex-direction:column;align-items:stretch;gap:10px}
+  .enr-grp > span{display:block;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint);margin-bottom:5px}
+  .enr-thumbs{display:flex;gap:6px;flex-wrap:wrap}
+  .enr-c.keep[aria-pressed="false"]{opacity:.35;outline:2px solid var(--accent);outline-offset:1px;filter:grayscale(1)}
+  .enr-c.keep[aria-pressed="true"]{opacity:1;outline:none}
 </style>
 </head>
 <body data-theme="paddock">
@@ -1476,7 +1493,7 @@
     "Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…":"Tell why it’s special: bespoke order, one-of-one, story, unique specs…",
     "Aún no escribes la historia. Edita el coche y llena el campo 'Historia / deep-dive' de esta versión.":"You haven’t written the story yet. Edit the car and fill the “Story / deep-dive” field on this version.",
     "Sin historia todavía.":"No story yet.","Historia":"Story","Detalles":"Details","Valor":"Value","Rareza":"Rarity","One-off":"One-off",
-    "Trifoglio Podcast":"Trifoglio Podcast","Completar fotos":"Fill in photos","Completar fotos del catálogo":"Fill in catalog photos","Detener búsqueda":"Stop search","Guardar todos los seleccionados":"Save all selected","Cargando el catálogo…":"Loading the catalog…","Sin resultados en Commons":"No results on Commons","Guardado":"Saved","Búsqueda detenida.":"Search stopped.","Todos los coches del catálogo tienen más de una foto.":"Every catalog car has more than one photo.","Elige al menos una foto":"Pick at least one photo","Nada nuevo que guardar":"Nothing new to save","Investigar":"Research","Fotos":"Photos","Historia":"Story","Buscar más fotos":"Find more photos","Buscar fotos":"Find photos","Agregar fotos":"Add photos","Fotos e historia sin salir de la página":"Photos and history without leaving the page","Marca, modelo, año…":"Make, model, year…","Escribe un coche para buscar fotos e historia.":"Type a car to search photos and history.","No encontramos fotos libres con esa búsqueda. Prueba solo con marca y modelo.":"No free photos found. Try just make and model.","No se pudo conectar con Wikimedia Commons.":"Couldn't reach Wikimedia Commons.","Sin artículo en Wikipedia para esta búsqueda.":"No Wikipedia article for this search.","Leer en Wikipedia ↗":"Read on Wikipedia ↗","Otros artículos":"Other articles","Fotos con licencia libre de Wikimedia Commons; el crédito de cada una se muestra junto a la foto.":"Freely licensed photos from Wikimedia Commons; each photo shows its credit.","Este coche ya existe":"This car already exists","¿Es alguno de estos?":"Is it one of these?","Usa el nombre exacto para no crear duplicados":"Use the exact name to avoid duplicates","Usar nombre":"Use name","Agregar con fotos":"Add with photos","Nombre del catálogo aplicado":"Catalog name applied","Solo las cuentas administradoras pueden usar este modo":"Only admin accounts can use this mode","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
+    "Trifoglio Podcast":"Trifoglio Podcast","Buscar fotos de esta versión":"Find photos for this version","Agregar sugeridas":"Add suggested","Ejemplar específico":"Specific car","Versión general / única":"General / one-off version","Guardar cambios marcados":"Save marked changes","Todas las versiones del catálogo tienen fotos suficientes.":"Every catalog version has enough photos.","Se conserva":"Kept","Se quitará: no es de este ejemplar":"Will be removed: not this car","Ya guardadas de Commons":"Already saved from Commons","Sugeridas":"Suggested","Completar fotos":"Fill in photos","Completar fotos del catálogo":"Fill in catalog photos","Detener búsqueda":"Stop search","Guardar todos los seleccionados":"Save all selected","Cargando el catálogo…":"Loading the catalog…","Sin resultados en Commons":"No results on Commons","Guardado":"Saved","Búsqueda detenida.":"Search stopped.","Todos los coches del catálogo tienen más de una foto.":"Every catalog car has more than one photo.","Elige al menos una foto":"Pick at least one photo","Nada nuevo que guardar":"Nothing new to save","Investigar":"Research","Fotos":"Photos","Historia":"Story","Buscar más fotos":"Find more photos","Buscar fotos":"Find photos","Agregar fotos":"Add photos","Fotos e historia sin salir de la página":"Photos and history without leaving the page","Marca, modelo, año…":"Make, model, year…","Escribe un coche para buscar fotos e historia.":"Type a car to search photos and history.","No encontramos fotos libres con esa búsqueda. Prueba solo con marca y modelo.":"No free photos found. Try just make and model.","No se pudo conectar con Wikimedia Commons.":"Couldn't reach Wikimedia Commons.","Sin artículo en Wikipedia para esta búsqueda.":"No Wikipedia article for this search.","Leer en Wikipedia ↗":"Read on Wikipedia ↗","Otros artículos":"Other articles","Fotos con licencia libre de Wikimedia Commons; el crédito de cada una se muestra junto a la foto.":"Freely licensed photos from Wikimedia Commons; each photo shows its credit.","Este coche ya existe":"This car already exists","¿Es alguno de estos?":"Is it one of these?","Usa el nombre exacto para no crear duplicados":"Use the exact name to avoid duplicates","Usar nombre":"Use name","Agregar con fotos":"Add with photos","Nombre del catálogo aplicado":"Catalog name applied","Solo las cuentas administradoras pueden usar este modo":"Only admin accounts can use this mode","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz.":"Three friends obsessed with cars: stories, debates and car culture.",
     "Nuevos episodios seguido, en YouTube.":"New episodes regularly, on YouTube.","Ver el canal →":"View the channel →",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.":"Three friends obsessed with cars: stories, debates and car culture. New episodes often.",
@@ -2259,11 +2276,12 @@ function openDetail(id){
       <span class="track" style="height:8px"><span class="fill" style="width:${v*10}%"></span></span>
       <span class="v" style="width:24px;font-size:14px">${v}</span></div>`;
   }).join("");
-  const specs=(c.specs||[]).map(s=>`
+  const specs=(c.specs||[]).map((s,si)=>`
     <div class="specsec">
       <strong>${esc(s.title||"Versión")}</strong>${s.color?` <span class="tag">${esc(s.color)}</span>`:""}
       ${s.details?`<div style="color:var(--ink-dim);font-size:13px">${esc(s.details)}</div>`:""}
-      ${s.images?.length?`<div class="specthumbs">${s.images.map(im=>`<img src="${im}">`).join("")}</div>`:""}
+      ${s.images?.length?`<div class="specthumbs">${s.images.map(im=>`<img src="${esc(im)}" alt="">`).join("")}<span class="spec-sug" id="specSug-${si}"></span></div>`:`<div class="specthumbs"><span class="spec-sug" id="specSug-${si}"></span></div>`}
+      ${readOnly?"":`<button type="button" class="spec-find" onclick="openResearch(versionProfile(${JSON.stringify(c.brand||"").replace(/"/g,"&quot;")},${JSON.stringify(c.name||"").replace(/"/g,"&quot;")},${JSON.stringify(String(c.year||"")).replace(/"/g,"&quot;")},cars.find(x=>x.id==='${c.id}').specs[${si}]).queries[0],{kind:'car',id:'${c.id}',spec:${si}})">Buscar fotos de esta versión</button>`}
     </div>`).join("");
   $("#detailModal").innerHTML=`
     <div class="mh"><h3>${esc(c.name||"Coche")}</h3>
@@ -2285,9 +2303,6 @@ function openDetail(id){
             ${imgs.length>1?`<div class="cdots">${imgs.map((_,i)=>`<span class="${i===0?'on':''}" onclick="detailGo(${i})"></span>`).join("")}</div>`:''}
           </div>${imgs.length>1?`<div style="text-align:center;color:var(--ink-faint);font-size:11px;margin-top:6px">${imgs.length} fotos · toca los lados para cambiar</div>`:''}`:`<div class="dropimg">Sin fotos</div>`}
           <div class="photo-credit" id="detailCredit"></div>
-          ${readOnly?"":`<div class="more-ph" id="morePh">
-            <button class="btn sm" onclick="openResearch(${JSON.stringify(((c.brand||"")+" "+(c.name||"")).trim()).replace(/"/g,"&quot;")},{kind:'car',id:'${c.id}'})">Buscar más fotos</button>
-          </div>`}
         </div>
         <div style="display:flex;flex-direction:column;gap:12px">
           <div><div style="color:var(--ink-faint);font-size:12px;text-transform:uppercase;letter-spacing:1px">Valor</div>
@@ -2310,15 +2325,29 @@ function openDetail(id){
 }
 function afterDetail(c){
   showCredit($("#detailCredit"),detailImgs[detailIdx]);
-  if(readOnly||allImgs(c).length>1) return;
-  const box=$("#morePh"); if(!box) return;
-  const q=((c.brand||"")+" "+(c.name||"")).trim();
-  commonsSearch(q,8).then(res=>{
-    const have=new Set(allImgs(c)); res=res.filter(r=>!have.has(r.url)).slice(0,6);
-    if(!res.length||!$("#morePh")) return;
-    box.insertAdjacentHTML("afterbegin",`<div class="more-ph-h">Este coche tiene una sola foto. Encontramos ${res.length} en Wikimedia Commons:</div>
-      <button type="button" class="more-ph-strip" title="Elegir fotos" onclick="openResearch(${JSON.stringify(q).replace(/"/g,"&quot;")},{kind:'car',id:'${c.id}'})">${res.map(r=>`<img src="${esc(r.thumb)}" alt="" loading="lazy">`).join("")}</button>`);
-  }).catch(()=>{});
+  if(readOnly) return;
+  // versiones con 0 o 1 foto: sugerencias que respetan su color / chasis, dentro de la propia versión
+  (c.specs||[]).forEach((sp,si)=>{
+    if((sp.images||[]).length>1) return;
+    const prof=versionProfile(c.brand,c.name,c.year,sp);
+    versionSearch(c.brand,c.name,prof,new Set(allImgs(c))).then(res=>{
+      const box=document.getElementById("specSug-"+si); if(!box) return;
+      const good=res.filter(r=>r.match).slice(0,4); if(!good.length) return;
+      specSug[si]={carId:c.id,list:good,picked:new Set(good.map((_,k)=>k))};
+      box.innerHTML=good.map((r,k)=>`<button type="button" class="ss-c" aria-pressed="true" title="Sugerida · ${esc(r.author)} · ${esc(r.license)}" onclick="toggleSpecSug(${si},${k})"><img src="${esc(r.thumb)}" alt="" loading="lazy"></button>`).join("")+
+        `<button type="button" class="btn sm ss-add" onclick="addSpecSug(${si})">Agregar sugeridas</button>`;
+    }).catch(()=>{});
+  });
+}
+let specSug={};
+function toggleSpecSug(si,k){ const g=specSug[si]; if(!g) return; g.picked.has(k)?g.picked.delete(k):g.picked.add(k);
+  document.querySelectorAll(`#specSug-${si} .ss-c`).forEach((b,j)=>b.setAttribute("aria-pressed",String(g.picked.has(j)))); }
+function addSpecSug(si){
+  const g=specSug[si]; if(!g) return; const c=cars.find(x=>x.id===g.carId); const sp=c&&c.specs[si]; if(!sp) return;
+  const urls=[...g.picked].map(k=>g.list[k]?.url).filter(Boolean); if(!urls.length){ toast("Elige al menos una foto"); return; }
+  sp.images=sp.images||[]; urls.forEach(u=>{ if(!sp.images.includes(u)) sp.images.push(u); });
+  if(!c.image) c.image=sp.images[0];
+  saveAll(); upsertCatalog(c); renderGarage(); openDetail(c.id); toast(urls.length+" fotos agregadas a la versión");
 }
 function detailImg(d){
   if(detailImgs.length<2)return;
@@ -3336,7 +3365,8 @@ async function commonsSearch(q,limit){
     const full=String(ii.thumburl||ii.url||"").split("?")[0];
     return { title:p.title, url:full, page:ii.descriptionurl, w:ii.width, h:ii.height,
       thumb:full.includes("/thumb/")?full.replace(/\/\d+px-/,"/500px-"):full,
-      author:stripTags(md.Artist?.value).slice(0,80)||"Autor desconocido", license:stripTags(md.LicenseShortName?.value)||"Licencia libre" };
+      author:stripTags(md.Artist?.value).slice(0,80)||"Autor desconocido", license:stripTags(md.LicenseShortName?.value)||"Licencia libre",
+      text:[p.title,stripTags(md.ImageDescription?.value),stripTags(md.ObjectName?.value),String(md.Categories?.value||"").replace(/\|/g," ")].join(" ") };
   }).filter(x=>x.url&&x.w>=800&&!/\.(svg|tif|tiff|pdf)$/i.test(x.title));
 }
 async function wikiLookup(q){
@@ -3382,7 +3412,8 @@ function openResearch(q,target){
 function closeResearch(){ const el=$("#rx"); if(el&&!el.hidden){ el.hidden=true; document.body.classList.remove("rx-open"); } }
 function rxTargetLabel(){
   const t=rx.target; if(!t) return "";
-  if(t.kind==="car"){ const c=cars.find(x=>x.id===t.id); return c?((c.brand||"")+" "+(c.name||"")).trim():""; }
+  if(t.kind==="car"){ const c=cars.find(x=>x.id===t.id); if(!c) return ""; const sp=t.spec!=null?c.specs[t.spec]:null;
+    return ((c.brand||"")+" "+(c.name||"")).trim()+(sp?[sp.color,sp.details].filter(Boolean).map(x=>" · "+x).join(""):""); }
   const sp=editSpecs[t.index]; return ((($("#f-brand")?.value||"")+" "+($("#f-name")?.value||"")).trim()+(sp&&sp.color?" · "+sp.color:""))||"esta versión";
 }
 function rxTab(t){
@@ -3431,7 +3462,7 @@ function rxApply(){
   if(t&&t.kind==="car"){
     const c=cars.find(x=>x.id===t.id); if(!c) return;
     c.specs=c.specs||[];
-    let sp=c.specs.find(s=>(s.images||[]).includes(c.image))||c.specs[0];
+    let sp=(t.spec!=null?c.specs[t.spec]:null)||c.specs.find(s=>(s.images||[]).includes(c.image))||c.specs[0];
     if(!sp){ sp={id:uid(),title:"",details:"",color:c.color||"",images:[],rare:false,story:"",storyTitle:""}; c.specs.push(sp); }
     sp.images=sp.images||[]; urls.forEach(u=>{ if(!sp.images.includes(u)) sp.images.push(u); });
     if(!c.image) c.image=sp.images[0];
@@ -3440,13 +3471,55 @@ function rxApply(){
   }
 }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("#rx").hidden){ e.stopPropagation(); closeResearch(); } },true);
-/* ---------- Admin: completar fotos del catálogo ---------- */
-let enr={rows:[],stop:false,running:false};
+/* ---------- Fotos por versión: perfil, búsqueda y coincidencia ---------- */
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const isCommons=u=>/(?:upload|thumb)\.wikimedia\.org\//.test(String(u||""));
+const commonsThumb=u=>String(u).includes("/thumb/")?String(u).replace(/\/\d+px-/,"/500px-"):u;
+const COLOR_STOP=new Set(["over","with","and","the","con","sobre","del","las","los","leather","interior","piel","paint","pintura","color","metallic","metalizado","pearl","crema"]);
+// qué hace única a una versión: su color y su número de chasis / VIN (en título o notas)
+function versionProfile(brand,name,year,v){
+  v=v||{};
+  const color=String(v.color||"").trim();
+  const colorWords=fzNorm(color).split(" ").filter(w=>w.length>2&&!COLOR_STOP.has(w)).slice(0,2);
+  const nameWords=new Set(fzNorm((brand||"")+" "+(name||"")+" "+(v.title||"")).split(" "));
+  const chassis=[...new Set((String((v.title||"")+" "+(v.details||"")).match(/#?\b[A-Za-z0-9-]*\d[A-Za-z0-9-]*\b/g)||[])
+    .map(t=>t.replace(/^#/,"").toLowerCase()).filter(t=>t.length>=3&&t!==String(year||"")&&!nameWords.has(t)))].slice(0,2);
+  const base=((brand||"")+" "+(name||"")).trim();
+  const queries=[...new Set([chassis.length?base+" "+chassis[0]:"", colorWords.length?base+" "+color:"", base].filter(Boolean))];
+  return { specific:!!(colorWords.length||chassis.length), colorWords, chassis, queries, base,
+    label:[color,v.details].filter(Boolean).join(" · ") };
+}
+// ¿la foto es de esta versión? específica: debe mencionar el chasis (o el color); genérica: marca y modelo
+function versionMatch(text,brand,name,p){
+  const t=fzNorm(text);
+  if(p.chassis.length) return p.chassis.some(c=>t.includes(fzNorm(c)));
+  if(p.colorWords.length) return p.colorWords.every(w=>t.includes(w))&&likelyMatch(text,{brand,name});
+  return likelyMatch(text,{brand,name});
+}
+async function versionSearch(brand,name,p,exclude){
+  const seen=new Set(exclude||[]), out=[];
+  for(const q of p.queries){
+    let res=[]; try{ res=await commonsSearch(q,12); }catch(e){}
+    res.forEach(r=>{ if(!seen.has(r.url)){ seen.add(r.url); out.push({...r,match:versionMatch(r.text,brand,name,p)}); } });
+    if(out.filter(r=>r.match).length>=6) break;
+    await sleep(200);
+  }
+  return out.sort((a,b)=>(b.match?1:0)-(a.match?1:0));
+}
+// texto descriptivo de una foto de Commons ya guardada (para revisar si corresponde a la versión)
+async function commonsText(u){
+  const f=commonsFileFromUrl(u); if(!f) return "";
+  try{ const j=await (await fetch(COMMONS+"?action=query&format=json&origin=*&prop=imageinfo&iiprop=extmetadata&titles="+encodeURIComponent("File:"+f))).json();
+    const md=((Object.values(j.query?.pages||{})[0]?.imageinfo||[])[0]||{}).extmetadata||{};
+    return [f,stripTags(md.ImageDescription?.value),stripTags(md.ObjectName?.value),String(md.Categories?.value||"").replace(/\|/g," ")].join(" ");
+  }catch(e){ return f; }
+}
+/* ---------- Admin: completar fotos del catálogo (por versión) ---------- */
+let enr={rows:[],stop:false,running:false};
 function catPhotos(e){ const set=new Set(); if(e.image) set.add(e.image); catVariants(e).forEach(v=>(v.images||[]).forEach(u=>u&&set.add(u))); return [...set]; }
-// una foto es "probable" si el nombre del archivo menciona la marca y todas las palabras del modelo
-function likelyMatch(title,e){
-  const t=fzNorm(title), brand=fzNorm(e.brand), words=fzNorm(e.name).split(" ").filter(w=>w.length>1);
+// una foto es "probable" si su texto menciona la marca y todas las palabras del modelo
+function likelyMatch(text,e){
+  const t=fzNorm(text), brand=fzNorm(e.brand), words=fzNorm(e.name).split(" ").filter(w=>w.length>1);
   return (!brand||t.includes(brand.split(" ")[0]))&&words.every(w=>t.includes(w));
 }
 async function openEnrich(){
@@ -3454,60 +3527,85 @@ async function openEnrich(){
   if(enr.running) { $("#enrichScrim").classList.add("show"); return; }
   $("#enrichModal").innerHTML=`<div class="mh"><h3>Completar fotos del catálogo</h3><button class="iconbtn" onclick="enr.stop=true;closeAll()">×</button></div>
     <div class="mb">
-      <p class="enr-lead">Coches del catálogo con 0 o 1 foto. Para cada uno se buscan fotos libres en Wikimedia Commons; las que mencionan la marca y el modelo vienen preseleccionadas. Revisa y guarda.</p>
+      <p class="enr-lead">Cada versión se trata por separado. Si tiene color o número de chasis, solo se preseleccionan fotos que los mencionen; si es una versión única o un concept, sirven las fotos generales del modelo. Las fotos de Commons que ya están en una versión y no le corresponden aparecen marcadas para quitar.</p>
       <div class="enr-status" id="enrStatus">Cargando el catálogo…</div>
       <div id="enrList" class="enr-list"></div>
     </div>
-    <div class="mf"><button class="btn ghost" onclick="enr.stop=true">Detener búsqueda</button><button class="btn primary" onclick="saveAllEnrich()">Guardar todos los seleccionados</button></div>`;
+    <div class="mf"><button class="btn ghost" onclick="enr.stop=true">Detener búsqueda</button><button class="btn primary" onclick="saveAllEnrich()">Guardar cambios marcados</button></div>`;
   $("#enrichScrim").classList.add("show");
   qsCat=null; catIndexP=null;                       // catálogo fresco
   const cat=await loadCatalogIndex();
-  const need=cat.map(e=>({e,have:catPhotos(e)})).filter(x=>x.have.length<=1).slice(0,40);
+  // una entrada por versión que tenga 0–1 fotos propias o fotos de Commons por revisar
+  const need=[];
+  cat.forEach(e=>{
+    const vars=Array.isArray(e.variants)&&e.variants.length?e.variants:[{color:"",title:"",details:"",image:e.image,images:e.image?[e.image]:[]}];
+    vars.forEach((v,vi)=>{
+      const imgs=(Array.isArray(v.images)&&v.images.length?v.images:(v.image?[v.image]:[])).filter(Boolean);
+      const own=imgs.filter(u=>!isCommons(u)), wiki=imgs.filter(isCommons);
+      const prof=versionProfile(e.brand,e.name,e.year,v);
+      if(own.length+wiki.length<=1||(wiki.length&&prof.specific)) need.push({e,vi,v,own,wiki,prof});
+    });
+  });
   enr={rows:[],stop:false,running:true};
   const st=$("#enrStatus");
-  if(!need.length){ st.textContent="Todos los coches del catálogo tienen más de una foto."; enr.running=false; return; }
-  for(let i=0;i<need.length;i++){
+  if(!need.length){ st.textContent="Todas las versiones del catálogo tienen fotos suficientes."; enr.running=false; return; }
+  for(let i=0;i<need.length&&i<40;i++){
     if(enr.stop) break;
-    st.textContent=`Buscando ${i+1} de ${need.length}…`;
-    const {e,have}=need[i];
+    const n=need[i]; st.textContent=`Revisando ${i+1} de ${Math.min(need.length,40)}…`;
+    // fotos de Commons ya guardadas: se conservan si corresponden a la versión
+    const existing=[];
+    for(const u of n.wiki){ const txt=await commonsText(u); existing.push({url:u,thumb:commonsThumb(u),keep:!n.prof.specific||versionMatch(txt,n.e.brand,n.e.name,n.prof)}); }
     let cands=[];
-    try{ cands=(await commonsSearch(((e.brand||"")+" "+(e.name||"")).trim(),12)).filter(r=>!have.includes(r.url)).slice(0,6); }catch(err){}
-    const row={e,have,cands,picked:new Set(cands.map((c,k)=>likelyMatch(c.title,e)?k:-1).filter(k=>k>=0)),saved:false};
+    if(n.own.length+existing.filter(x=>x.keep).length<=1){
+      try{ cands=(await versionSearch(n.e.brand,n.e.name,n.prof,new Set([...n.own,...n.wiki]))).slice(0,6); }catch(err){}
+    }
+    const row={...n,existing,cands,picked:new Set(cands.map((c,k)=>c.match?k:-1).filter(k=>k>=0)),saved:false};
     enr.rows.push(row); renderEnrichRow(enr.rows.length-1);
-    await sleep(350);                                // con calma: no saturar la API de Wikimedia
+    await sleep(300);                                // con calma: no saturar la API de Wikimedia
   }
   enr.running=false;
-  st.textContent=enr.stop?"Búsqueda detenida.":`Listo: ${enr.rows.length} coches revisados.`;
+  st.textContent=enr.stop?"Búsqueda detenida.":`Listo: ${enr.rows.length} versiones revisadas.`;
 }
+function enrChanges(r){ return r.picked.size+r.existing.filter(x=>!x.keep).length; }
 function renderEnrichRow(i){
   const r=enr.rows[i], list=$("#enrList"); if(!list) return;
+  const removing=r.existing.filter(x=>!x.keep).length, noMatch=r.prof.specific&&r.cands.length&&!r.cands.some(c=>c.match);
   const html=`<div class="enr-row${r.saved?" saved":""}" id="enr-${i}">
-    <div class="enr-car"><span class="enr-ph">${r.have[0]?`<img src="${esc(r.have[0])}" alt="" loading="lazy">`:""}</span>
-      <span><b>${esc((r.e.brand||"")+" "+(r.e.name||""))}</b><small>${esc(String(r.e.year||""))} · ${r.have.length} ${r.have.length===1?"foto":"fotos"}</small></span></div>
-    <div class="enr-cands">${r.cands.length?r.cands.map((c,k)=>`<button type="button" class="enr-c" aria-pressed="${r.picked.has(k)}" title="${esc(c.author)} · ${esc(c.license)}" onclick="toggleEnrich(${i},${k})"><img src="${esc(c.thumb)}" alt="" loading="lazy"></button>`).join(""):'<span class="enr-none">Sin resultados en Commons</span>'}</div>
-    <div class="enr-act">${r.saved?'<span class="enr-ok">Guardado</span>':(r.cands.length?`<button class="btn sm" onclick="saveEnrich(${i})">Guardar</button>`:"")}</div>
+    <div class="enr-car"><span class="enr-ph">${r.own[0]?`<img src="${esc(r.own[0])}" alt="" loading="lazy">`:""}</span>
+      <span><b>${esc((r.e.brand||"")+" "+(r.e.name||""))}</b>
+        <small>${esc(String(r.e.year||""))}${r.prof.label?" · "+esc(r.prof.label):""}</small>
+        <em class="enr-kind${r.prof.specific?" sp":""}">${r.prof.specific?"Ejemplar específico":"Versión general / única"}</em></span></div>
+    <div class="enr-cands">
+      ${r.existing.length?`<div class="enr-grp"><span>Ya guardadas de Commons${removing?` · se quitarán ${removing}`:""}</span><div class="enr-thumbs">${r.existing.map((x,k)=>`<button type="button" class="enr-c keep" aria-pressed="${x.keep}" title="${x.keep?"Se conserva":"Se quitará: no es de este ejemplar"}" onclick="toggleKeep(${i},${k})"><img src="${esc(x.thumb)}" alt="" loading="lazy"></button>`).join("")}</div></div>`:""}
+      ${r.cands.length?`<div class="enr-grp"><span>Sugeridas${noMatch?" · ninguna menciona este color o chasis, elige solo si estás seguro":""}</span><div class="enr-thumbs">${r.cands.map((c,k)=>`<button type="button" class="enr-c" aria-pressed="${r.picked.has(k)}" title="${esc(c.author)} · ${esc(c.license)}" onclick="toggleEnrich(${i},${k})"><img src="${esc(c.thumb)}" alt="" loading="lazy"></button>`).join("")}</div></div>`:(r.existing.length?"":'<span class="enr-none">Sin resultados en Commons</span>')}
+    </div>
+    <div class="enr-act">${r.saved?'<span class="enr-ok">Guardado</span>':(enrChanges(r)?`<button class="btn sm" onclick="saveEnrich(${i})">Guardar</button>`:"")}</div>
   </div>`;
   const old=document.getElementById("enr-"+i); if(old) old.outerHTML=html; else list.insertAdjacentHTML("beforeend",html);
 }
 function toggleEnrich(i,k){ const r=enr.rows[i]; if(!r||r.saved) return; r.picked.has(k)?r.picked.delete(k):r.picked.add(k); renderEnrichRow(i); }
+function toggleKeep(i,k){ const r=enr.rows[i]; if(!r||r.saved) return; r.existing[k].keep=!r.existing[k].keep; renderEnrichRow(i); }
 async function saveEnrich(i){
-  const r=enr.rows[i]; if(!r||r.saved) return false;
-  const urls=[...r.picked].map(k=>r.cands[k]?.url).filter(Boolean); if(!urls.length){ toast("Elige al menos una foto"); return false; }
+  const r=enr.rows[i]; if(!r||r.saved||!enrChanges(r)) return false;
+  const add=[...r.picked].map(k=>r.cands[k]?.url).filter(Boolean);
+  const drop=new Set(r.existing.filter(x=>!x.keep).map(x=>x.url));
   try{
     const {data,error:e1}=await supa.from("catalog").select("variants,image").eq("key",r.e.key).maybeSingle(); if(e1) throw e1;
     let variants=Array.isArray(data?.variants)?data.variants:[];
-    const cover=data?.image||r.e.image||urls[0];
-    if(variants.length){
-      const v=variants[0]; v.images=Array.isArray(v.images)&&v.images.length?v.images:(v.image?[v.image]:[]);
-      urls.forEach(u=>{ if(!v.images.includes(u)) v.images.push(u); }); v.images=v.images.slice(0,12); v.image=v.image||v.images[0];
-    } else variants=[{color:"",title:"",details:"",image:cover,images:[...new Set([cover,...urls])].slice(0,12)}];
+    if(!variants.length) variants=[{color:"",title:"",details:"",image:data?.image||"",images:data?.image?[data.image]:[]}];
+    const v=variants[r.vi]; if(!v) throw new Error("versión no encontrada");
+    let imgs=(Array.isArray(v.images)&&v.images.length?v.images:(v.image?[v.image]:[])).filter(u=>u&&!drop.has(u));
+    add.forEach(u=>{ if(!imgs.includes(u)) imgs.push(u); });
+    v.images=imgs.slice(0,12); if(!v.image||drop.has(v.image)) v.image=v.images[0]||"";
+    const all=variants.flatMap(x=>x.images||[]);
+    const cover=data?.image&&all.includes(data.image)?data.image:(variants[0].image||all[0]||"");
     const {error}=await supa.from("catalog").update({variants,image:cover}).eq("key",r.e.key); if(error) throw error;
     r.saved=true; renderEnrichRow(i); return true;
   }catch(err){ toast("No se pudo guardar: "+(err.message||"error")); return false; }
 }
 async function saveAllEnrich(){
-  let n=0; for(let i=0;i<enr.rows.length;i++){ const r=enr.rows[i]; if(!r.saved&&r.picked.size&&await saveEnrich(i)) n++; }
-  toast(n?n+" coches actualizados":"Nada nuevo que guardar");
+  let n=0; for(let i=0;i<enr.rows.length;i++){ const r=enr.rows[i]; if(!r.saved&&enrChanges(r)&&await saveEnrich(i)) n++; }
+  toast(n?n+" versiones actualizadas":"Nada nuevo que guardar");
   if(n){ qsCat=null; catIndexP=null; }
 }
 /* ---------- Buscador rápido ---------- */
@@ -3825,7 +3923,8 @@ async function upsertCatalog(c){
       .map(v=>({...v, images:(Array.isArray(v.images)&&v.images.length?v.images:[v.image]).filter(im=>im&&!isData(im))}));
     local.forEach(v=>{
       const ex=variants.find(x=>x.image===v.image);
-      if(ex){ ex.images=v.images; ex.details=v.details||ex.details||""; ex.title=ex.title||v.title; ex.color=ex.color||v.color; }
+      // conserva las fotos de Commons que la comunidad agregó a esta versión (si no, se perderían al volver a guardar)
+      if(ex){ const extra=(ex.images||[]).filter(u=>isCommons(u)&&!v.images.includes(u)); ex.images=[...v.images,...extra].slice(0,12); ex.details=v.details||ex.details||""; ex.title=ex.title||v.title; ex.color=ex.color||v.color; }
       else variants.push(v);   // versión nueva con todas sus fotos + detalles
     });
     variants=variants.slice(0,24);

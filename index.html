@@ -3051,6 +3051,9 @@ async function zqNext(){
     if(zq.era==="classic") list=list.filter(p=>{ const y=zqYear(p.e); return y>1900&&y<1990; });
     if(!list.length){ zq.used.clear(); list=pool; }
     if(!list.length){ zq.car=null; zq.empty=true; return; }
+    // 10 íconos externos por cada coche del catálogo: los que subimos nosotros se reconocen al instante
+    const ext=list.filter(p=>p.e.generic), own=list.filter(p=>!p.e.generic);
+    if(ext.length&&own.length) list=Math.random()<10/11?ext:own;
     const pick=list[Math.floor(Math.random()*list.length)];
     zq.used.add(pick.url);
     zq.car=pick.e; zq.img=pick.url; zq.level=0; zq.answered=null; zq.round++;

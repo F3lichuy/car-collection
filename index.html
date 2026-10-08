@@ -1265,6 +1265,39 @@
   .rv-plates{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:44px}
   .rv-plates button{padding:0;border:0;background:var(--card);aspect-ratio:4/3;border-radius:var(--radius);overflow:hidden;cursor:pointer}
   .rv-plates img{width:100%;height:100%;object-fit:cover;display:block}
+
+  /* --- ¿Qué coche es? --- */
+  .zq-top{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-start}
+  .zq-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .zq-body{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:28px;margin-top:24px;align-items:start;background:var(--bg)}
+  .zq-body:fullscreen{padding:3vw;align-items:center;grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+  .zq-stage{position:relative;aspect-ratio:4/3;overflow:hidden;border-radius:var(--radius);background:var(--card)}
+  .zq-body:fullscreen .zq-stage{aspect-ratio:auto;height:86vh}
+  .zq-stage img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 1.1s cubic-bezier(.16,1,.3,1);user-select:none}
+  .zq-stage.busy img{opacity:.4}
+  .zq-level{position:absolute;left:12px;top:12px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#f3efe6;background:rgba(6,8,7,.55);padding:4px 8px;border-radius:var(--radius)}
+  .zq-level:empty{display:none}
+  .zq-empty{display:flex;align-items:center;justify-content:center;height:100%;color:var(--ink-faint)}
+  .zq-panel{display:flex;flex-direction:column;gap:16px}
+  .zq-opts{display:flex;flex-direction:column;gap:8px}
+  .zq-opt{text-align:left;background:transparent;border:1px solid var(--line);border-radius:var(--radius);color:var(--ink);padding:14px 16px;font-family:var(--display);font-size:19px;line-height:1.2;transition:border-color .2s,background .2s;counter-increment:zq}
+  .zq-opts{counter-reset:zq}
+  .zq-opt::before{content:counter(zq);font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-right:12px;vertical-align:2px}
+  .zq-opt:hover:not(:disabled){border-color:var(--ink)}
+  .zq-opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent)}
+  .zq-opt.wrong{border-color:var(--accent);opacity:.7}
+  .zq-opt:disabled{cursor:default}
+  .zq-hint{display:flex;gap:8px;flex-wrap:wrap}
+  .zq-res{border-top:1px solid var(--line);padding-top:14px}
+  .zq-k{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-faint)}
+  .zq-res.ok .zq-k{color:var(--good)}
+  .zq-ans{font-family:var(--display);font-style:italic;font-size:clamp(28px,3vw,42px);line-height:1.05;margin-top:6px}
+  .zq-y{font-family:var(--mono);font-size:12px;color:var(--ink-dim);margin-top:4px}
+  .zq-score{display:flex;gap:18px;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint)}
+  .zq-score b{color:var(--ink);font-weight:500;margin-left:4px}
+  .zq-next{align-self:flex-start}
+  .zq-keys{font-size:12px;color:var(--ink-faint);margin:18px 0 0}
+  @media(max-width:760px){ .zq-body{grid-template-columns:1fr;gap:16px} .zq-keys{display:none} }
 </style>
 </head>
 <body data-theme="paddock">
@@ -1363,7 +1396,8 @@
   <!-- ============ ACTIVITIES TAB ============ -->
   <section id="tab-activities" style="display:none">
     <div class="actnav" id="actnav">
-      <button data-act="five" class="on"><span class="ic"></span> Garaje de ensueño <small>combo con límites</small></button>
+      <button data-act="zoom" class="on"><span class="ic"></span> ¿Qué coche es? <small>adivina por un detalle</small></button>
+      <button data-act="five"><span class="ic"></span> Garaje de ensueño <small>combo con límites</small></button>
       <button data-act="tier"><span class="ic"></span> Tier list <small>S/A/B/C/D</small></button>
       <button data-act="bracket"><span class="ic"></span> Torneo <small>bracket + podio</small></button>
       <button data-act="top100"><span class="ic"></span> Top 100 <small>tu ranking</small></button>
@@ -1570,7 +1604,7 @@
     "Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…":"Tell why it’s special: bespoke order, one-of-one, story, unique specs…",
     "Aún no escribes la historia. Edita el coche y llena el campo 'Historia / deep-dive' de esta versión.":"You haven’t written the story yet. Edit the car and fill the “Story / deep-dive” field on this version.",
     "Sin historia todavía.":"No story yet.","Historia":"Story","Detalles":"Details","Valor":"Value","Rareza":"Rarity","One-off":"One-off",
-    "Trifoglio Podcast":"Trifoglio Podcast","Elegida":"Selected","Rarezas":"Rare specs","Piezas únicas y pedidos a medida de las colecciones de la comunidad.":"One-offs and bespoke builds from the community's collections.","Todas":"All","Mi colección":"My collection","Compartir":"Share","Enlace copiado":"Link copied","Esta pieza todavía no tiene historia.":"This piece doesn't have a story yet.","Leer la historia":"Read the story","Esa rareza ya no está disponible":"That rare spec is no longer available","Pronto habrá piezas únicas de la comunidad.":"Community one-offs coming soon.","Web":"Web","Libres (Commons)":"Free (Commons)","Guardando fotos…":"Saving photos…","Búsqueda web no activada: mostrando Commons":"Web search not enabled: showing Commons","Inicia sesión para buscar en la web: mostrando Commons":"Sign in to search the web: showing Commons","La búsqueda web falló: mostrando Commons":"Web search failed: showing Commons","No encontramos fotos con esa búsqueda. Prueba solo con marca y modelo.":"No photos found. Try just make and model.","Las fotos de la web pertenecen a sus autores: se guarda una copia en tu almacenamiento al agregarlas.":"Web photos belong to their authors: a copy is saved to your storage when added.","Buscar fotos de esta versión":"Find photos for this version","Agregar sugeridas":"Add suggested","Ejemplar específico":"Specific car","Versión general / única":"General / one-off version","Guardar cambios marcados":"Save marked changes","Todas las versiones del catálogo tienen fotos suficientes.":"Every catalog version has enough photos.","Se conserva":"Kept","Se quitará: no es de este ejemplar":"Will be removed: not this car","Ya guardadas de Commons":"Already saved from Commons","Sugeridas":"Suggested","Completar fotos":"Fill in photos","Completar fotos del catálogo":"Fill in catalog photos","Detener búsqueda":"Stop search","Guardar todos los seleccionados":"Save all selected","Cargando el catálogo…":"Loading the catalog…","Sin resultados en Commons":"No results on Commons","Guardado":"Saved","Búsqueda detenida.":"Search stopped.","Todos los coches del catálogo tienen más de una foto.":"Every catalog car has more than one photo.","Elige al menos una foto":"Pick at least one photo","Nada nuevo que guardar":"Nothing new to save","Investigar":"Research","Fotos":"Photos","Historia":"Story","Buscar más fotos":"Find more photos","Buscar fotos":"Find photos","Agregar fotos":"Add photos","Fotos e historia sin salir de la página":"Photos and history without leaving the page","Marca, modelo, año…":"Make, model, year…","Escribe un coche para buscar fotos e historia.":"Type a car to search photos and history.","No encontramos fotos libres con esa búsqueda. Prueba solo con marca y modelo.":"No free photos found. Try just make and model.","No se pudo conectar con Wikimedia Commons.":"Couldn't reach Wikimedia Commons.","Sin artículo en Wikipedia para esta búsqueda.":"No Wikipedia article for this search.","Leer en Wikipedia ↗":"Read on Wikipedia ↗","Otros artículos":"Other articles","Fotos con licencia libre de Wikimedia Commons; el crédito de cada una se muestra junto a la foto.":"Freely licensed photos from Wikimedia Commons; each photo shows its credit.","Este coche ya existe":"This car already exists","¿Es alguno de estos?":"Is it one of these?","Usa el nombre exacto para no crear duplicados":"Use the exact name to avoid duplicates","Usar nombre":"Use name","Agregar con fotos":"Add with photos","Nombre del catálogo aplicado":"Catalog name applied","Solo las cuentas administradoras pueden usar este modo":"Only admin accounts can use this mode","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
+    "Trifoglio Podcast":"Trifoglio Podcast","¿Qué coche es?":"Which car is it?","adivina por un detalle":"guess from a detail","Un acercamiento a un detalle de un coche del catálogo, elegido al azar. Cada pista abre un poco más la imagen; adivinar antes da más puntos.":"A close-up of a detail from a random catalog car. Each hint zooms out a little; guessing earlier scores more.","Clásicos":"Classics","Pantalla completa":"Fullscreen","Más pista":"More hint","Revelar":"Reveal","Siguiente coche":"Next car","No era ese":"Not that one","La respuesta":"The answer","Puntos":"Points","Racha":"Streak","Ronda":"Round","Elegida":"Selected","Rarezas":"Rare specs","Piezas únicas y pedidos a medida de las colecciones de la comunidad.":"One-offs and bespoke builds from the community's collections.","Todas":"All","Mi colección":"My collection","Compartir":"Share","Enlace copiado":"Link copied","Esta pieza todavía no tiene historia.":"This piece doesn't have a story yet.","Leer la historia":"Read the story","Esa rareza ya no está disponible":"That rare spec is no longer available","Pronto habrá piezas únicas de la comunidad.":"Community one-offs coming soon.","Web":"Web","Libres (Commons)":"Free (Commons)","Guardando fotos…":"Saving photos…","Búsqueda web no activada: mostrando Commons":"Web search not enabled: showing Commons","Inicia sesión para buscar en la web: mostrando Commons":"Sign in to search the web: showing Commons","La búsqueda web falló: mostrando Commons":"Web search failed: showing Commons","No encontramos fotos con esa búsqueda. Prueba solo con marca y modelo.":"No photos found. Try just make and model.","Las fotos de la web pertenecen a sus autores: se guarda una copia en tu almacenamiento al agregarlas.":"Web photos belong to their authors: a copy is saved to your storage when added.","Buscar fotos de esta versión":"Find photos for this version","Agregar sugeridas":"Add suggested","Ejemplar específico":"Specific car","Versión general / única":"General / one-off version","Guardar cambios marcados":"Save marked changes","Todas las versiones del catálogo tienen fotos suficientes.":"Every catalog version has enough photos.","Se conserva":"Kept","Se quitará: no es de este ejemplar":"Will be removed: not this car","Ya guardadas de Commons":"Already saved from Commons","Sugeridas":"Suggested","Completar fotos":"Fill in photos","Completar fotos del catálogo":"Fill in catalog photos","Detener búsqueda":"Stop search","Guardar todos los seleccionados":"Save all selected","Cargando el catálogo…":"Loading the catalog…","Sin resultados en Commons":"No results on Commons","Guardado":"Saved","Búsqueda detenida.":"Search stopped.","Todos los coches del catálogo tienen más de una foto.":"Every catalog car has more than one photo.","Elige al menos una foto":"Pick at least one photo","Nada nuevo que guardar":"Nothing new to save","Investigar":"Research","Fotos":"Photos","Historia":"Story","Buscar más fotos":"Find more photos","Buscar fotos":"Find photos","Agregar fotos":"Add photos","Fotos e historia sin salir de la página":"Photos and history without leaving the page","Marca, modelo, año…":"Make, model, year…","Escribe un coche para buscar fotos e historia.":"Type a car to search photos and history.","No encontramos fotos libres con esa búsqueda. Prueba solo con marca y modelo.":"No free photos found. Try just make and model.","No se pudo conectar con Wikimedia Commons.":"Couldn't reach Wikimedia Commons.","Sin artículo en Wikipedia para esta búsqueda.":"No Wikipedia article for this search.","Leer en Wikipedia ↗":"Read on Wikipedia ↗","Otros artículos":"Other articles","Fotos con licencia libre de Wikimedia Commons; el crédito de cada una se muestra junto a la foto.":"Freely licensed photos from Wikimedia Commons; each photo shows its credit.","Este coche ya existe":"This car already exists","¿Es alguno de estos?":"Is it one of these?","Usa el nombre exacto para no crear duplicados":"Use the exact name to avoid duplicates","Usar nombre":"Use name","Agregar con fotos":"Add with photos","Nombre del catálogo aplicado":"Catalog name applied","Solo las cuentas administradoras pueden usar este modo":"Only admin accounts can use this mode","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz.":"Three friends obsessed with cars: stories, debates and car culture.",
     "Nuevos episodios seguido, en YouTube.":"New episodes regularly, on YouTube.","Ver el canal →":"View the channel →",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.":"Three friends obsessed with cars: stories, debates and car culture. New episodes often.",
@@ -1697,6 +1731,8 @@
   ];
 
   PAT.push(
+    P(/^Pista (\d+) de (\d+)$/, function(m){ return "Hint "+m[1]+" of "+m[2]; }),
+    P(/^¡Correcto! \+(\d+)$/, function(m){ return "Correct! +"+m[1]; }),
     P(/^y (\d+) versiones más$/, function(m){ return "and "+m[1]+" more versions"; }),
     P(/^de la colección de @(.+)$/, function(m){ return "from @"+m[1]+"'s collection"; }),
     P(/^(\d+) piezas?$/, function(m){ return m[1]+" piece(s)"; }),
@@ -1882,7 +1918,7 @@ let top100 = {};          // {carId: position}
 let theme = "retro";
 let activeTagFilters = new Set();
 let tagPanelOpen = false;
-let currentAct = "five";
+let currentAct = "zoom";
 let fivePick = [];        // working slot of car ids
 let fiveBudget = 0;
 let fiveN = 5;            // número de coches del garaje de ensueño
@@ -2736,12 +2772,132 @@ function doImport(file){
    ====================================================================== */
 function renderAct(){
   document.querySelectorAll("#actnav button").forEach(b=>b.classList.toggle("on",b.dataset.act===currentAct));
-  if(currentAct==="five")renderFive();
+  if(currentAct==="zoom")renderZoomQuiz();
+  else if(currentAct==="five")renderFive();
   else if(currentAct==="tier")renderTier();
   else if(currentAct==="bracket")renderBracket();
   else if(currentAct==="top100")renderTop100();
   else renderTourney();
 }
+/* ---------- ¿QUÉ COCHE ES? (acercamiento a un detalle) ---------- */
+// niveles de acercamiento: cada pista abre más la imagen
+const ZQ_LEVELS=[7,4.6,3,1.9,1];
+let zq={pool:null,era:"classic",car:null,img:"",focus:[50,50],level:0,options:[],answered:null,score:0,round:0,streak:0,used:new Set(),loading:false};
+async function zqPool(){
+  if(zq.pool) return zq.pool;
+  const cat=await loadCatalogIndex();
+  // un elemento por foto: así la misma marca/modelo aparece con distintas tomas
+  const pool=[];
+  cat.forEach(e=>{ const imgs=new Set([e.image,...catVariants(e).flatMap(v=>v.images||[])].filter(Boolean)); imgs.forEach(u=>pool.push({e,url:u})); });
+  zq.pool=pool; return pool;
+}
+const zqYear=e=>parseInt(e.year,10)||0;
+function zqLabel(e){ return ((e.brand||"")+" "+(e.name||"")).trim(); }
+// busca la zona con más detalle de la foto (faros, parrilla, rines…) evitando cielo y piso lisos
+function zqFocus(url){
+  return new Promise(res=>{
+    const fallback=()=>res([30+Math.random()*40,40+Math.random()*30]);
+    const im=new Image(); im.crossOrigin="anonymous";
+    im.onload=()=>{ try{
+      const W=48,H=32,cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+      const g=cv.getContext("2d",{willReadFrequently:true}); g.drawImage(im,0,0,W,H);
+      const d=g.getImageData(0,0,W,H).data, lum=(x,y)=>{ const i=(y*W+x)*4; return d[i]*.3+d[i+1]*.59+d[i+2]*.11; };
+      const cells=[];
+      for(let y=3;y<H-3;y++) for(let x=3;x<W-3;x++){
+        // detalle = contraste local (gradientes) en una ventana de 5x5
+        let e=0; for(let yy=-2;yy<=2;yy++) for(let xx=-2;xx<=2;xx++) e+=Math.abs(lum(x+xx,y+yy)-lum(x+xx+1,y+yy))+Math.abs(lum(x+xx,y+yy)-lum(x+xx,y+yy+1));
+        const center=1-Math.hypot((x/W-.5)*1.2,(y/H-.55)*1.6);   // preferir la zona central, donde suele estar el coche
+        cells.push({x,y,score:e*(.6+.4*Math.max(0,center))});
+      }
+      cells.sort((a,b)=>b.score-a.score);
+      const top=cells.slice(0,Math.max(6,Math.round(cells.length*.04)));
+      const c=top[Math.floor(Math.random()*top.length)];
+      res([(c.x+.5)/W*100,(c.y+.5)/H*100]);
+    }catch(e){ fallback(); } };
+    im.onerror=fallback; im.src=url;
+  });
+}
+function zqOptions(e,pool){
+  const right=zqLabel(e), seen=new Set([right.toLowerCase()]), opts=[right];
+  // distractores: primero de la misma marca o época, para que no sea obvio
+  const cands=pool.map(p=>p.e).filter(x=>!seen.has(zqLabel(x).toLowerCase()));
+  const near=cands.filter(x=>x.brand===e.brand||Math.abs(zqYear(x)-zqYear(e))<=12).sort(()=>Math.random()-.5);
+  const rest=cands.sort(()=>Math.random()-.5);
+  for(const x of [...near,...rest]){ const l=zqLabel(x); if(opts.length>=4) break; if(!seen.has(l.toLowerCase())){ seen.add(l.toLowerCase()); opts.push(l); } }
+  return opts.sort(()=>Math.random()-.5);
+}
+async function zqNext(){
+  if(zq.loading) return; zq.loading=true;
+  const view=$("#zqStage"); if(view) view.classList.add("busy");
+  try{
+    const pool=await zqPool();
+    let list=pool.filter(p=>!zq.used.has(p.url));
+    if(zq.era==="classic") list=list.filter(p=>{ const y=zqYear(p.e); return y>1900&&y<1990; });
+    if(!list.length){ zq.used.clear(); list=pool; }
+    if(!list.length){ zq.car=null; zq.empty=true; return; }
+    const pick=list[Math.floor(Math.random()*list.length)];
+    zq.used.add(pick.url);
+    zq.car=pick.e; zq.img=pick.url; zq.level=0; zq.answered=null; zq.round++;
+    zq.focus=await zqFocus(pick.url);
+    zq.options=zqOptions(pick.e,pool);
+  }finally{ zq.loading=false; }
+  renderZoomQuiz();
+}
+function zqApply(){
+  const im=$("#zqImg"); if(!im) return;
+  const z=zq.answered?1:ZQ_LEVELS[zq.level];
+  im.style.transformOrigin=zq.focus[0]+"% "+zq.focus[1]+"%";
+  im.style.transform="scale("+z+")";
+  const lv=$("#zqLevel"); if(lv) lv.textContent=zq.answered?"":"Pista "+(zq.level+1)+" de "+ZQ_LEVELS.length;
+}
+function zqHint(){ if(zq.answered||zq.level>=ZQ_LEVELS.length-1) return; zq.level++; zqApply(); renderZqPanel(); }
+function zqAnswer(label){
+  if(zq.answered) return;
+  const right=zqLabel(zq.car), ok=label===right;
+  // más puntos mientras más cerrada estaba la imagen
+  const pts=ok?(ZQ_LEVELS.length-zq.level)*10:0;
+  zq.answered={label,ok,pts}; zq.score+=pts; zq.streak=ok?zq.streak+1:0;
+  zqApply(); renderZqPanel();
+}
+function zqReveal(){ if(!zq.answered){ zq.answered={label:null,ok:false,pts:0}; zq.streak=0; zqApply(); renderZqPanel(); } }
+function renderZqPanel(){
+  const p=$("#zqPanel"); if(!p||!zq.car) return;
+  const right=zqLabel(zq.car), a=zq.answered;
+  p.innerHTML=`<div class="zq-opts">${zq.options.map(o=>{ const st=a?(o===right?"right":(o===a.label?"wrong":"")):"";
+      return `<button class="zq-opt ${st}" ${a?"disabled":""} onclick="zqAnswer(${JSON.stringify(o).replace(/"/g,"&quot;")})">${esc(o)}</button>`; }).join("")}</div>
+    ${a?`<div class="zq-res ${a.ok?"ok":""}"><div class="zq-k">${a.ok?"¡Correcto! +"+a.pts:(a.label?"No era ese":"La respuesta")}</div>
+        <div class="zq-ans">${esc(right)}</div><div class="zq-y">${esc(String(zq.car.year||""))}</div></div>`
+      :`<div class="zq-hint"><button class="btn" onclick="zqHint()" ${zq.level>=ZQ_LEVELS.length-1?"disabled":""}>Más pista</button><button class="btn ghost" onclick="zqReveal()">Revelar</button></div>`}
+    <div class="zq-score"><span>Puntos <b>${zq.score}</b></span><span>Racha <b>${zq.streak}</b></span><span>Ronda <b>${zq.round}</b></span></div>
+    ${a?`<button class="btn primary zq-next" onclick="zqNext()">Siguiente coche</button>`:""}`;
+}
+function renderZoomQuiz(){
+  const v=$("#actView"); if(!v) return;
+  v.innerHTML=`<div class="panel zq">
+    <div class="zq-top"><div><h3>¿Qué coche es?</h3><p class="lead">Un acercamiento a un detalle de un coche del catálogo, elegido al azar. Cada pista abre un poco más la imagen; adivinar antes da más puntos.</p></div>
+      <div class="zq-tools">
+        <div class="gs-toggle" role="group"><button class="${zq.era==="classic"?"on":""}" onclick="zq.era='classic';zq.used.clear();zqNext()">Clásicos</button><button class="${zq.era==="all"?"on":""}" onclick="zq.era='all';zq.used.clear();zqNext()">Todos</button></div>
+        <button class="btn sm" onclick="zqFullscreen()">Pantalla completa</button>
+      </div></div>
+    <div class="zq-body" id="zqBody">
+      <div class="zq-stage" id="zqStage">${zq.car?`<img id="zqImg" src="${esc(zq.img)}" alt="Detalle de un coche" draggable="false">`:'<div class="zq-empty">Cargando el catálogo…</div>'}<span class="zq-level" id="zqLevel"></span></div>
+      <div class="zq-panel" id="zqPanel"></div>
+    </div>
+    <p class="zq-keys">Teclado: <b>Espacio</b> más pista · <b>1–4</b> responder · <b>R</b> revelar · <b>N</b> siguiente</p>
+  </div>`;
+  if(!zq.car){ if(zq.empty) $("#zqStage").innerHTML='<div class="zq-empty">El catálogo todavía no tiene fotos.</div>'; else if(!zq.loading) zqNext(); return; }
+  const im=$("#zqImg"); im.style.transition="none"; zqApply(); void im.offsetWidth; im.style.transition="";
+  renderZqPanel();
+}
+function zqFullscreen(){ const b=$("#zqBody"); try{ document.fullscreenElement?document.exitFullscreen():b.requestFullscreen(); }catch(e){} }
+document.addEventListener("keydown",e=>{
+  if(currentAct!=="zoom"||$("#tab-activities")?.style.display==="none"||!zq.car) return;
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName||"")) return;
+  if(e.key===" "){ e.preventDefault(); zqHint(); }
+  else if(/^[1-4]$/.test(e.key)&&!zq.answered){ const o=zq.options[Number(e.key)-1]; if(o) zqAnswer(o); }
+  else if(e.key==="r"||e.key==="R") zqReveal();
+  else if((e.key==="n"||e.key==="N")&&zq.answered) zqNext();
+});
 /* ---------- 5-CAR GARAGE ---------- */
 function renderFive(){
   const v=$("#actView");

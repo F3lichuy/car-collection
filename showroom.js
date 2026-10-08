@@ -98,8 +98,10 @@ const cssColor = (el, name, fallback) => {
 
 export function mountShowroom(container, opts = {}) {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  // en teléfonos: menos resolución y sombras más ligeras para no agotar la memoria gráfica
+  const small = matchMedia("(max-width: 860px)").matches;
+  const renderer = new THREE.WebGLRenderer({ antialias: !small, preserveDrawingBuffer: !!opts.capture, powerPreference: "high-performance" });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, small ? 1.5 : 2));
   renderer.toneMapping = THREE.NeutralToneMapping;
   renderer.toneMappingExposure = opts.exposure ?? 1;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -136,7 +138,7 @@ export function mountShowroom(container, opts = {}) {
   const key = new THREE.DirectionalLight(0xfff1e0, 1.5);
   key.position.set(-3, 11, 7);
   key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.mapSize.set(small ? 1024 : 2048, small ? 1024 : 2048);
   key.shadow.radius = 9;
   key.shadow.blurSamples = 16;
   key.shadow.bias = -0.0004;
@@ -153,6 +155,9 @@ export function mountShowroom(container, opts = {}) {
   controls.enableZoom = false;
   controls.minPolarAngle = 1.02;
   controls.maxPolarAngle = 1.42;
+  // giro lento automático (en celular): empieza tras la entrada de cámara y se pausa mientras el usuario arrastra
+  const spin = !reduce && (opts.autoRotate ?? small);
+  controls.autoRotateSpeed = 0.55;
 
   // encuadre: distancia para que el conjunto quepa según el ancho del contenedor
   let fitHalf = new THREE.Vector3(2.5, 0.7, 1.2), fitCenter = new THREE.Vector3(0, 0.7, 0);
@@ -163,7 +168,7 @@ export function mountShowroom(container, opts = {}) {
     const halfD = Math.abs(heroDir.x) * fitHalf.x + Math.abs(heroDir.z) * fitHalf.z;
     const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
     const tanH = tanV * camera.aspect;
-    const fill = camera.aspect > 1.3 ? (opts.fill ?? 0.84) : 0.92;   // en pantallas anchas el coche ocupa parte del encuadre
+    const fill = camera.aspect > 1.3 && !small ? (opts.fill ?? 0.84) : 0.9;   // en pantallas anchas el coche ocupa parte del encuadre
     return Math.max(halfW / (tanH * fill), (fitHalf.y * 1.6) / (tanV * fill)) + halfD;
   }
   function frame() {
@@ -171,7 +176,7 @@ export function mountShowroom(container, opts = {}) {
     const d = fitDistance();
     scene.fog.near = d - 2; scene.fog.far = d + 13;
     // desplaza la vista: coche arriba a la derecha, libre del texto
-    if (camera.aspect > 1.3) camera.setViewOffset(width, height, -width * (opts.shiftX ?? 0.19), height * (opts.shiftY ?? 0.13), width, height);
+    if (camera.aspect > 1.3 && !small) camera.setViewOffset(width, height, -width * (opts.shiftX ?? 0.19), height * (opts.shiftY ?? 0.13), width, height);
     else camera.clearViewOffset();
     return d;
   }
@@ -239,17 +244,25 @@ export function mountShowroom(container, opts = {}) {
       const t = Math.min(1, (performance.now() - intro.t0) / intro.dur);
       camera.position.lerpVectors(intro.start, intro.end, ease(t));
       camera.lookAt(controls.target);
-      if (t >= 1) intro = null;
+      if (t >= 1) { intro = null; controls.autoRotate = spin; }
     } else {
       controls.update();
     }
     renderer.render(scene, camera);
   });
-  controls.addEventListener("start", () => { intro = null; });
+  let spinTimer;
+  controls.addEventListener("start", () => { intro = null; controls.autoRotate = false; clearTimeout(spinTimer); });
+  controls.addEventListener("end", () => { if (spin) spinTimer = setTimeout(() => (controls.autoRotate = true), 3500); });
   resize();
 
   return {
     show,
+    // dibuja un cuadro en la posición final de la cámara (sirve para generar la imagen fija de respaldo)
+    snapshot() {
+      if (intro) { camera.position.copy(intro.end); intro = null; }
+      camera.lookAt(controls.target); controls.update(); renderer.render(scene, camera);
+      return renderer.domElement;
+    },
     dispose() {
       renderer.setAnimationLoop(null);
       ro.disconnect(); io.disconnect(); themeObserver.disconnect(); controls.dispose(); renderer.dispose();

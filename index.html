@@ -421,8 +421,8 @@
   .cine-stage{position:absolute;inset:0;cursor:grab}
   .cine-stage:active{cursor:grabbing}
   .cine-stage canvas{display:block}
-  .cine-veil{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;background:var(--bg);transition:opacity 1.2s ease .2s,visibility 0s linear 1.4s}
-  .cine-veil span{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
+  .cine-veil{position:absolute;inset:0;z-index:3;background:var(--bg) url("models/alfa-poster-wide.jpg") center/cover no-repeat;transition:opacity 1.2s ease .2s,visibility 0s linear 1.4s;pointer-events:none}
+  .cine-veil span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   .cine-veil.off{opacity:0;visibility:hidden}
   .cine::after{content:"";position:absolute;inset:auto 0 0 0;height:42%;z-index:1;pointer-events:none;
     background:linear-gradient(0deg,var(--bg) 0%,color-mix(in srgb,var(--bg) 70%,transparent) 40%,transparent 100%)}
@@ -440,11 +440,16 @@
   .cp-credit{font-size:10.5px;line-height:1.5}
   .cp-credit a{color:var(--ink-dim)}
   @media(max-width:860px){
+    /* celular: primero el texto, luego el estudio compacto (gira solo), luego la ficha */
     .cine{height:auto;min-height:0;display:flex;flex-direction:column}
-    .cine-stage{position:relative;inset:auto;height:clamp(300px,62vw,460px)}
+    .cine-copy{order:1;position:relative;left:auto;bottom:auto;padding:28px 16px 4px;max-width:none}
+    .cine-copy h1{font-size:clamp(34px,9vw,48px)}
+    .cine-copy p{margin-bottom:18px}
+    .cine-stage{order:2;position:relative;inset:auto;height:min(64vw,420px);margin-top:8px}
+    .cine-veil{background-image:url("models/alfa-poster-m.jpg")}
     .cine::after{display:none}
-    .cine-copy{position:relative;left:auto;bottom:auto;padding:8px 16px 0;max-width:none}
-    .cine-plate{position:relative;right:auto;bottom:auto;width:auto;margin:28px 16px 0}
+    .cine-plate{order:3;position:relative;right:auto;bottom:auto;width:auto;margin:12px 16px 0}
+    .cp-hint{display:none}
   }
   /* skeletons de carga */
   @keyframes shimmer{0%{background-position:-450px 0}100%{background-position:450px 0}}
@@ -4527,8 +4532,9 @@ async function renderHome(){
   const v=$("#tab-home"); if(!v)return;
   v.innerHTML=`
     <section class="cine" aria-label="Portada">
-      <div class="cine-stage" id="heroStage" aria-label="Modelo 3D interactivo de dos Alfa Romeo Giulia Sprint de 1965. Arrastra para girar la escena."></div>
-      <div class="cine-veil" id="heroLoading" aria-hidden="true"><span>Cargando el estudio</span></div>
+      <div class="cine-stage" id="heroStage" aria-label="Modelo 3D interactivo de dos Alfa Romeo Giulia Sprint de 1965. Arrastra para girar la escena.">
+        <div class="cine-veil" id="heroLoading" aria-hidden="true"><span>Cargando el estudio</span></div>
+      </div>
       <div class="cine-copy">
         <h1>Tu garage de <em>clásicos</em>, en línea de salida.</h1>
         <p>Publica tus autos, compara especificaciones y sigue lo que se mueve en el mercado de clásicos.</p>
@@ -4843,7 +4849,7 @@ async function init(){
   const stage = document.getElementById("heroStage"); if(!stage || stage === stageEl) return;
   if(room){ room.dispose(); room = null; }
   stageEl = stage;
-  try{ lib = lib || await import("./showroom.js"); }catch(e){ document.getElementById("heroLoading")?.querySelector("span")?.replaceChildren("No se pudo cargar el estudio"); return; }
+  try{ lib = lib || await import("./showroom.js"); }catch(e){ return; }   // sin 3D: queda la imagen fija
   const { mountShowroom, CLASSICS } = lib;
   const car = CLASSICS.find(c => c.ready); if(!car) return;
   const veil = document.getElementById("heroLoading");
@@ -4852,8 +4858,9 @@ async function init(){
   // crédito requerido por la licencia CC Attribution: va en el pie de página
   const credit = document.getElementById("footCredit"); if(credit) credit.innerHTML = 'Modelo 3D: <a href="' + car.credit.url + '" target="_blank" rel="noopener">' + car.credit.title + '</a> por ' + car.credit.author + ', <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>';
   room = mountShowroom(stage, { exposure: 0.9 });
-  try{ await room.show(car); veil.classList.add("off"); }
-  catch(e){ veil.querySelector("span").textContent = "No se pudo cargar el modelo"; }
+  // la imagen fija se retira cuando el 3D ya se dibujó en pantalla (dos cuadros después de cargar)
+  try{ await room.show(car); requestAnimationFrame(()=>requestAnimationFrame(()=>veil.classList.add("off"))); }
+  catch(e){ veil.classList.add("fallback"); }   // se queda la imagen fija del estudio
 }
 window.initHeroShowroom = init;
 init();

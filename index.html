@@ -1625,6 +1625,22 @@
     .sb-res{padding:30px 10px 8px}
     .sb-res b{font-size:30px}
   }
+  /* interacción y accesibilidad */
+  button,a,[role="button"],summary,label,select{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  :focus-visible{outline:2px solid var(--accent2);outline-offset:3px}
+  .field input:focus-visible,.field select:focus-visible,.field textarea:focus-visible,.qs-box input:focus-visible,.rx-q input:focus-visible,.ctrl:focus-visible{outline:2px solid var(--accent2);outline-offset:1px}
+  [role="button"]{cursor:pointer}
+  .modal,.pm,.qs-box,.av-grid,.picker,.scrim{overscroll-behavior:contain}
+  .gs-v,.gm-big,.gm-grade,.gm-board-l b,.gm-break b,.pm-pl b,.pm-final b,.hl-bar b,.zq-score b,.sb-res b,.t100row .pos,.ch-rec b,.hl-val{font-variant-numeric:tabular-nums}
+  h1,h2,h3,.gm-b-what,.sb-name{text-wrap:balance}
+  .lead,.pm-lead{text-wrap:pretty}
+  .toast{bottom:calc(26px + env(safe-area-inset-bottom))}
+  .totop{bottom:calc(22px + env(safe-area-inset-bottom));right:calc(22px + env(safe-area-inset-right))}
+  .pm-play{padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+  /* tarjetas: inclinación suave y brillo que sigue al mouse */
+  .car .ph,.gm-offer .ph,.gm-vs-card .ph,.sb-ph{transition:transform .7s cubic-bezier(.16,1,.3,1)}
+  .tilting{transition:transform .12s ease-out!important;will-change:transform;transform-style:preserve-3d}
+  .tilting::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.18),transparent 55%);mix-blend-mode:soft-light}
   /* foto de perfil */
   .av{width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid var(--line);vertical-align:middle}
   .av-lg{width:44px;height:44px}
@@ -2520,7 +2536,7 @@ function renderThemes(){
        <span class="swatch" style="background:${t.c}"></span>${t.label}</button>`).join("");
   document.querySelectorAll("#themes button").forEach(b=>b.onclick=()=>{
     try{ localStorage.setItem("cc-theme-picked","1"); }catch(e){}
-    theme=b.dataset.th; document.body.dataset.theme=theme; renderThemes(); saveAll();
+    theme=b.dataset.th; document.body.dataset.theme=theme; renderThemes(); saveAll(); syncThemeMeta();
   });
   document.body.dataset.theme=theme;
 }
@@ -4418,6 +4434,33 @@ async function podReview(){
     <p class="gm-note">Toca un coche para ocultarlo o volver a mostrarlo. Los ocultos no salen en el podcast ni en tu quiz.</p>
     <div class="pm-all">${shown.map(p=>`<button class="pm-all-c ${zqHidden(p.e)?"off":""}" data-k="${esc(zqKey(p.e))}" onclick="podToggleCar(this)">${gmPh(p.url)}<span><b>${esc(zqLabel(p.e))}</b>${esc(String(p.e.year||""))}</span><i>Oculto</i></button>`).join("")||'<p class="gm-note">Nada con esa búsqueda.</p>'}</div>`;
 }
+/* ---------- ACCESIBILIDAD E INTERACCIÓN ----------
+   Lo que se toca con onclick también funciona con teclado (Tab + Enter), las fotos
+   tienen texto alternativo y los botones de icono se anuncian por su nombre. */
+(function(){
+  const SEL='[onclick]:not(button):not(a):not(input):not(select):not(textarea):not(label):not(option):not([tabindex])';
+  let t=0;
+  const fix=()=>{ t=0;
+    document.querySelectorAll(SEL).forEach(el=>{ el.tabIndex=0; if(!el.getAttribute("role")) el.setAttribute("role","button"); });
+    document.querySelectorAll("img:not([alt])").forEach(im=>{ im.alt=""; });
+    document.querySelectorAll("button.iconbtn:not([aria-label])").forEach(b=>{ const s=b.textContent.trim(); if(s==="×"||s==="✕") b.setAttribute("aria-label","Cerrar"); else if(b.title) b.setAttribute("aria-label",b.title); });
+  };
+  new MutationObserver(()=>{ if(!t) t=requestAnimationFrame(fix); }).observe(document.documentElement,{childList:true,subtree:true});
+  document.addEventListener("keydown",e=>{
+    const el=e.target;
+    if((e.key==="Enter"||e.key===" ")&&el&&el.matches&&el.matches('[role="button"][onclick]:not(button):not(a)')){ e.preventDefault(); el.click(); }
+  });
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",fix); else fix();
+})();
+/* el color de la barra del navegador y los controles nativos siguen al tema */
+function syncThemeMeta(){
+  requestAnimationFrame(()=>{
+    const m=getComputedStyle(document.body).backgroundColor.match(/\d+/g); if(!m) return;
+    const [r,g,b]=m.map(Number), dark=(r*.299+g*.587+b*.114)<140;
+    document.documentElement.style.colorScheme=dark?"dark":"light";
+    const meta=document.querySelector('meta[name="theme-color"]'); if(meta) meta.content=`rgb(${r},${g},${b})`;
+  });
+}
 /* ---------- FOTO DE PERFIL: un coche de tu colección ---------- */
 function avatarUrl(){ return (profile&&profile.img)||""; }
 function openAvatarPicker(){
@@ -4707,6 +4750,7 @@ function showTab(t){
   ["home","garage","irl","activities","market","battle","historia","discover","rare"].forEach(x=>{const el=$("#tab-"+x); if(el) el.style.display=x===t?"":"none";});
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===t));
   try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){}
+  if(window.ccMotion) ccMotion.tab($("#tab-"+t));
   if(t==="home")renderHome();
   else if(t==="activities")renderAct();
   else if(t==="irl")renderIrl();
@@ -4769,6 +4813,7 @@ function guardSupabase(client){
 }
 function initSupabase(){ try{ supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY); guardSupabase(supa); }catch(e){ supa=null; } }
 function applyAfterLoad(){
+  setTimeout(syncThemeMeta,0);
   remapCats();   // migra categorías viejas (español) → inglés
   document.body.classList.toggle("viewing", !!viewing);
   renderThemes();
@@ -6355,6 +6400,85 @@ async function init(){
 }
 window.initHeroShowroom = init;
 init();
+</script>
+<!-- ======================================================================
+     MOVIMIENTO (motion.dev): aparición al hacer scroll, cambio de pestaña,
+     ventanas, cifras que cuentan e inclinación de las tarjetas.
+     Si la librería no carga o pides menos movimiento, la página se ve igual, sin animar.
+     ====================================================================== -->
+<script type="module">
+const calm=matchMedia("(prefers-reduced-motion: reduce)");
+const finePointer=matchMedia("(hover: hover) and (pointer: fine)");
+let M=null;
+const ease=[.16,1,.3,1];
+async function lib(){
+  if(calm.matches) return null;
+  if(!M) M=import("https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm").catch(()=>null);
+  return M;
+}
+// --- aparición al entrar en pantalla (tarjetas, cifras, bloques) ---
+const REVEAL=".car, .gs-cell, .tl-dec, .ch, .rare-card, .st-card, .gm-start, .gm-board, .mk-card, .home-sec, .podium .pod";
+let pending=new Set(), raf=0;
+function queue(root){
+  const typing=/^(INPUT|TEXTAREA)$/.test((document.activeElement||{}).tagName||"");
+  (root.matches&&root.matches(REVEAL)?[root]:[]).concat([...(root.querySelectorAll?root.querySelectorAll(REVEAL):[])])
+    .forEach(el=>{ if(!el.__rv){ el.__rv=1; if(!typing) pending.add(el); } });
+  if(!raf) raf=requestAnimationFrame(flush);
+}
+async function flush(){
+  raf=0; const m=await lib(); if(!m){ pending.clear(); return; }
+  const els=[...pending]; pending.clear();
+  const vh=innerHeight;
+  // lo que ya está a la vista entra escalonado; lo de abajo espera a que llegues
+  const now=els.filter(el=>{ const r=el.getBoundingClientRect(); return r.top<vh&&r.bottom>0; });
+  const later=els.filter(el=>!now.includes(el));
+  if(now.length) m.animate(now,{opacity:[0,1],y:[18,0]},{duration:.7,ease,delay:m.stagger(.04,{startDelay:.02})});
+  later.forEach(el=>{ el.style.opacity="0";
+    m.inView(el,()=>{ m.animate(el,{opacity:[0,1],y:[22,0]},{duration:.75,ease}).then(()=>{ el.style.transform=""; }); },{margin:"0px 0px -8% 0px"}); });
+  els.forEach(el=>{ if(el.classList.contains("gs-cell")) countUp(m,el); });
+}
+// --- cifras que cuentan (Coches, Valor, Promedio…) ---
+function countUp(m,cell){
+  const v=cell.querySelector(".gs-v"); if(!v||v.__cnt) return; v.__cnt=1;
+  const txt=v.textContent, num=txt.match(/[\d.,]+/); if(!num) return;
+  const raw=num[0], dec=(raw.split(".")[1]||"").length, target=parseFloat(raw.replace(/,/g,""));
+  if(!isFinite(target)||target===0) return;
+  const fmt=x=>txt.replace(raw, dec?x.toFixed(dec):Math.round(x).toLocaleString("en-US"));
+  m.inView(cell,()=>{ m.animate(0,target,{duration:1.1,ease,onUpdate:x=>{ v.textContent=fmt(x); }}).then(()=>{ v.textContent=txt; }); });
+}
+// --- cambio de pestaña ---
+window.ccMotion={
+  async tab(el){ const m=await lib(); if(m&&el) m.animate(el,{opacity:[0,1],y:[10,0]},{duration:.45,ease}); },
+};
+// --- ventanas (modales y buscador) ---
+async function popIn(el){ const m=await lib(); if(m&&el) m.animate(el,{opacity:[0,1],scale:[.97,1],y:[12,0]},{duration:.4,ease}); }
+// --- inclinación suave de tarjetas con el mouse ---
+function tilt(e){
+  if(!finePointer.matches||calm.matches) return;
+  const ph=e.target.closest&&e.target.closest(".car .ph, .gm-offer .ph, .gm-vs-card .ph, .sb-ph");
+  document.querySelectorAll(".tilting").forEach(x=>{ if(x!==ph){ x.classList.remove("tilting"); x.style.transform=""; } });
+  if(!ph) return;
+  const r=ph.getBoundingClientRect(), x=(e.clientX-r.left)/r.width-.5, y=(e.clientY-r.top)/r.height-.5;
+  ph.classList.add("tilting");
+  ph.style.transform=`perspective(900px) rotateX(${(-y*4).toFixed(2)}deg) rotateY(${(x*5).toFixed(2)}deg)`;
+  ph.style.setProperty("--gx",(x*100+50).toFixed(1)+"%"); ph.style.setProperty("--gy",(y*100+50).toFixed(1)+"%");
+}
+document.addEventListener("pointermove",tilt,{passive:true});
+document.addEventListener("pointerleave",()=>document.querySelectorAll(".tilting").forEach(x=>{ x.classList.remove("tilting"); x.style.transform=""; }));
+// --- observa lo que se va dibujando ---
+const mo=new MutationObserver(muts=>{
+  for(const mu of muts){
+    if(mu.type==="attributes"){ const t=mu.target; if(t.classList.contains("show")&&(t.classList.contains("scrim"))) popIn(t.querySelector(".modal, .qs-box")||t.firstElementChild); continue; }
+    mu.addedNodes.forEach(n=>{ if(n.nodeType===1) queue(n); });
+  }
+});
+function start(){
+  if(calm.matches) return;
+  mo.observe(document.getElementById("main")||document.body,{childList:true,subtree:true});
+  document.querySelectorAll(".scrim").forEach(s=>mo.observe(s,{attributes:true,attributeFilter:["class"]}));
+  queue(document.getElementById("main")||document.body);
+}
+if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start); else start();
 </script>
 </body>
 </html>

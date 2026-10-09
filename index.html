@@ -39,7 +39,7 @@
   :root,[data-theme="paddock"]{
     --bg:#0c1712; --bg2:#10201a; --card:#14261e; --card2:#1a2f25;
     --line:#26392f; --ink:#ece6d6; --ink-dim:#bdb9aa; --ink-faint:#8e968a;
-    --accent:#dda13a; --accent2:#dda13a; --on-accent:var(--on-accent); --good:#8fcf7a; --shadow:rgba(0,0,0,.4);
+    --accent:#dda13a; --accent2:#dda13a; --on-accent:#1a1205; --good:#8fcf7a; --shadow:rgba(0,0,0,.4);
     --shade:8,14,11; --grain:.055;
     --radius:2px; --display:"Bodoni Moda",Didot,"Times New Roman",serif; --body:"Archivo",system-ui,sans-serif;
     --mono:"IBM Plex Mono",ui-monospace,monospace;
@@ -1744,6 +1744,63 @@
   .colo-wm .logo{font-size:46px}
   .ch-plate .plate{height:36px;width:auto;display:block;margin-top:10px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35))}
   @media(max-width:760px){ .colo-wm .logo{font-size:30px} .ch-plate .plate{height:30px} }
+  /* garage vacío con sugerencias */
+  .gx-sug{width:100%;max-width:900px;margin:0 auto}
+  .gx-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;text-align:left}
+  .gx-c{all:unset;cursor:pointer;position:relative;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;background:var(--bg2);transition:border-color .2s}
+  .gx-c:hover{border-color:var(--ink)}
+  .gx-ph{aspect-ratio:16/10;background:var(--card2);overflow:hidden}
+  .gx-ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .gx-c b{font-family:var(--display);font-weight:400;font-size:18px;padding:10px 12px 0}
+  .gx-c span:not(.gx-ph){font-size:12px;color:var(--ink-faint);padding:2px 12px 12px}
+  .gx-c i{position:absolute;top:8px;right:8px;font-style:normal;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:16px}
+  @media(max-width:760px){ .gx-grid{grid-template-columns:1fr 1fr} }
+  .gm-feat{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border:1px solid var(--accent);border-radius:var(--radius);padding:14px 16px;margin-bottom:22px;background:color-mix(in srgb,var(--accent) 8%,transparent);font-size:14px;color:var(--ink-dim)}
+  .gm-feat a{color:var(--ink);font-weight:600}
+  .gm-feat .gm-start-k{color:var(--accent);margin-bottom:4px}
+  /* portada: cifras, cómo funciona, destacada y reto */
+  .hm-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:8px 0 56px}
+  .hm-stats:empty{display:none}
+  .hm-stat{padding:22px 18px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+  .hm-stat:first-child{border-left:0;padding-left:0}
+  .hm-stat b{font-family:var(--display);font-weight:400;font-size:clamp(30px,3.4vw,46px);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .hm-stat span{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+  .hm-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}
+  .hm-steps li{border-top:1px solid var(--ink);padding-top:16px;display:flex;flex-direction:column;gap:8px}
+  .hm-n{font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--accent)}
+  .hm-steps b{font-family:var(--display);font-weight:400;font-size:28px;line-height:1.1;letter-spacing:-.02em}
+  .hm-steps p{margin:0;color:var(--ink-dim);font-size:14px;max-width:38ch}
+  .hm-plate .plate{height:34px;width:auto;margin-top:6px}
+  .hm-duo{display:grid;grid-template-columns:1.25fr 1fr;gap:28px;align-items:start}
+  .hm-duo>div:empty{display:none}
+  .hm-feat,.hm-week{border:1px solid var(--line);border-radius:var(--radius);padding:22px;display:flex;flex-direction:column;gap:14px;background:var(--bg2)}
+  .hm-feat-ph{display:block;aspect-ratio:16/8;border-radius:var(--radius);overflow:hidden;background:var(--card2)}
+  .hm-feat-ph img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 1.1s cubic-bezier(.16,1,.3,1)}
+  .hm-feat-ph:hover img{transform:scale(1.03)}
+  .hm-feat-row{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+  .hm-feat h3,.hm-week h3{font-family:var(--display);font-weight:400;font-size:32px;line-height:1;letter-spacing:-.02em;margin:0}
+  .hm-feat-m{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--ink-faint);margin-top:6px}
+  .hm-feat-row .plate{height:32px;width:auto}
+  .hm-feat-top{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .hm-feat-top span{display:flex;flex-direction:column;gap:5px}
+  .hm-feat-top img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:3px;display:block}
+  .hm-feat-top i{font-style:normal;font-size:11px;color:var(--ink-dim);line-height:1.2}
+  .hm-week p{margin:0;color:var(--ink-dim);font-size:14px}
+  .hm-feat a.btn,.hm-week a.btn{text-decoration:none}
+  .hm-feat a.btn.primary{color:var(--on-accent)}
+  .hm-wk-cars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .hm-wk-cars span{position:relative;aspect-ratio:4/3;border-radius:3px;overflow:hidden;background:var(--card2)}
+  .hm-wk-cars img{width:100%;height:100%;object-fit:cover;display:block}
+  .hm-wk-cars i{position:absolute;left:6px;top:6px;font:500 10px/1 var(--mono);color:#f3efe6;background:rgba(6,8,7,.6);padding:3px 6px;border-radius:2px;font-style:normal}
+  .hm-week .gm-board-l{margin-top:4px}
+  .hm-week .gm-actions{margin-top:auto}
+  @media(max-width:760px){
+    .hm-stats{grid-template-columns:1fr 1fr;margin-bottom:40px}
+    .hm-stat:nth-child(3){border-left:0;padding-left:0}
+    .hm-stat:nth-child(n+3){border-top:1px solid var(--line)}
+    .hm-steps{grid-template-columns:1fr;gap:20px}
+    .hm-duo{grid-template-columns:1fr}
+  }
   /* foto de perfil */
   .av{width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid var(--line);vertical-align:middle}
   .av-lg{width:44px;height:44px}
@@ -1795,13 +1852,13 @@
   <div class="tabs" id="tabs">
     <button data-tab="home" class="on">Inicio</button>
     <button data-tab="garage">Garage</button>
-    <button data-tab="irl">Manejados IRL</button>
-    <button data-tab="activities">Actividades</button>
-    <button data-tab="market">Marketplace</button>
+    <button data-tab="irl">Manejados</button>
+    <button data-tab="activities">Juegos</button>
+    <button data-tab="market">Mercado</button>
     <button data-tab="battle">Spec Battle</button>
     <button data-tab="rare">Rarezas</button>
-    <button data-tab="historia">Historia</button>
-    <button data-tab="discover">Descubrir</button>
+    <button data-tab="historia">Historias</button>
+    <button data-tab="discover">Comunidad</button>
   </div>
 </header>
 <div class="wrap" id="main" tabindex="-1">
@@ -1905,7 +1962,7 @@
    ============================================================ */
 (function(){
   var LANG="en";
-  try{ LANG = localStorage.getItem("mg-lang") || "en"; }catch(e){}
+  try{ LANG = localStorage.getItem("mg-lang") || (/^es\b/i.test(navigator.language||"")?"es":"en"); }catch(e){}
 
   var DICT = {
     // header / tabs
@@ -2067,7 +2124,7 @@
     "Cuenta por qué es especial: pedido a medida, one-of-one, historia, specs únicas…":"Tell why it’s special: bespoke order, one-of-one, story, unique specs…",
     "Aún no escribes la historia. Edita el coche y llena el campo 'Historia / deep-dive' de esta versión.":"You haven’t written the story yet. Edit the car and fill the “Story / deep-dive” field on this version.",
     "Sin historia todavía.":"No story yet.","Historia":"Story","Detalles":"Details","Valor":"Value","Rareza":"Rarity","One-off":"One-off",
-    "Trifoglio Podcast":"Trifoglio Podcast","draft con presupuesto":"draft on a budget","contrarreloj":"against the clock","bracket y podio":"bracket and podium","ordénalos por duelos":"rank them by duels","más o menos":"higher or lower","Reto":"Challenge","Libre":"Free","Contrarreloj":"Against the clock","Mi tier list":"My tier list","Más o menos":"Higher or lower","Mi favorito":"My favorite","Un draft de 5 rondas con tu colección. En cada ronda te tocan 3 coches y te quedas con uno. Respeta el presupuesto y cumple el reto: el puntaje premia la calidad, las reglas cumplidas y lo que te sobre.":"A 5-round draft from your collection. Each round you get 3 cars and keep one. Stay on budget and meet the challenge: the score rewards quality, rules met and money left over.","Necesitas al menos 8 coches con foto para jugar.":"You need at least 8 cars with photos to play.","Cómo se juega":"How to play","Te damos un presupuesto y 2 reglas al azar.":"You get a budget and 2 random rules.","5 rondas: eliges 1 de 3 coches. Tienes un cambio de opciones.":"5 rounds: pick 1 of 3 cars. You get one reshuffle.","Calidad media ×10 + 15 por regla + bono por lo que te sobre. Pasarte cuesta 40.":"Average quality ×10 + 15 per rule + a bonus for what's left. Going over costs 40.","Normal":"Normal","A ciegas":"Blind","Precios y calificaciones ocultos hasta el final.":"Prices and ratings hidden until the end.","Ves precio y calificación de cada coche.":"You see each car's price and rating.","Empezar el reto":"Start the challenge","Tu récord":"Your record","¡Nuevo récord!":"New record!","El reto":"The challenge","sin precio":"no price","Te pasarías del presupuesto":"You'd go over budget","Cambiar opciones (1)":"Reshuffle (1)","Cambiar opciones (0)":"Reshuffle (0)","Abandonar":"Quit","Calidad media":"Average quality","Te pasaste del presupuesto":"You went over budget","Bono por lo que sobró":"Leftover bonus","Otro reto":"Another challenge","Guardar como combo":"Save as combo","Tus coches no tienen precios suficientes: este reto no tiene presupuesto.":"Your cars don't have enough prices: this challenge has no budget.","Al menos un clásico de antes de 1975":"At least one classic from before 1975","Coches de 3 épocas distintas":"Cars from 3 different eras","Máximo 2 coches de la misma marca":"At most 2 cars of the same brand","Uno con calificación de 9 o más":"One rated 9 or higher","Un coche de menos de $250 K":"One car under $250K","4 marcas distintas o más":"4 or more different brands","Ningún coche de después de 2015":"No cars from after 2015","Prepara la ronda":"Set up the round","Toda la colección":"Whole collection","Con reloj":"Timed","Sin reloj":"Untimed","Empezar":"Start","Tu mejor coincidencia":"Your best match","Tu instinto contra tus calificaciones":"Your instinct vs your ratings","Clasificados":"Ranked","Tiempo medio por coche":"Average time per car","Se te acabó el tiempo":"Time ran out","Las mayores sorpresas":"The biggest surprises","Otra ronda":"Another round","Guardar en mi tier list":"Save to my tier list","Cambiar ajustes":"Change settings","Guardado en tu tier list":"Saved to your tier list","Eliminación directa, duelo por duelo. Al final: podio, el camino completo y las sorpresas (cuando un coche con menos calificación elimina a uno mejor).":"Single elimination, duel by duel. At the end: podium, the full path and the upsets (when a lower-rated car knocks out a better one).","Arma el cuadro":"Build the bracket","Todos":"All","Mi colección":"My collection","Catálogo de la comunidad":"Community catalog","Empezar torneo":"Start tournament","Reiniciar":"Restart","Final":"Final","Semifinal":"Semifinal","Cuartos de final":"Quarterfinals","Octavos de final":"Round of 16","El campeón":"The champion","El camino":"The path","Otro torneo":"Another tournament","Cambiar cuadro":"Change bracket","¡Sorpresa!":"Upset!","sorpresa":"upset","pasa directo":"bye","¿Cuál va más arriba?":"Which one ranks higher?","Terminar aquí":"Stop here","Nuevo":"New","Tu ranking definitivo. Coloca tus coches con duelos: te preguntamos “¿cuál va más arriba?” y cada coche encuentra su lugar en pocas preguntas. Arrastra para ajustar.":"Your definitive ranking. Place your cars with duels: we ask \"which ranks higher?\" and each car finds its spot in a few questions. Drag to fine-tune.","Autollenar por promedio":"Autofill by average","Vaciar ranking":"Clear ranking","Quitar":"Remove","Aún no has rankeado ningún coche. Empieza con los duelos o usa autollenar.":"You haven't ranked any car yet. Start with duels or use autofill.","Sin posición — toca para añadir al final":"Unranked — tap to add at the end","Tu Top 100 ya está lleno":"Your Top 100 is full","Todos tus coches ya tienen posición":"All your cars already have a position","Más o menos: dos coches de la colección y una pregunta — ¿cuál es más antiguo, cuál vale más, cuál tiene mejor calificación? Tienes 3 vidas. Con racha de 5, cada acierto vale doble.":"Higher or lower: two cars from the collection and one question — which is older, which is worth more, which is rated higher? You have 3 lives. On a streak of 5, each hit counts double.","Necesitas al menos 4 coches con foto.":"You need at least 4 cars with photos.","Tranquilo":"Relaxed","Jugar":"Play","Fin del juego":"Game over","Otra vez":"Again","Ajustes":"Settings","¿Cuál es más antiguo?":"Which one is older?","¿Cuál vale más?":"Which one is worth more?","¿Cuál tiene mejor calificación?":"Which one is rated higher?","Récord":"Record","Siguiente":"Next","¡Correcto!":"Correct!","¡Correcto! Racha doble":"Correct! Double streak","No":"No","Se acabó el tiempo":"Time's up","Foto de perfil":"Profile photo","Elige un coche de tu colección. Todos verán esta foto en Descubrir y en tu garage.":"Pick a car from your collection. Everyone will see this photo in Discover and on your garage.","Quitar foto":"Remove photo","Agrega coches con foto primero.":"Add cars with photos first.","Foto de perfil actualizada":"Profile photo updated","Foto de perfil quitada":"Profile photo removed","Un acercamiento a un detalle de un coche elegido al azar, del catálogo o de los grandes íconos. Cada pista abre un poco más la imagen; adivinar antes da más puntos.":"A close-up of a detail from a random car, from the catalog or the great icons. Each hint zooms out a little; guessing earlier scores more.","Copiado al portapapeles":"Copied to clipboard","Combo guardado":"Combo saved","Ranking de la comunidad":"Community ranking","Modo podcast":"Podcast mode","Juegos":"Games","Más":"More","Manejados IRL":"Driven IRL","Historias":"Stories","Tema":"Theme","Idioma":"Language","Español / English":"Español / English","Eliminar":"Delete","Editar":"Edit","Dos versiones frente a frente: color, carrocería, ejemplar. Vota la que prefieres y mira qué eligió la comunidad.":"Two versions head to head: color, body, specific car. Vote for your favorite and see what the community picked.","Mismo coche":"Same car","Misma marca":"Same brand","Sorteando duelo…":"Drawing a battle…","Siguiente batalla":"Next battle","Saltar":"Skip","Elegir mis specs":"Pick my specs","Tu voto":"Your vote","Votar por A":"Vote A","Votar por B":"Vote B","Coincides con la mayoría":"You agree with the majority","Vas contra la mayoría":"You're against the majority","Eres el primero en votar esta batalla":"You're the first to vote on this battle","Batallas":"Battles","Con la mayoría":"With the majority","Inicia sesión para que tus votos cuenten en la comunidad.":"Sign in so your votes count in the community.","Las specs que más ganan":"The specs that win the most","Todavía no hay suficientes votos. Cada spec aparece aquí al juntar 3.":"Not enough votes yet. Each spec shows up here after 3.","No hay specs suficientes en el catálogo":"Not enough specs in the catalog","No se pudo sortear":"Couldn't draw","＋ Elegir spec":"＋ Pick spec","A ·":"A ·","B ·":"B ·","siguiente":"next","Partida":"Game","Revisar coches":"Review cars","Trifoglio Podcast · solo admin":"Trifoglio Podcast · admin only","Revisa antes de grabar qué coches van a salir. Cambia los que no te convenzan u ocúltalos para siempre si son demasiado raros.":"Before recording, check which cars will come up. Swap the ones you don't like, or hide them for good if they're too obscure.","Empezar con estos coches":"Start with these cars","Cambiar":"Swap","Ocultar siempre":"Always hide","Volver a sortear":"Draw again","La partida usará exactamente estos coches.":"The game will use exactly these cars.","Íconos":"Icons","Ocultos":"Hidden","Oculto":"Hidden","Ícono":"Icon","Toca un coche para ocultarlo o volver a mostrarlo. Los ocultos no salen en el podcast ni en tu quiz.":"Tap a car to hide or show it again. Hidden cars don't appear in the podcast or your quiz.","Nada con esa búsqueda.":"Nothing matches that search.","Vuelve a tu garage para cambiar esto":"Go back to your garage to change this","Espacio":"Space","Resultado":"Result","Empate":"Tie","Modo podcast: pantalla completa, marcador y controles para quien conduce. Los jugadores responden en voz alta; tú marcas quién acertó.":"Podcast mode: fullscreen, scoreboard and host controls. Players answer out loud; you mark who got it right.","Jugadores":"Players","＋ Jugador":"＋ Player","− Quitar":"− Remove","Rondas":"Rounds","Pista automática":"Auto hint","Manual":"Manual","Cada 6 s":"Every 6 s","Cada 8 s":"Every 8 s","Cada 12 s":"Every 12 s","Mostrar 4 opciones":"Show 4 options","pista ·":"hint ·","acertó el jugador ·":"player got it ·","falló ·":"missed ·","revelar ·":"reveal ·","siguiente ·":"next ·","ocultar controles ·":"hide controls ·","pantalla completa ·":"fullscreen ·","salir":"exit","Salir":"Exit","Ganador":"Winner","Otra partida":"Another game","Cambiar jugadores":"Change players","Ver resultado":"See result","Ocultar controles":"Hide controls","Mostrar controles":"Show controls","¿Salir del modo podcast?":"Exit podcast mode?","Escribe al menos un jugador":"Enter at least one player","Trifoglio Podcast · ¿Qué coche es?":"Trifoglio Podcast · Which car is it?","Tu perfil de coleccionista":"Your collector profile","Coleccionista":"Collector","Cambiar foto":"Change photo","Elegir foto de perfil":"Choose profile photo","Mi enlace":"My link","Récords en actividades":"Activity records","Garaje de ensueño":"Dream garage","Tier list":"Tier list","Duelos":"Duels","Su colección en cifras":"Their collection in numbers","Mejor puntaje":"Best score","Mejor coincidencia":"Best match","Más aciertos":"Most correct","Mejor racha":"Best streak","Esta semana":"This week","Histórico":"All time","Nadie ha jugado esta semana. ¡Sé el primero!":"Nobody has played this week. Be the first!","Todavía no hay récords. ¡Sé el primero!":"No records yet. Be the first!","Inicia sesión para que tus récords entren al ranking.":"Sign in so your records make the ranking.","No se pudo cargar el ranking.":"Couldn't load the ranking.","No disponible.":"Not available.","Cargando…":"Loading…","Contrarreloj: los coches aparecen uno por uno y tienes 6 segundos para mandarlos a S, A, B, C o D. Al final comparamos tu instinto con tus propias calificaciones.":"Against the clock: cars appear one by one and you have 6 seconds to send them to S, A, B, C or D. At the end we compare your instinct with your own ratings.","Teclado:":"Keyboard:","para elegir.":"to pick.","o":"or","Si se acaba el tiempo, el coche se queda sin clasificar.":"If time runs out, the car stays unranked.","el nuevo ·":"the new one ·","el que ya estaba":"the one already there","y":"and","para responder,":"to answer,","para seguir.":"to continue.","Coches":"Cars","De":"From","Por categoría":"By category","Por época":"By era","Duelo":"Duel","pts":"pts","Garage restaurado":"Garage restored","No se guardó en la nube: el garage quedaría vacío":"Not saved to the cloud: the garage would be empty","No se pudo cargar tu garage de la nube. Recarga la página; no se guardará nada mientras tanto.":"Couldn't load your garage from the cloud. Reload the page; nothing will be saved meanwhile.","¿Qué coche es?":"Which car is it?","adivina por un detalle":"guess from a detail","Un acercamiento a un detalle de un coche del catálogo, elegido al azar. Cada pista abre un poco más la imagen; adivinar antes da más puntos.":"A close-up of a detail from a random catalog car. Each hint zooms out a little; guessing earlier scores more.","Clásicos":"Classics","Pantalla completa":"Fullscreen","Más pista":"More hint","Revelar":"Reveal","Siguiente coche":"Next car","No era ese":"Not that one","La respuesta":"The answer","Puntos":"Points","Racha":"Streak","Ronda":"Round","Elegida":"Selected","Rarezas":"Rare specs","Piezas únicas y pedidos a medida de las colecciones de la comunidad.":"One-offs and bespoke builds from the community's collections.","Todas":"All","Mi colección":"My collection","Compartir":"Share","Enlace copiado":"Link copied","Esta pieza todavía no tiene historia.":"This piece doesn't have a story yet.","Leer la historia":"Read the story","Esa rareza ya no está disponible":"That rare spec is no longer available","Pronto habrá piezas únicas de la comunidad.":"Community one-offs coming soon.","Web":"Web","Libres (Commons)":"Free (Commons)","Guardando fotos…":"Saving photos…","Búsqueda web no activada: mostrando Commons":"Web search not enabled: showing Commons","Inicia sesión para buscar en la web: mostrando Commons":"Sign in to search the web: showing Commons","La búsqueda web falló: mostrando Commons":"Web search failed: showing Commons","No encontramos fotos con esa búsqueda. Prueba solo con marca y modelo.":"No photos found. Try just make and model.","Las fotos de la web pertenecen a sus autores: se guarda una copia en tu almacenamiento al agregarlas.":"Web photos belong to their authors: a copy is saved to your storage when added.","Buscar fotos de esta versión":"Find photos for this version","Agregar sugeridas":"Add suggested","Ejemplar específico":"Specific car","Versión general / única":"General / one-off version","Guardar cambios marcados":"Save marked changes","Todas las versiones del catálogo tienen fotos suficientes.":"Every catalog version has enough photos.","Se conserva":"Kept","Se quitará: no es de este ejemplar":"Will be removed: not this car","Ya guardadas de Commons":"Already saved from Commons","Sugeridas":"Suggested","Completar fotos":"Fill in photos","Completar fotos del catálogo":"Fill in catalog photos","Detener búsqueda":"Stop search","Guardar todos los seleccionados":"Save all selected","Cargando el catálogo…":"Loading the catalog…","Sin resultados en Commons":"No results on Commons","Guardado":"Saved","Búsqueda detenida.":"Search stopped.","Todos los coches del catálogo tienen más de una foto.":"Every catalog car has more than one photo.","Elige al menos una foto":"Pick at least one photo","Nada nuevo que guardar":"Nothing new to save","Investigar":"Research","Fotos":"Photos","Historia":"Story","Buscar más fotos":"Find more photos","Buscar fotos":"Find photos","Agregar fotos":"Add photos","Fotos e historia sin salir de la página":"Photos and history without leaving the page","Marca, modelo, año…":"Make, model, year…","Escribe un coche para buscar fotos e historia.":"Type a car to search photos and history.","No encontramos fotos libres con esa búsqueda. Prueba solo con marca y modelo.":"No free photos found. Try just make and model.","No se pudo conectar con Wikimedia Commons.":"Couldn't reach Wikimedia Commons.","Sin artículo en Wikipedia para esta búsqueda.":"No Wikipedia article for this search.","Leer en Wikipedia ↗":"Read on Wikipedia ↗","Otros artículos":"Other articles","Fotos con licencia libre de Wikimedia Commons; el crédito de cada una se muestra junto a la foto.":"Freely licensed photos from Wikimedia Commons; each photo shows its credit.","Este coche ya existe":"This car already exists","¿Es alguno de estos?":"Is it one of these?","Usa el nombre exacto para no crear duplicados":"Use the exact name to avoid duplicates","Usar nombre":"Use name","Agregar con fotos":"Add with photos","Nombre del catálogo aplicado":"Catalog name applied","Solo las cuentas administradoras pueden usar este modo":"Only admin accounts can use this mode","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
+    "Trifoglio Podcast":"Trifoglio Podcast","draft con presupuesto":"draft on a budget","contrarreloj":"against the clock","bracket y podio":"bracket and podium","ordénalos por duelos":"rank them by duels","más o menos":"higher or lower","Reto":"Challenge","Libre":"Free","Contrarreloj":"Against the clock","Mi tier list":"My tier list","Más o menos":"Higher or lower","Mi favorito":"My favorite","Un draft de 5 rondas con tu colección. En cada ronda te tocan 3 coches y te quedas con uno. Respeta el presupuesto y cumple el reto: el puntaje premia la calidad, las reglas cumplidas y lo que te sobre.":"A 5-round draft from your collection. Each round you get 3 cars and keep one. Stay on budget and meet the challenge: the score rewards quality, rules met and money left over.","Necesitas al menos 8 coches con foto para jugar.":"You need at least 8 cars with photos to play.","Cómo se juega":"How to play","Te damos un presupuesto y 2 reglas al azar.":"You get a budget and 2 random rules.","5 rondas: eliges 1 de 3 coches. Tienes un cambio de opciones.":"5 rounds: pick 1 of 3 cars. You get one reshuffle.","Calidad media ×10 + 15 por regla + bono por lo que te sobre. Pasarte cuesta 40.":"Average quality ×10 + 15 per rule + a bonus for what's left. Going over costs 40.","Normal":"Normal","A ciegas":"Blind","Precios y calificaciones ocultos hasta el final.":"Prices and ratings hidden until the end.","Ves precio y calificación de cada coche.":"You see each car's price and rating.","Empezar el reto":"Start the challenge","Tu récord":"Your record","¡Nuevo récord!":"New record!","El reto":"The challenge","sin precio":"no price","Te pasarías del presupuesto":"You'd go over budget","Cambiar opciones (1)":"Reshuffle (1)","Cambiar opciones (0)":"Reshuffle (0)","Abandonar":"Quit","Calidad media":"Average quality","Te pasaste del presupuesto":"You went over budget","Bono por lo que sobró":"Leftover bonus","Otro reto":"Another challenge","Guardar como combo":"Save as combo","Tus coches no tienen precios suficientes: este reto no tiene presupuesto.":"Your cars don't have enough prices: this challenge has no budget.","Al menos un clásico de antes de 1975":"At least one classic from before 1975","Coches de 3 épocas distintas":"Cars from 3 different eras","Máximo 2 coches de la misma marca":"At most 2 cars of the same brand","Uno con calificación de 9 o más":"One rated 9 or higher","Un coche de menos de $250 K":"One car under $250K","4 marcas distintas o más":"4 or more different brands","Ningún coche de después de 2015":"No cars from after 2015","Prepara la ronda":"Set up the round","Toda la colección":"Whole collection","Con reloj":"Timed","Sin reloj":"Untimed","Empezar":"Start","Tu mejor coincidencia":"Your best match","Tu instinto contra tus calificaciones":"Your instinct vs your ratings","Clasificados":"Ranked","Tiempo medio por coche":"Average time per car","Se te acabó el tiempo":"Time ran out","Las mayores sorpresas":"The biggest surprises","Otra ronda":"Another round","Guardar en mi tier list":"Save to my tier list","Cambiar ajustes":"Change settings","Guardado en tu tier list":"Saved to your tier list","Eliminación directa, duelo por duelo. Al final: podio, el camino completo y las sorpresas (cuando un coche con menos calificación elimina a uno mejor).":"Single elimination, duel by duel. At the end: podium, the full path and the upsets (when a lower-rated car knocks out a better one).","Arma el cuadro":"Build the bracket","Todos":"All","Mi colección":"My collection","Catálogo de la comunidad":"Community catalog","Empezar torneo":"Start tournament","Reiniciar":"Restart","Final":"Final","Semifinal":"Semifinal","Cuartos de final":"Quarterfinals","Octavos de final":"Round of 16","El campeón":"The champion","El camino":"The path","Otro torneo":"Another tournament","Cambiar cuadro":"Change bracket","¡Sorpresa!":"Upset!","sorpresa":"upset","pasa directo":"bye","¿Cuál va más arriba?":"Which one ranks higher?","Terminar aquí":"Stop here","Nuevo":"New","Tu ranking definitivo. Coloca tus coches con duelos: te preguntamos “¿cuál va más arriba?” y cada coche encuentra su lugar en pocas preguntas. Arrastra para ajustar.":"Your definitive ranking. Place your cars with duels: we ask \"which ranks higher?\" and each car finds its spot in a few questions. Drag to fine-tune.","Autollenar por promedio":"Autofill by average","Vaciar ranking":"Clear ranking","Quitar":"Remove","Aún no has rankeado ningún coche. Empieza con los duelos o usa autollenar.":"You haven't ranked any car yet. Start with duels or use autofill.","Sin posición — toca para añadir al final":"Unranked — tap to add at the end","Tu Top 100 ya está lleno":"Your Top 100 is full","Todos tus coches ya tienen posición":"All your cars already have a position","Más o menos: dos coches de la colección y una pregunta — ¿cuál es más antiguo, cuál vale más, cuál tiene mejor calificación? Tienes 3 vidas. Con racha de 5, cada acierto vale doble.":"Higher or lower: two cars from the collection and one question — which is older, which is worth more, which is rated higher? You have 3 lives. On a streak of 5, each hit counts double.","Necesitas al menos 4 coches con foto.":"You need at least 4 cars with photos.","Tranquilo":"Relaxed","Jugar":"Play","Fin del juego":"Game over","Otra vez":"Again","Ajustes":"Settings","¿Cuál es más antiguo?":"Which one is older?","¿Cuál vale más?":"Which one is worth more?","¿Cuál tiene mejor calificación?":"Which one is rated higher?","Récord":"Record","Siguiente":"Next","¡Correcto!":"Correct!","¡Correcto! Racha doble":"Correct! Double streak","No":"No","Se acabó el tiempo":"Time's up","Foto de perfil":"Profile photo","Elige un coche de tu colección. Todos verán esta foto en Descubrir y en tu garage.":"Pick a car from your collection. Everyone will see this photo in Discover and on your garage.","Quitar foto":"Remove photo","Agrega coches con foto primero.":"Add cars with photos first.","Foto de perfil actualizada":"Profile photo updated","Foto de perfil quitada":"Profile photo removed","Un acercamiento a un detalle de un coche elegido al azar, del catálogo o de los grandes íconos. Cada pista abre un poco más la imagen; adivinar antes da más puntos.":"A close-up of a detail from a random car, from the catalog or the great icons. Each hint zooms out a little; guessing earlier scores more.","Copiado al portapapeles":"Copied to clipboard","Combo guardado":"Combo saved","Ranking de la comunidad":"Community ranking","Modo podcast":"Podcast mode","El club de los que":"The club for those who","coleccionan":"collect","clásicos.":"classics.","Arma tu garage soñado, califica cada coche, compite con la comunidad y presume tu placa de coleccionista.":"Build your dream garage, rate every car, compete with the community and show off your collector plate.","Crear mi garage":"Create my garage","Jugar sin cuenta":"Play without an account","coleccionistas":"collectors","coches en colecciones":"cars in collections","en valor estimado":"in estimated value","historias":"stories","Cómo funciona":"How it works","Arma tu garage":"Build your garage","Agrega coches del catálogo de la comunidad en un toque, con sus versiones, colores y fotos. O súbelos desde cero.":"Add cars from the community catalog in one tap, with their versions, colors and photos. Or upload them from scratch.","Califica y ordena":"Rate and rank","Seis criterios por coche, tu tier list, tu Top 100 y un catálogo en PDF para presumir.":"Six criteria per car, your tier list, your Top 100 and a PDF catalog to show off.","Compite y presume":"Compete and show off","Juegos, ranking semanal, Spec Battle y tu placa personal de coleccionista.":"Games, a weekly ranking, Spec Battle and your personal collector plate.","Ver la colección":"View the collection","Jugar con ella":"Play with it","Reto de la semana":"Challenge of the week","Cinco rondas, un presupuesto y dos reglas. ¿Quién arma el mejor garaje esta semana?":"Five rounds, a budget and two rules. Who builds the best garage this week?","Nadie ha jugado esta semana. El primero se queda con el primer lugar.":"Nobody has played this week. The first one takes first place.","Jugar el reto":"Play the challenge","Jugar ¿Qué coche es?":"Play Which car is it?","Nuevos episodios seguido, en YouTube. ¿Le ganas a los de Trifoglio adivinando coches por un detalle?":"New episodes regularly, on YouTube. Can you beat the Trifoglio crew at guessing cars from a detail?","Colecciones y coleccionistas.":"Collections and collectors.","Draft, tier list, torneo, duelos y quiz.":"Draft, tier list, tournament, duels and quiz.","Añade coches que la comunidad publicó.":"Add cars the community published.","Colección de la semana":"Collection of the week","Agrega 8 coches con foto a tu garage para jugar con los tuyos.":"Add 8 cars with photos to your garage to play with yours.","Crea tu cuenta para jugar con tu colección y entrar al ranking.":"Create your account to play with your collection and join the ranking.","Ir a mi garage":"Go to my garage","Manejados":"Driven","Juegos":"Games","Mercado":"Market","Historias":"Stories","Comunidad":"Community","Empieza con un coche de la comunidad o agrega el tuyo desde cero.":"Start with a car from the community or add your own from scratch.","Crear cuenta":"Create account","Para empezar · toca uno para agregarlo":"To get started · tap one to add it","Juegos":"Games","Más":"More","Manejados IRL":"Driven IRL","Historias":"Stories","Tema":"Theme","Idioma":"Language","Español / English":"Español / English","Eliminar":"Delete","Editar":"Edit","Dos versiones frente a frente: color, carrocería, ejemplar. Vota la que prefieres y mira qué eligió la comunidad.":"Two versions head to head: color, body, specific car. Vote for your favorite and see what the community picked.","Mismo coche":"Same car","Misma marca":"Same brand","Sorteando duelo…":"Drawing a battle…","Siguiente batalla":"Next battle","Saltar":"Skip","Elegir mis specs":"Pick my specs","Tu voto":"Your vote","Votar por A":"Vote A","Votar por B":"Vote B","Coincides con la mayoría":"You agree with the majority","Vas contra la mayoría":"You're against the majority","Eres el primero en votar esta batalla":"You're the first to vote on this battle","Batallas":"Battles","Con la mayoría":"With the majority","Inicia sesión para que tus votos cuenten en la comunidad.":"Sign in so your votes count in the community.","Las specs que más ganan":"The specs that win the most","Todavía no hay suficientes votos. Cada spec aparece aquí al juntar 3.":"Not enough votes yet. Each spec shows up here after 3.","No hay specs suficientes en el catálogo":"Not enough specs in the catalog","No se pudo sortear":"Couldn't draw","＋ Elegir spec":"＋ Pick spec","A ·":"A ·","B ·":"B ·","siguiente":"next","Partida":"Game","Revisar coches":"Review cars","Trifoglio Podcast · solo admin":"Trifoglio Podcast · admin only","Revisa antes de grabar qué coches van a salir. Cambia los que no te convenzan u ocúltalos para siempre si son demasiado raros.":"Before recording, check which cars will come up. Swap the ones you don't like, or hide them for good if they're too obscure.","Empezar con estos coches":"Start with these cars","Cambiar":"Swap","Ocultar siempre":"Always hide","Volver a sortear":"Draw again","La partida usará exactamente estos coches.":"The game will use exactly these cars.","Íconos":"Icons","Ocultos":"Hidden","Oculto":"Hidden","Ícono":"Icon","Toca un coche para ocultarlo o volver a mostrarlo. Los ocultos no salen en el podcast ni en tu quiz.":"Tap a car to hide or show it again. Hidden cars don't appear in the podcast or your quiz.","Nada con esa búsqueda.":"Nothing matches that search.","Vuelve a tu garage para cambiar esto":"Go back to your garage to change this","Espacio":"Space","Resultado":"Result","Empate":"Tie","Modo podcast: pantalla completa, marcador y controles para quien conduce. Los jugadores responden en voz alta; tú marcas quién acertó.":"Podcast mode: fullscreen, scoreboard and host controls. Players answer out loud; you mark who got it right.","Jugadores":"Players","＋ Jugador":"＋ Player","− Quitar":"− Remove","Rondas":"Rounds","Pista automática":"Auto hint","Manual":"Manual","Cada 6 s":"Every 6 s","Cada 8 s":"Every 8 s","Cada 12 s":"Every 12 s","Mostrar 4 opciones":"Show 4 options","pista ·":"hint ·","acertó el jugador ·":"player got it ·","falló ·":"missed ·","revelar ·":"reveal ·","siguiente ·":"next ·","ocultar controles ·":"hide controls ·","pantalla completa ·":"fullscreen ·","salir":"exit","Salir":"Exit","Ganador":"Winner","Otra partida":"Another game","Cambiar jugadores":"Change players","Ver resultado":"See result","Ocultar controles":"Hide controls","Mostrar controles":"Show controls","¿Salir del modo podcast?":"Exit podcast mode?","Escribe al menos un jugador":"Enter at least one player","Trifoglio Podcast · ¿Qué coche es?":"Trifoglio Podcast · Which car is it?","Tu perfil de coleccionista":"Your collector profile","Coleccionista":"Collector","Cambiar foto":"Change photo","Elegir foto de perfil":"Choose profile photo","Mi enlace":"My link","Récords en actividades":"Activity records","Garaje de ensueño":"Dream garage","Tier list":"Tier list","Duelos":"Duels","Su colección en cifras":"Their collection in numbers","Mejor puntaje":"Best score","Mejor coincidencia":"Best match","Más aciertos":"Most correct","Mejor racha":"Best streak","Esta semana":"This week","Histórico":"All time","Nadie ha jugado esta semana. ¡Sé el primero!":"Nobody has played this week. Be the first!","Todavía no hay récords. ¡Sé el primero!":"No records yet. Be the first!","Inicia sesión para que tus récords entren al ranking.":"Sign in so your records make the ranking.","No se pudo cargar el ranking.":"Couldn't load the ranking.","No disponible.":"Not available.","Cargando…":"Loading…","Contrarreloj: los coches aparecen uno por uno y tienes 6 segundos para mandarlos a S, A, B, C o D. Al final comparamos tu instinto con tus propias calificaciones.":"Against the clock: cars appear one by one and you have 6 seconds to send them to S, A, B, C or D. At the end we compare your instinct with your own ratings.","Teclado:":"Keyboard:","para elegir.":"to pick.","o":"or","Si se acaba el tiempo, el coche se queda sin clasificar.":"If time runs out, the car stays unranked.","el nuevo ·":"the new one ·","el que ya estaba":"the one already there","y":"and","para responder,":"to answer,","para seguir.":"to continue.","Coches":"Cars","De":"From","Por categoría":"By category","Por época":"By era","Duelo":"Duel","pts":"pts","Garage restaurado":"Garage restored","No se guardó en la nube: el garage quedaría vacío":"Not saved to the cloud: the garage would be empty","No se pudo cargar tu garage de la nube. Recarga la página; no se guardará nada mientras tanto.":"Couldn't load your garage from the cloud. Reload the page; nothing will be saved meanwhile.","¿Qué coche es?":"Which car is it?","adivina por un detalle":"guess from a detail","Un acercamiento a un detalle de un coche del catálogo, elegido al azar. Cada pista abre un poco más la imagen; adivinar antes da más puntos.":"A close-up of a detail from a random catalog car. Each hint zooms out a little; guessing earlier scores more.","Clásicos":"Classics","Pantalla completa":"Fullscreen","Más pista":"More hint","Revelar":"Reveal","Siguiente coche":"Next car","No era ese":"Not that one","La respuesta":"The answer","Puntos":"Points","Racha":"Streak","Ronda":"Round","Elegida":"Selected","Rarezas":"Rare specs","Piezas únicas y pedidos a medida de las colecciones de la comunidad.":"One-offs and bespoke builds from the community's collections.","Todas":"All","Mi colección":"My collection","Compartir":"Share","Enlace copiado":"Link copied","Esta pieza todavía no tiene historia.":"This piece doesn't have a story yet.","Leer la historia":"Read the story","Esa rareza ya no está disponible":"That rare spec is no longer available","Pronto habrá piezas únicas de la comunidad.":"Community one-offs coming soon.","Web":"Web","Libres (Commons)":"Free (Commons)","Guardando fotos…":"Saving photos…","Búsqueda web no activada: mostrando Commons":"Web search not enabled: showing Commons","Inicia sesión para buscar en la web: mostrando Commons":"Sign in to search the web: showing Commons","La búsqueda web falló: mostrando Commons":"Web search failed: showing Commons","No encontramos fotos con esa búsqueda. Prueba solo con marca y modelo.":"No photos found. Try just make and model.","Las fotos de la web pertenecen a sus autores: se guarda una copia en tu almacenamiento al agregarlas.":"Web photos belong to their authors: a copy is saved to your storage when added.","Buscar fotos de esta versión":"Find photos for this version","Agregar sugeridas":"Add suggested","Ejemplar específico":"Specific car","Versión general / única":"General / one-off version","Guardar cambios marcados":"Save marked changes","Todas las versiones del catálogo tienen fotos suficientes.":"Every catalog version has enough photos.","Se conserva":"Kept","Se quitará: no es de este ejemplar":"Will be removed: not this car","Ya guardadas de Commons":"Already saved from Commons","Sugeridas":"Suggested","Completar fotos":"Fill in photos","Completar fotos del catálogo":"Fill in catalog photos","Detener búsqueda":"Stop search","Guardar todos los seleccionados":"Save all selected","Cargando el catálogo…":"Loading the catalog…","Sin resultados en Commons":"No results on Commons","Guardado":"Saved","Búsqueda detenida.":"Search stopped.","Todos los coches del catálogo tienen más de una foto.":"Every catalog car has more than one photo.","Elige al menos una foto":"Pick at least one photo","Nada nuevo que guardar":"Nothing new to save","Investigar":"Research","Fotos":"Photos","Historia":"Story","Buscar más fotos":"Find more photos","Buscar fotos":"Find photos","Agregar fotos":"Add photos","Fotos e historia sin salir de la página":"Photos and history without leaving the page","Marca, modelo, año…":"Make, model, year…","Escribe un coche para buscar fotos e historia.":"Type a car to search photos and history.","No encontramos fotos libres con esa búsqueda. Prueba solo con marca y modelo.":"No free photos found. Try just make and model.","No se pudo conectar con Wikimedia Commons.":"Couldn't reach Wikimedia Commons.","Sin artículo en Wikipedia para esta búsqueda.":"No Wikipedia article for this search.","Leer en Wikipedia ↗":"Read on Wikipedia ↗","Otros artículos":"Other articles","Fotos con licencia libre de Wikimedia Commons; el crédito de cada una se muestra junto a la foto.":"Freely licensed photos from Wikimedia Commons; each photo shows its credit.","Este coche ya existe":"This car already exists","¿Es alguno de estos?":"Is it one of these?","Usa el nombre exacto para no crear duplicados":"Use the exact name to avoid duplicates","Usar nombre":"Use name","Agregar con fotos":"Add with photos","Nombre del catálogo aplicado":"Catalog name applied","Solo las cuentas administradoras pueden usar este modo":"Only admin accounts can use this mode","Modo galería":"Gallery mode","Pausa":"Pause","Reproducir":"Play","Cerrar":"Close","No hay fotos para mostrar":"No photos to show","1.6 L 4 en línea":"1.6 L inline-4","Modelo 3D:":"3D model:","por":"by","Mi":"My","Todas":"All","Antes de 1950":"Before 1950","2000 en adelante":"2000 and later","Cargar más":"Load more","Nada en esta época todavía":"Nothing from this era yet","Prueba con otra década o quita la búsqueda.":"Try another decade or clear the search.","Época":"Era","Catálogo PDF":"PDF catalog","Imprimir o guardar como PDF":"Print or save as PDF","Catálogo de la colección":"Collection catalog","No hay coches para el catálogo":"No cars for the catalog","Preparando el catálogo…":"Preparing the catalog…","Buscar":"Search","Busca un coche, una marca o una sección":"Search a car, a brand or a section","Sección":"Section","Tu garage":"Your garage","Catálogo":"Catalog","Sin resultados":"No results","Buscando en el catálogo…":"Searching the catalog…","↑ ↓ para moverte":"↑ ↓ to move","Enter para abrir":"Enter to open","Esc para cerrar":"Esc to close","Una pieza del catálogo de la comunidad, elegida para hoy. Mañana habrá otra.":"A piece from the community catalog, picked for today. Tomorrow there'll be another.","Agregar a mi garage":"Add to my garage","Ver Marketplace":"View Marketplace","Saltar al contenido":"Skip to content","Tu colección en cifras":"Your collection in numbers","Coches":"Cars","Valor estimado":"Estimated value","Década favorita":"Favorite decade","Marca más presente":"Top brand","Promedio":"Average","de 10":"out of 10","Cuadrícula":"Grid","Línea de tiempo":"Timeline","Sin año":"No year","Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.":"A collection made by and for people who love cars. Photos and stories come from the community.","Podcast":"Podcast","Ver el canal":"View the channel",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz.":"Three friends obsessed with cars: stories, debates and car culture.",
     "Nuevos episodios seguido, en YouTube.":"New episodes regularly, on YouTube.","Ver el canal →":"View the channel →",
     "Tres amigos apasionados por los autos: historias, debates y cultura automotriz. Nuevos episodios seguido.":"Three friends obsessed with cars: stories, debates and car culture. New episodes often.",
@@ -2152,6 +2209,8 @@
 
   function P(re,fn){ return [re,fn]; }
   var PAT = [
+    P(/^Juegas con los (\d+) coches de$/, function(m){ return "You're playing with the "+m[1]+" cars of"; }),
+    P(/^(\d+) coches · (.+)$/, function(m){ return m[1]+" cars · "+m[2]; }),
     P(/^(\d+) votos?$/, function(m){ return m[1]+" vote"+(m[1]==="1"?"":"s"); }),
     P(/^· (\d+) votos$/, function(m){ return "· "+m[1]+" votes"; }),
     P(/^Esta partida · (\d+) coches, en orden$/, function(m){ return "This game · "+m[1]+" cars, in order"; }),
@@ -2692,6 +2751,15 @@ function getFilteredSorted(){
   });
   return list;
 }
+// garage vacío: 6 coches del catálogo para empezar con un toque
+async function garageSuggest(){
+  const box=$("#garageSug"); if(!box) return;
+  let cat=[]; try{ cat=await loadCatalogIndex(); }catch(e){}
+  const pick=gmShuffle(cat.filter(e=>e.image)).slice(0,6); if(!pick.length||!$("#garageSug")) return;
+  mkData=pick;
+  $("#garageSug").innerHTML=`<div class="gm-start-k" style="margin:28px 0 12px">Para empezar · toca uno para agregarlo</div>
+    <div class="gx-grid">${pick.map((e,i)=>`<button class="gx-c" onclick="addFromCatalog(${i})"><span class="gx-ph">${gmPh(e.image)}</span><b>${esc(e.name||"")}</b><span>${esc(e.brand||"")} · ${esc(String(e.year||""))}</span><i>＋</i></button>`).join("")}</div>`;
+}
 function renderGarage(){
   renderTagFilters();
   const list=getFilteredSorted();
@@ -2701,8 +2769,10 @@ function renderGarage(){
   if(!cars.length){
     view.innerHTML=`<div class="empty"><div class="big"></div>
       <h2>Tu garage está vacío</h2>
-      <p>Importa tu colección o añade tu primer coche favorito.</p>
-      <button class="btn primary" onclick="openEdit()">＋ Añadir coche</button></div>`;
+      <p>Empieza con un coche de la comunidad o agrega el tuyo desde cero.</p>
+      <div class="gm-actions" style="justify-content:center"><button class="btn primary" onclick="openEdit()">＋ Añadir coche</button>${session?"":`<button class="btn" onclick="openAuth('signup')">Crear cuenta</button>`}</div>
+      <div class="gx-sug" id="garageSug"></div></div>`;
+    garageSuggest();
     return;
   }
   if(!list.length){
@@ -3689,7 +3759,7 @@ const DRAFT_RULES=[
 ];
 const niceRound=n=>{ const p=Math.pow(10,Math.floor(Math.log10(n))-1); return Math.round(n/p)*p; };
 function draftStart(){
-  const pool=cars.filter(c=>firstImg(c));
+  const pool=GC().filter(c=>firstImg(c));
   const priced=pool.filter(c=>Number(c.price)>0);
   let budget=0;
   if(priced.length>=8){
@@ -3701,7 +3771,7 @@ function draftStart(){
 }
 function draftDeal(){
   const d=draft; let deck=d.deck.filter(id=>!d.picks.includes(id));
-  if(deck.length<3) deck=gmShuffle(cars.filter(c=>firstImg(c)&&!d.picks.includes(c.id)).map(c=>c.id));
+  if(deck.length<3) deck=gmShuffle(GC().filter(c=>firstImg(c)&&!d.picks.includes(c.id)).map(c=>c.id));
   d.offers=deck.slice(0,3); d.deck=deck.slice(3);
 }
 function draftPick(id){
@@ -3716,7 +3786,7 @@ function draftPick(id){
 }
 function draftReroll(){ const d=draft; if(!d||d.rerolls<1||d.done) return; d.rerolls--; d.deck=[...d.deck,...d.offers]; draftDeal(); renderFive(); }
 function draftScore(d){
-  const p=d.picks.map(id=>cars.find(c=>c.id===id)).filter(Boolean);
+  const p=d.picks.map(id=>GC().find(c=>c.id===id)).filter(Boolean);
   const base=p.length?Math.round(p.reduce((s,c)=>s+avg(c),0)/p.length*10):0;
   const met=d.rules.filter(r=>r.ok(p)).length;
   const spent=p.reduce((s,c)=>s+(Number(c.price)||0),0);
@@ -3749,7 +3819,7 @@ function renderFiveGame(){
   const head=`<div class="gm-head"><div><h3>Garaje de ensueño</h3>
       <p class="lead">Un draft de 5 rondas con tu colección. En cada ronda te tocan 3 coches y te quedas con uno. Respeta el presupuesto y cumple el reto: el puntaje premia la calidad, las reglas cumplidas y lo que te sobre.</p></div>
       ${gmModes("five",[["game","Reto"],["free","Libre"]])}</div>`;
-  if(cars.filter(c=>firstImg(c)).length<8){ v.innerHTML=`<div class="panel gm-panel">${head}<p class="lead">Necesitas al menos 8 coches con foto para jugar.</p></div>`; return; }
+  if(GC().filter(c=>firstImg(c)).length<8){ v.innerHTML=`<div class="panel gm-panel">${head}<p class="lead">Necesitas al menos 8 coches con foto para jugar.</p></div>`; return; }
   if(!draft){
     const b=gmBest("draft").best;
     v.innerHTML=`<div class="panel gm-panel">${head}
@@ -3765,14 +3835,14 @@ function renderFiveGame(){
       </div></div>`;
     return;
   }
-  const d=draft, p=d.picks.map(id=>cars.find(c=>c.id===id)).filter(Boolean);
+  const d=draft, p=d.picks.map(id=>GC().find(c=>c.id===id)).filter(Boolean);
   const spent=p.reduce((s,c)=>s+(Number(c.price)||0),0);
   const pct=d.budget?Math.min(100,spent/d.budget*100):0, over=d.budget&&spent>d.budget;
   const showMoney=!d.hard||d.done;
   const rules=d.rules.map(r=>{ const ok=r.ok(p); const st=d.done?(ok?"ok":"no"):(r.keep?(ok?"ok":"no"):(ok?"ok":"")); return `<li class="${st}">${esc(r.t)}</li>`; }).join("");
   const slots=Array.from({length:d.n},(_,i)=>{ const c=p[i];
     return c?`<div class="gm-slot full">${gmPh(firstImg(c))}<span>${esc(gmName(c))}</span></div>`:`<div class="gm-slot${i===p.length&&!d.done?" next":""}"><b>${i+1}</b></div>`; }).join("");
-  const card=(id,i)=>{ const c=cars.find(x=>x.id===id); if(!c) return "";
+  const card=(id,i)=>{ const c=GC().find(x=>x.id===id); if(!c) return "";
     const after=spent+(Number(c.price)||0), bust=d.budget&&after>d.budget;
     return `<button class="gm-offer" data-id="${c.id}" onclick="draftPick('${c.id}')">
       <div class="ph">${gmPh(firstImg(c))}<span class="gm-key">${i+1}</span></div>
@@ -3821,7 +3891,7 @@ document.addEventListener("keydown",e=>{
 let tq=null, tqSize=15, tqTimed=true;
 const TQ_SECS=6;
 function tqStart(){
-  const pool=gmShuffle(tierFilteredCars().filter(c=>firstImg(c)));
+  const pool=gmShuffle((gmUseFeatured()?GC():tierFilteredCars()).filter(c=>firstImg(c)));
   const list=(tqSize?pool.slice(0,tqSize):pool).map(c=>c.id);
   if(list.length<3){ toast("Necesitas al menos 3 coches con foto"); return; }
   tq={list,i:0,placed:{},timed:tqTimed,missed:[],times:[],t0:Date.now(),done:false};
@@ -3850,7 +3920,7 @@ function tqPlace(k){
 }
 function tqExpected(){
   // el nivel que te "tocaría" según tus calificaciones, con el mismo reparto que el autollenado
-  const ids=tq.list.slice().sort((a,b)=>avg(cars.find(c=>c.id===b))-avg(cars.find(c=>c.id===a)));
+  const ids=tq.list.slice().sort((a,b)=>avg(GC().find(c=>c.id===b))-avg(GC().find(c=>c.id===a)));
   const n=ids.length||1, out={};
   ids.forEach((id,i)=>{ const q=i/n; out[id]=q<0.2?"S":q<0.4?"A":q<0.6?"B":q<0.8?"C":"D"; });
   return out;
@@ -3875,9 +3945,9 @@ function renderTierGame(){
   const head=`<div class="gm-head"><div><h3>Tier list</h3>
       <p class="lead">Contrarreloj: los coches aparecen uno por uno y tienes ${TQ_SECS} segundos para mandarlos a S, A, B, C o D. Al final comparamos tu instinto con tus propias calificaciones.</p></div>
       ${gmModes("tier",[["game","Contrarreloj"],["free","Mi tier list"]])}</div>`;
-  if(!cars.length){ v.innerHTML=`<div class="panel gm-panel">${head}<p class="lead">Añade coches primero.</p></div>`; return; }
-  const tags=[...new Set(cars.flatMap(c=>c.tags||[]))].sort();
-  const eras=ERAS.filter(e=>cars.some(c=>eraOf(c)===e.key));
+  if(!GC().length){ v.innerHTML=`<div class="panel gm-panel">${head}<p class="lead">Añade coches primero.</p></div>`; return; }
+  const tags=[...new Set(GC().flatMap(c=>c.tags||[]))].sort();
+  const eras=ERAS.filter(e=>GC().some(c=>eraOf(c)===e.key));
   if(!tq){
     const b=gmBest("tier-match").best;
     v.innerHTML=`<div class="panel gm-panel">${head}
@@ -3899,9 +3969,9 @@ function renderTierGame(){
     return;
   }
   const board=TIER_DEFS.map(t=>{ const ids=Object.keys(tq.placed).filter(id=>tq.placed[id]===t.k);
-    return `<div class="tq-row"><span class="tq-lab" style="background:${t.c}">${t.k}</span><div class="tq-chips">${ids.map(id=>{ const c=cars.find(x=>x.id===id); return c?`<span class="tq-chip" title="${esc(gmName(c))}">${gmPh(firstImg(c))}</span>`:""; }).join("")}</div></div>`; }).join("");
+    return `<div class="tq-row"><span class="tq-lab" style="background:${t.c}">${t.k}</span><div class="tq-chips">${ids.map(id=>{ const c=GC().find(x=>x.id===id); return c?`<span class="tq-chip" title="${esc(gmName(c))}">${gmPh(firstImg(c))}</span>`:""; }).join("")}</div></div>`; }).join("");
   if(!tq.done){
-    const c=cars.find(x=>x.id===tq.list[tq.i]);
+    const c=GC().find(x=>x.id===tq.list[tq.i]);
     v.innerHTML=`<div class="panel gm-panel">${head}
       <div class="tq-play">
         <div class="tq-stage">
@@ -3916,7 +3986,7 @@ function renderTierGame(){
     tqTick();
     return;
   }
-  const sur=(tq.surprises||[]).map(x=>{ const c=cars.find(y=>y.id===x.id); return c?`<li>${gmPh(firstImg(c))}<div><b>${esc(gmName(c))}</b><span>Lo pusiste en ${x.k}, tus calificaciones dicen ${x.e} (★ ${avg(c).toFixed(1)})</span></div></li>`:""; }).join("");
+  const sur=(tq.surprises||[]).map(x=>{ const c=GC().find(y=>y.id===x.id); return c?`<li>${gmPh(firstImg(c))}<div><b>${esc(gmName(c))}</b><span>Lo pusiste en ${x.k}, tus calificaciones dicen ${x.e} (★ ${avg(c).toFixed(1)})</span></div></li>`:""; }).join("");
   v.innerHTML=`<div class="panel gm-panel">${head}
     <div class="gm-result">
       <div class="gm-grade tq-pct" id="tqPct">${tq.match}%</div>
@@ -3949,14 +4019,14 @@ async function brkStart(){
   if(brkSrc==="catalog"){
     let cat=[]; try{ cat=await loadCatalogIndex(); }catch(e){}
     cat.filter(e=>e.image).forEach((e,i)=>{ items["c"+i]={brand:e.brand,name:e.name,year:e.year,img:e.image,score:null}; });
-  } else cars.filter(c=>firstImg(c)).forEach(c=>{ items[c.id]={brand:c.brand,name:c.name,year:c.year,img:firstImg(c),score:avg(c)}; });
+  } else GC().filter(c=>firstImg(c)).forEach(c=>{ items[c.id]={brand:c.brand,name:c.name,year:c.year,img:firstImg(c),score:avg(c)}; });
   let ids=gmShuffle(Object.keys(items));
   if(brkSize) ids=ids.slice(0,brkSize);
   if(ids.length<2){ toast("Necesitas al menos 2 coches con foto"); return; }
   brk={round:ids,next:[],match:0,roundNo:1,podium:[],history:[],total:ids.length,items,played:0,matches:ids.length-1,upsets:0};
   renderBracket();
 }
-const brkItem=id=>(brk&&brk.items&&brk.items[id])||(()=>{ const c=cars.find(x=>x.id===id); return c?{brand:c.brand,name:c.name,year:c.year,img:firstImg(c),score:avg(c)}:null; })();
+const brkItem=id=>(brk&&brk.items&&brk.items[id])||(()=>{ const c=GC().find(x=>x.id===id); return c?{brand:c.brand,name:c.name,year:c.year,img:firstImg(c),score:avg(c)}:null; })();
 const brkRoundName=n=>n<=2?"Final":n<=4?"Semifinal":n<=8?"Cuartos de final":n<=16?"Octavos de final":"Ronda de "+n;
 function renderBracket(){
   const v=$("#actView");
@@ -4144,7 +4214,7 @@ const HL_Q=[
 ];
 function hlStart(){ hl={score:0,lives:3,streak:0,best:gmBest("duel").best,round:0,timed:hlTimed,over:false}; hlDeal(); }
 function hlDeal(){
-  const pool=cars.filter(c=>firstImg(c));
+  const pool=GC().filter(c=>firstImg(c));
   const qs=HL_Q.filter(q=>pool.filter(q.ok).length>=2);
   if(!qs.length){ hl.over=true; renderTourney(); return; }
   for(let tries=0;tries<60;tries++){
@@ -4168,7 +4238,7 @@ function hlTick(){
 function hlAnswer(i){
   if(!hl||hl.ans||hl.over) return;
   clearInterval(hlTick.t);
-  const A=cars.find(c=>c.id===hl.a), B=cars.find(c=>c.id===hl.b), va=hl.q.val(A), vb=hl.q.val(B);
+  const A=GC().find(c=>c.id===hl.a), B=GC().find(c=>c.id===hl.b), va=hl.q.val(A), vb=hl.q.val(B);
   const right=hl.q.win(va,vb)?0:1, ok=i===right;
   hl.ans={i,right,ok};
   if(ok){ hl.score+=1+(hl.streak>=4?1:0); hl.streak++; } else { hl.lives--; hl.streak=0; }
@@ -4185,7 +4255,7 @@ function renderTourneyGame(){
   const head=`<div class="gm-head"><div><h3>Duelos</h3>
       <p class="lead">Más o menos: dos coches de la colección y una pregunta — ¿cuál es más antiguo, cuál vale más, cuál tiene mejor calificación? Tienes 3 vidas. Con racha de 5, cada acierto vale doble.</p></div>
       ${gmModes("tourney",[["game","Más o menos"],["fav","Mi favorito"]])}</div>`;
-  if(cars.filter(c=>firstImg(c)).length<4){ v.innerHTML=`<div class="panel gm-panel">${head}<p class="lead">Necesitas al menos 4 coches con foto.</p></div>`; return; }
+  if(GC().filter(c=>firstImg(c)).length<4){ v.innerHTML=`<div class="panel gm-panel">${head}<p class="lead">Necesitas al menos 4 coches con foto.</p></div>`; return; }
   if(!hl){
     const b=gmBest("duel").best;
     v.innerHTML=`<div class="panel gm-panel">${head}
@@ -4206,7 +4276,7 @@ function renderTourneyGame(){
         </div></div></div>`;
     return;
   }
-  const A=cars.find(c=>c.id===hl.a), B=cars.find(c=>c.id===hl.b), a=hl.ans;
+  const A=GC().find(c=>c.id===hl.a), B=GC().find(c=>c.id===hl.b), a=hl.ans;
   const card=(c,i)=>{ const st=a?(i===a.right?"win":(i===a.i?"lose":"")):"";
     return `<button class="gm-vs-card ${st}" onclick="hlAnswer(${i})" ${a?"disabled":""}>
       <div class="ph">${gmPh(firstImg(c))}<span class="gm-key">${i?"→":"←"}</span>${a?`<span class="hl-val" id="hlV${i}">${hl.q.fmt(0)}</span>`:""}</div>
@@ -4227,6 +4297,38 @@ document.addEventListener("keydown",e=>{
   else if(hl.ans&&(e.key==="Enter"||e.key===" ")){ e.preventDefault(); hlNext(); }
 });
 
+/* ---------- COLECCIÓN DE LA SEMANA: para jugar sin tener coches ---------- */
+let gmFeatured=null, gmFeatLoading=false;
+function gmUseFeatured(){ return !viewing && !!gmFeatured && cars.filter(c=>firstImg(c)).length<8; }
+function GC(){ return gmUseFeatured()?gmFeatured.cars:cars; }
+async function gmLoadFeatured(){
+  if(gmFeatured||gmFeatLoading||!supa) return; gmFeatLoading=true;
+  try{
+    const {data:profs}=await supa.from("profiles").select("user_id,username").eq("is_public",true).limit(200);
+    const ids=(profs||[]).map(p=>p.user_id);
+    const {data:gs}=ids.length?await supa.from("garages").select("user_id,data").in("user_id",ids):{data:[]};
+    // colecciones públicas con 8+ coches con foto; rota una por semana
+    const ok=(gs||[]).map(g=>({username:(profs.find(p=>p.user_id===g.user_id)||{}).username,cars:((g.data&&g.data.cars)||[]).map(normalizeCar).filter(c=>firstImg(c))}))
+      .filter(x=>x.username&&x.cars.length>=8).sort((a,b)=>a.username.localeCompare(b.username));
+    if(ok.length){ const wk=Math.floor((Date.now()/864e5+3)/7); gmFeatured=ok[wk%ok.length]; }
+  }catch(e){}
+  gmFeatLoading=false;
+  if(gmFeatured&&gmUseFeatured()&&$("#tab-activities")?.style.display!=="none") renderAct();
+}
+function gmFeatBanner(){
+  const host=document.querySelector("#actView .panel"); if(!host) return;
+  host.querySelector(".gm-feat")?.remove();
+  if(!gmUseFeatured()) return;
+  const f=gmFeatured;
+  host.insertAdjacentHTML("afterbegin",`<div class="gm-feat">
+    <div><div class="gm-start-k">Colección de la semana</div>
+      <div>Juegas con los ${f.cars.length} coches de <a href="#u/${encodeURIComponent(f.username)}">@${esc(f.username)}</a>.
+      ${session?"Agrega 8 coches con foto a tu garage para jugar con los tuyos.":"Crea tu cuenta para jugar con tu colección y entrar al ranking."}</div></div>
+    ${session?`<button class="btn sm" onclick="showTab('garage')">Ir a mi garage</button>`:`<button class="btn sm primary" onclick="openAuth('signup')">Crear cuenta</button>`}</div>`);
+  // con una colección ajena no se guarda nada en tu garage
+  host.querySelectorAll('[onclick^="draftSave"],[onclick^="tqApply"]').forEach(b=>b.remove());
+}
+["renderFive","renderTier","renderBracket","renderTourney"].forEach(n=>{ const f=window[n]; window[n]=function(){ if(!gmFeatured&&!viewing&&cars.filter(c=>firstImg(c)).length<8) gmLoadFeatured(); const r=f.apply(this,arguments); gmFeatBanner(); return r; }; });
 /* ---------- despachadores: reto o modo libre ---------- */
 function renderFive(){ if(actMode.five==="free") renderFiveFree(); else { renderFiveGame(); if(!draft||draft.done) gmAttachBoard("draft"); } }
 function renderTier(){ if(actMode.tier==="free") renderTierFree(); else { renderTierGame(); if(!tq||tq.done) gmAttachBoard("tier"); } }
@@ -5596,7 +5698,7 @@ async function renderDiscover(){
       const avgRating=rated.length?(rated.reduce((a,b)=>a+b,0)/rated.length):0;
       const pr=gmap[p.user_id]&&gmap[p.user_id].profile;
       return {username:p.username, count:cars.length, totalVal, avgRating, img:((pr&&pr.img)||cars.map(firstImg).find(Boolean)||""), av:(pr&&pr.img)||"", car:(pr&&pr.car)||""};
-    }).sort((a,b)=>b.count-a.count);
+    }).filter(d=>d.count>0).sort((a,b)=>b.count-a.count);
     renderDiscoverCards(discoverData);
   }catch(e){ box.innerHTML='<p style="color:var(--accent)">Error al cargar.</p>'; }
 }
@@ -6186,6 +6288,45 @@ async function delStory(id){ if(!confirm("¿Eliminar tu historia?"))return; try{
    HOME (portada estilo galería) — coches recientes + historias + accesos
    ====================================================================== */
 let homeCars=[], homeStories=[];
+let communityCache=null;
+async function communityData(){
+  if(communityCache&&Date.now()-communityCache.t<120000) return communityCache;
+  const {data:profs}=await supa.from("profiles").select("user_id,username").eq("is_public",true).limit(300);
+  const ids=(profs||[]).map(p=>p.user_id);
+  const {data:gs}=ids.length?await supa.from("garages").select("user_id,data").in("user_id",ids):{data:[]};
+  const cols=(gs||[]).map(g=>{ const c=((g.data&&g.data.cars)||[]); return {username:(profs.find(p=>p.user_id===g.user_id)||{}).username,cars:c,profile:g.data&&g.data.profile,value:c.reduce((a,x)=>a+(Number(x.price)||0),0)}; }).filter(x=>x.username&&x.cars.length);
+  let stories=0; try{ const r=await supa.from("stories").select("id",{count:"exact",head:true}); stories=r.count||0; }catch(e){}
+  communityCache={t:Date.now(),cols,stories,cars:cols.reduce((a,x)=>a+x.cars.length,0),value:cols.reduce((a,x)=>a+x.value,0)};
+  return communityCache;
+}
+async function homeExtras(){
+  if(!supa) return;
+  let d=null; try{ d=await communityData(); }catch(e){ return; }
+  const st=$("#homeStats");
+  if(st) st.innerHTML=[[d.cols.length,"coleccionistas"],[d.cars,"coches en colecciones"],[gmUsd(d.value),"en valor estimado"],[d.stories,"historias"]]
+    .map(([v,k])=>`<div class="hm-stat"><b>${typeof v==="number"?v.toLocaleString("en-US"):v}</b><span>${k}</span></div>`).join("");
+  // colección destacada: la de la semana (la misma con la que se juega sin cuenta)
+  await gmLoadFeatured();
+  const f=gmFeatured||null, fc=f&&d.cols.find(c=>c.username===f.username), box=$("#homeFeat");
+  if(box&&fc){
+    const cover=(fc.profile&&fc.profile.img)||fc.cars.map(firstImg).find(Boolean)||"";
+    const top=fc.cars.slice().sort((a,b)=>avg(b)-avg(a)).slice(0,3);
+    box.innerHTML=`<article class="hm-feat">
+      <div class="gm-start-k">Colección de la semana</div>
+      <a class="hm-feat-ph" href="#u/${encodeURIComponent(fc.username)}">${gmPh(cover)}</a>
+      <div class="hm-feat-row"><div><h3>@${esc(fc.username)}</h3><div class="hm-feat-m">${fc.cars.length} coches · ${gmUsd(fc.value)}</div></div>${plateSVG(plateText(fc.username),"plate")}</div>
+      <div class="hm-feat-top">${top.map(c=>`<span>${gmPh(firstImg(c))}<i>${esc(gmName(c))}</i></span>`).join("")}</div>
+      <div class="gm-actions" style="margin-top:6px"><a class="btn primary" href="#u/${encodeURIComponent(fc.username)}">Ver la colección</a><button class="btn" onclick="currentAct='five';showTab('activities')">Jugar con ella</button></div>
+    </article>`;
+  }
+  // reto de la semana: el mejor draft de la semana
+  const wk=$("#homeWeek"); if(!wk) return;
+  let rows=[]; try{ rows=await gmFetchBoard("draft","week"); }catch(e){}
+  wk.innerHTML=`<article class="hm-week"><div class="gm-start-k">Reto de la semana</div>
+    <h3>Garaje de ensueño</h3><p>Cinco rondas, un presupuesto y dos reglas. ¿Quién arma el mejor garaje esta semana?</p>${f?`<div class="hm-wk-cars">${gmShuffle(f.cars).slice(0,3).map((c,i)=>`<span>${gmPh(firstImg(c))}<i>${i+1}</i></span>`).join("")}</div>`:""}
+    <ol class="gm-board-l">${rows.slice(0,3).map((r,i)=>`<li><span class="gm-b-pos">${i+1}</span>${r.avatar?`<img class="av" src="${esc(r.avatar)}" alt="">`:`<span class="av av-empty"></span>`}<a class="gm-b-user" href="#u/${encodeURIComponent(r.username)}">@${esc(r.username)}</a><b>${r.val} pts</b></li>`).join("")||`<li class="gm-note">Nadie ha jugado esta semana. El primero se queda con el primer lugar.</li>`}</ol>
+    <div class="gm-actions"><button class="btn primary" onclick="currentAct='five';showTab('activities')">Jugar el reto</button></div></article>`;
+}
 async function renderHome(){
   const v=$("#tab-home"); if(!v)return;
   v.innerHTML=`
@@ -6194,11 +6335,11 @@ async function renderHome(){
         <div class="cine-veil" id="heroLoading" aria-hidden="true"><span>Cargando el estudio</span></div>
       </div>
       <div class="cine-copy">
-        <h1>Tu garage de <em>clásicos</em>, en línea de salida.</h1>
-        <p>Publica tus autos, compara especificaciones y sigue lo que se mueve en el mercado de clásicos.</p>
+        <h1>El club de los que <em>coleccionan</em> clásicos.</h1>
+        <p>Arma tu garage soñado, califica cada coche, compite con la comunidad y presume tu placa de coleccionista.</p>
         <div class="cta">
-          <button class="btn primary" onclick="showTab('garage')">Mi garage</button>
-          <button class="btn" onclick="showTab('market')">Marketplace</button>
+          ${session?`<button class="btn primary" onclick="showTab('garage')">Mi garage</button>`:`<button class="btn primary" onclick="openAuth('signup')">Crear mi garage</button>`}
+          <button class="btn" onclick="currentAct='zoom';showTab('activities')">Jugar sin cuenta</button>
         </div>
       </div>
       <aside class="cine-plate" aria-label="Ficha">
@@ -6207,6 +6348,16 @@ async function renderHome(){
         <div class="cp-hint">Arrastra para recorrer el estudio</div>
       </aside>
     </section>
+    <section class="hm-stats" id="homeStats" aria-label="La comunidad en cifras"></section>
+    ${session?"":`<section class="home-sec hm-how" aria-labelledby="how-h">
+      <div class="home-sechead"><h2 id="how-h">Cómo funciona</h2></div>
+      <ol class="hm-steps">
+        <li><span class="hm-n">01</span><b>Arma tu garage</b><p>Agrega coches del catálogo de la comunidad en un toque, con sus versiones, colores y fotos. O súbelos desde cero.</p></li>
+        <li><span class="hm-n">02</span><b>Califica y ordena</b><p>Seis criterios por coche, tu tier list, tu Top 100 y un catálogo en PDF para presumir.</p></li>
+        <li><span class="hm-n">03</span><b>Compite y presume</b><p>Juegos, ranking semanal, Spec Battle y tu placa personal de coleccionista.</p><div class="hm-plate">${plateSVG("TU/PLACA","plate")}</div></li>
+      </ol>
+    </section>`}
+    <div class="home-sec hm-duo"><div id="homeFeat"></div><div id="homeWeek"></div></div>
     <div class="home-sec">
       <div class="home-sechead"><h2>Publicados recientemente</h2><button class="link" onclick="showTab('market')">Ver todo →</button></div>
       <div id="home-cars" class="grid">${skelCards(6)}</div>
@@ -6222,7 +6373,8 @@ async function renderHome(){
           <div class="trif-player"><iframe src="https://www.youtube-nocookie.com/embed/videoseries?list=UUQlYk6kGVgBBQlusZYBkGYA" title="Trifoglio Podcast" loading="lazy" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
           <div class="trif-side">
             <p class="trif-lead">Tres amigos apasionados por los autos: historias, debates y cultura automotriz.</p>
-            <p class="trif-sub">Nuevos episodios seguido, en YouTube.</p>
+            <p class="trif-sub">Nuevos episodios seguido, en YouTube. ¿Le ganas a los de Trifoglio adivinando coches por un detalle?</p>
+            <button class="btn" onclick="currentAct='zoom';showTab('activities')">Jugar ¿Qué coche es?</button>
             <a class="btn primary" href="https://www.youtube.com/@TrifoglioPodcast?sub_confirmation=1" target="_blank" rel="noopener noreferrer">Suscríbete en YouTube</a>
             <nav class="trif-links" aria-label="Trifoglio en redes">
               <a href="https://www.youtube.com/@TrifoglioPodcast" target="_blank" rel="noopener noreferrer"><span>Ver el canal</span><span aria-hidden="true">↗</span></a>
@@ -6244,13 +6396,14 @@ async function renderHome(){
       <div class="home-sechead"><h2>Explora</h2></div>
       <div class="home-tiles">
         <button class="home-tile" onclick="showTab('battle')"><span class="ic"></span><span class="t">Spec Battle</span><span class="d">Enfrenta dos coches y elige al ganador.</span></button>
-        <button class="home-tile" onclick="showTab('market')"><span class="ic"></span><span class="t">Marketplace</span><span class="d">Añade coches que la comunidad publicó.</span></button>
-        <button class="home-tile" onclick="showTab('discover')"><span class="ic"></span><span class="t">Descubrir</span><span class="d">Colecciones de la comunidad.</span></button>
-        <button class="home-tile" onclick="showTab('activities')"><span class="ic"></span><span class="t">Actividades</span><span class="d">Tier lists, torneos y tu Top 100.</span></button>
+        <button class="home-tile" onclick="showTab('market')"><span class="ic"></span><span class="t">Mercado</span><span class="d">Añade coches que la comunidad publicó.</span></button>
+        <button class="home-tile" onclick="showTab('discover')"><span class="ic"></span><span class="t">Comunidad</span><span class="d">Colecciones y coleccionistas.</span></button>
+        <button class="home-tile" onclick="showTab('activities')"><span class="ic"></span><span class="t">Juegos</span><span class="d">Draft, tier list, torneo, duelos y quiz.</span></button>
       </div>
     </div>`;
   if(window.initHeroShowroom) window.initHeroShowroom();
   revealScan();
+  homeExtras();
   if(!supa){ const hc=$("#home-cars"); if(hc)hc.innerHTML='<p style="color:var(--ink-faint);font-size:13px">Conéctate para ver lo más reciente.</p>'; const hs=$("#home-stories"); if(hs)hs.innerHTML=''; renderMarketVideos(); return; }
   // --- coches publicados recientemente (catálogo) ---
   try{
@@ -6490,10 +6643,11 @@ window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredP
     <div class="colo-wm"><span class="logo" translate="no"><svg class="plate" viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" translate="no"><rect x="1.5" y="1.5" width="397" height="97" rx="11" fill="var(--ink)"/><rect x="7" y="7" width="386" height="86" rx="7.5" fill="none" stroke="var(--bg)" stroke-width="3"/><rect x="10.5" y="10.5" width="379" height="79" rx="5" fill="none" stroke="var(--bg)" stroke-opacity=".14" stroke-width="1"/><path d="M14.5 7 H64 V93 H14.5 A7.5 7.5 0 0 1 7 85.5 V14.5 A7.5 7.5 0 0 1 14.5 7 Z" fill="var(--accent)"/><circle cx="36.00" cy="26.00" r="1.9" fill="var(--bg)"/><circle cx="42.47" cy="28.10" r="1.9" fill="var(--bg)"/><circle cx="46.46" cy="33.60" r="1.9" fill="var(--bg)"/><circle cx="46.46" cy="40.40" r="1.9" fill="var(--bg)"/><circle cx="42.47" cy="45.90" r="1.9" fill="var(--bg)"/><circle cx="36.00" cy="48.00" r="1.9" fill="var(--bg)"/><circle cx="29.53" cy="45.90" r="1.9" fill="var(--bg)"/><circle cx="25.54" cy="40.40" r="1.9" fill="var(--bg)"/><circle cx="25.54" cy="33.60" r="1.9" fill="var(--bg)"/><circle cx="29.53" cy="28.10" r="1.9" fill="var(--bg)"/><text x="36" y="80" text-anchor="middle" fill="var(--bg)" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="15" letter-spacing="1">MX</text><text x="229" y="23" text-anchor="middle" fill="var(--bg)" fill-opacity=".62" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="8.5" letter-spacing="3.2">CARCOLLECTION · CLUB</text><circle cx="84" cy="50" r="5.2" fill="var(--bg)" fill-opacity=".16" stroke="var(--bg)" stroke-opacity=".35" stroke-width="1"/><path d="M80.8 51.4 L87.2 48.6" stroke="var(--bg)" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/><circle cx="374" cy="50" r="5.2" fill="var(--bg)" fill-opacity=".16" stroke="var(--bg)" stroke-opacity=".35" stroke-width="1"/><path d="M370.8 51.4 L377.2 48.6" stroke="var(--bg)" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/><text x="229" y="75" text-anchor="middle" fill="var(--bg)" font-family="Archivo, sans-serif" font-weight="700" font-stretch="78%" font-size="64" letter-spacing="4">CC/00</text></svg><span class="logo-w">carcollection<em>.</em></span></span></div>
     <nav class="colo-nav" aria-label="Secciones">
       <button onclick="showTab('garage');scrollTo(0,0)">Garage</button>
-      <button onclick="showTab('market');scrollTo(0,0)">Marketplace</button>
-      <button onclick="showTab('historia');scrollTo(0,0)">Historia</button>
+      <button onclick="showTab('activities');scrollTo(0,0)">Juegos</button>
+      <button onclick="showTab('market');scrollTo(0,0)">Mercado</button>
+      <button onclick="showTab('historia');scrollTo(0,0)">Historias</button>
       <button onclick="showTab('battle');scrollTo(0,0)">Spec Battle</button>
-      <button onclick="showTab('discover');scrollTo(0,0)">Descubrir</button>
+      <button onclick="showTab('discover');scrollTo(0,0)">Comunidad</button>
     </nav>
     <p class="colo-note">Una colección hecha por y para gente que ama los autos. Las fotos y las historias son de la comunidad.</p>
     <p class="colo-credit" id="footCredit"></p>
@@ -6618,11 +6772,11 @@ if(document.readyState==="loading") document.addEventListener("DOMContentLoaded"
   <div class="mh"><h3>Más</h3><button class="iconbtn" onclick="dismissTop()" aria-label="Cerrar">×</button></div>
   <div class="mb">
     <div class="more-list">
-      <button data-go="irl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3v6.5M4.5 15.5l5.4-2.3M19.5 15.5l-5.4-2.3"/></svg>Manejados IRL</button>
-      <button data-go="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v6H4z"/><path d="M6 10v10h12V10"/><path d="M10 14h4"/></svg>Marketplace</button>
+      <button data-go="irl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3v6.5M4.5 15.5l5.4-2.3M19.5 15.5l-5.4-2.3"/></svg>Manejados</button>
+      <button data-go="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v6H4z"/><path d="M6 10v10h12V10"/><path d="M10 14h4"/></svg>Mercado</button>
       <button data-go="battle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 14 10M14 10l2-6 4 4-6 2"/><path d="M20 20 10 10M10 10 8 4 4 8l6 2"/></svg>Spec Battle</button>
       <button data-go="historia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11l3 3v13H5z"/><path d="M9 10h7M9 14h7M9 18h4"/></svg>Historias</button>
-      <button data-go="discover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>Descubrir</button>
+      <button data-go="discover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>Comunidad</button>
     </div>
     <div class="more-row"><span>Tema</span><div class="themes" id="moreThemes"></div></div>
     <div class="more-row"><span>Idioma</span><button class="btn sm" onclick="document.getElementById('langToggle').click()">Español / English</button></div>

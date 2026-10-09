@@ -6,23 +6,26 @@
 <!-- Seguridad: solo se cargan scripts propios y del CDN fijado; conexiones solo a Supabase, Wikipedia/Commons y el CDN -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' https:; connect-src 'self' blob: data: https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://*.wikipedia.org https://commons.wikimedia.org https://upload.wikimedia.org https://thumb.wikimedia.org; frame-src https://www.youtube-nocookie.com https://www.youtube.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>Mi Garage — Colección de Coches</title>
+<title>Car Collection — Colecciona, califica y compite con clásicos</title>
 <meta name="description" content="Colecciona, califica y comparte autos clásicos. Publica tu garage, lee historias de la comunidad y sigue el mercado de clásicos.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Car Collection">
-<meta property="og:title" content="Mi Garage · Car Collection">
+<meta property="og:title" content="Car Collection — el club de coleccionistas de autos">
 <meta property="og:description" content="Colecciona, califica y comparte autos clásicos con la comunidad.">
 <meta property="og:url" content="https://carcollection.app/">
-<meta property="og:image" content="https://carcollection.app/hero1.jpg">
+<meta property="og:image" content="https://carcollection.app/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f2219">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="icon" href="favicon-64.png">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" href="favicon-64.png" sizes="64x64">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Mi Garage">
+<meta name="apple-mobile-web-app-title" content="Car Collection">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -1693,7 +1696,7 @@
     header.top .topbar{flex-wrap:nowrap;padding:10px 16px;gap:10px}
     header.top .brand{min-width:max-content;flex:1 1 auto;gap:0}
     header.top .authArea{margin-left:auto}
-    header.top .brand .wm{font-size:24px;white-space:nowrap}
+    header.top .logo{font-size:20px}
     .brand .sub,header.top .themes,header.top #langToggle,header.top .tabs{display:none}
     header.top .qs-btn{font-size:0;padding:9px;gap:0;display:inline-flex}
     header.top .qs-btn kbd{display:none}
@@ -1730,6 +1733,17 @@
     .btn{border-color:var(--ink)}
   }
   :root{--ic-search:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'><circle cx='11' cy='11' r='7'/><path d='m20 20-3.5-3.5'/></svg>")}
+  /* logo: placa de matrícula + "carcollection." con letra fija (no cambia con el tema) */
+  .logo{display:inline-flex;align-items:center;gap:.42em;font-size:26px;color:var(--ink);text-decoration:none;white-space:nowrap}
+  .logo .plate{height:1.02em;width:auto;flex-shrink:0;display:block}
+  .plate,.plate text{font-style:normal;text-transform:none}
+  .logo-w{font-family:"Archivo",system-ui,sans-serif;font-stretch:100%;font-weight:700;font-style:normal;letter-spacing:-.035em;font-size:1em;line-height:1;text-transform:none;color:var(--ink)}
+  .logo-w em{font-style:normal;color:var(--accent)}
+  a.logo:hover .plate{transform:rotate(-2deg)}
+  .logo .plate{transition:transform .3s cubic-bezier(.16,1,.3,1)}
+  .colo-wm .logo{font-size:46px}
+  .ch-plate .plate{height:36px;width:auto;display:block;margin-top:10px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35))}
+  @media(max-width:760px){ .colo-wm .logo{font-size:30px} .ch-plate .plate{height:30px} }
   /* foto de perfil */
   .av{width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid var(--line);vertical-align:middle}
   .av-lg{width:44px;height:44px}
@@ -1771,8 +1785,7 @@
 <header class="top">
   <div class="topbar">
     <div class="brand">
-      <div class="wm">MI <b>GARAGE</b></div>
-      <div class="sub">colección personal</div>
+      <a class="logo" href="#" onclick="showTab('home');return false" aria-label="Car Collection, inicio" translate="no"><svg class="plate" viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" translate="no"><rect x="1.5" y="1.5" width="397" height="97" rx="11" fill="var(--ink)"/><rect x="7" y="7" width="386" height="86" rx="7.5" fill="none" stroke="var(--bg)" stroke-width="4"/><path d="M14.5 7 H64 V93 H14.5 A7.5 7.5 0 0 1 7 85.5 V14.5 A7.5 7.5 0 0 1 14.5 7 Z" fill="var(--accent)"/><circle cx="36" cy="37" r="9" fill="none" stroke="var(--bg)" stroke-width="3"/><text x="36" y="81" text-anchor="middle" fill="var(--bg)" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="17" letter-spacing="1">MX</text><text x="229" y="74" text-anchor="middle" fill="var(--bg)" font-family="Archivo, sans-serif" font-weight="800" font-stretch="82%" font-size="67.8" letter-spacing="3">CC/00</text></svg><span class="logo-w">carcollection<em>.</em></span></a>
     </div>
     <div class="themes" id="themes"></div>
     <button class="btn sm qs-btn" onclick="openQS()" title="Buscar (Ctrl+K)">Buscar <kbd>/</kbd></button>
@@ -3559,7 +3572,7 @@ function clearTier(){if(confirm("¿Vaciar la tier list (de los coches mostrados)
 function shareCombo(){
   const picks=fivePick.filter(Boolean).map(id=>{const c=cars.find(x=>x.id===id);return `${c.brand||""} ${c.name||""}`.trim();});
   if(!picks.length){toast("Arma un combo primero");return;}
-  const txt=`Mi Garage de 5:\n`+picks.map((p,i)=>`${i+1}. ${p}`).join("\n");
+  const txt=`Mi garaje de ensueño · Car Collection\n`+picks.map((p,i)=>`${i+1}. ${p}`).join("\n");
   if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>toast("Copiado al portapapeles"));}
   else toast(txt);
 }
@@ -4280,6 +4293,26 @@ async function collectorRecords(uid){
   try{ const {data}=await supa.from("game_scores").select("game,score").eq("user_id",uid); rows=data||[]; }catch(e){}
   recCache[uid]={t:Date.now(),rows}; return rows;
 }
+// placa personal: cada coleccionista tiene la suya (las letras salen de su usuario)
+function plateText(u){ const t=String(u||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8)||"CC01"; return t.length>4?t.slice(0,t.length-Math.floor(t.length/2))+"·"+t.slice(t.length-Math.floor(t.length/2)):t; }
+// la placa de la marca: larga (4:1), completa o compacta; colores del tema
+function ccPlate(text="CC/00",{full=true,band="MX",legend="CARCOLLECTION · CLUB",c={},cls="plate"}={}){
+  const ink=c.ink||"var(--ink)", bg=c.bg||"var(--bg)", ac=c.accent||"var(--accent)";
+  const n=text.replace(/[·\/\s]/g,"").length+(text.match(/[\/·]/g)||[]).length*.5;
+  const fs=+Math.min(64,300/(n*.62)).toFixed(1), cx=229;
+  const dots=Array.from({length:10},(_,i)=>{ const a=i/10*Math.PI*2-Math.PI/2; return `<circle cx="${(36+Math.cos(a)*11).toFixed(2)}" cy="${(37+Math.sin(a)*11).toFixed(2)}" r="1.9" fill="${bg}"/>`; }).join("");
+  const screw=x=>`<circle cx="${x}" cy="50" r="5.2" fill="${bg}" fill-opacity=".16" stroke="${bg}" stroke-opacity=".35" stroke-width="1"/><path d="M${x-3.2} 51.4 L${x+3.2} 48.6" stroke="${bg}" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/>`;
+  return `<svg class="${cls}" viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" translate="no">`+
+    `<rect x="1.5" y="1.5" width="397" height="97" rx="11" fill="${ink}"/>`+
+    `<rect x="7" y="7" width="386" height="86" rx="7.5" fill="none" stroke="${bg}" stroke-width="${full?3:4}"/>`+
+    (full?`<rect x="10.5" y="10.5" width="379" height="79" rx="5" fill="none" stroke="${bg}" stroke-opacity=".14" stroke-width="1"/>`:"")+
+    `<path d="M14.5 7 H64 V93 H14.5 A7.5 7.5 0 0 1 7 85.5 V14.5 A7.5 7.5 0 0 1 14.5 7 Z" fill="${ac}"/>`+
+    (full?dots:`<circle cx="36" cy="37" r="9" fill="none" stroke="${bg}" stroke-width="3"/>`)+
+    `<text x="36" y="${full?80:81}" text-anchor="middle" fill="${bg}" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="${full?15:17}" letter-spacing="1">${band}</text>`+
+    (full?`<text x="${cx}" y="23" text-anchor="middle" fill="${bg}" fill-opacity=".62" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="8.5" letter-spacing="3.2">${legend}</text>`+screw(84)+screw(374):"")+
+    `<text x="${cx}" y="${full?75:74}" text-anchor="middle" fill="${bg}" font-family="Archivo, sans-serif" font-weight="${full?700:800}" font-stretch="${full?78:82}%" font-size="${full?fs:+(fs*1.06).toFixed(1)}" letter-spacing="${full?4:3}">${text}</text></svg>`;
+}
+function plateSVG(text,cls){ return ccPlate(text,{full:true,cls:cls||"plate"}); }
 function renderCollectorHead(){
   const el=$("#collectorHead"); if(!el) return;
   const uname=viewing?viewing.username:(session&&myProfile?myProfile.username:"");
@@ -4298,6 +4331,7 @@ function renderCollectorHead(){
         ${avatarUrl()?`<img class="ch-av" src="${esc(avatarUrl())}" alt="">`:`<span class="ch-av ch-av-empty">${esc(uname.slice(0,1).toUpperCase())}</span>`}
         <div><div class="ch-k">${mine?"Tu perfil de coleccionista":"Coleccionista"}</div>
           <h2 class="ch-name">@${esc(uname)}</h2>
+          <div class="ch-plate" title="Placa de coleccionista">${plateSVG(plateText(uname),"plate")}</div>
           <div class="ch-meta">${sinceTxt?`<span>Colección desde ${esc(sinceTxt)}</span>`:""}${profile&&profile.car?`<span>Foto: ${esc(profile.car)}</span>`:""}</div></div>
       </div>
       ${mine?`<div class="ch-acts"><button class="btn sm" onclick="openAvatarPicker()">${avatarUrl()?"Cambiar foto":"Elegir foto de perfil"}</button><button class="btn sm ghost" onclick="copyMyLink()">Mi enlace</button></div>`:""}
@@ -6393,7 +6427,7 @@ function showInstall(kind){
   if(pwaStandalone()) return;
   try{ if(localStorage.getItem("pwaHide")) return; }catch(e){}
   if(kind==="android"){
-    bar.innerHTML='<span>Instala <b>Mi Garage</b> en tu pantalla</span><button class="btn primary sm" id="pwaInstall">Instalar</button><button class="btn sm ghost" id="pwaClose">×</button>';
+    bar.innerHTML='<span>Instala <b>Car Collection</b> en tu pantalla</span><button class="btn primary sm" id="pwaInstall">Instalar</button><button class="btn sm ghost" id="pwaClose">×</button>';
   }else{
     bar.innerHTML='<span>Instálala: toca <b>Compartir</b> y “<b>Agregar a inicio</b>”</span><button class="btn sm ghost" id="pwaClose">×</button>';
   }
@@ -6453,7 +6487,7 @@ window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredP
 <button class="totop" id="toTop" aria-label="Volver arriba" onclick="scrollTo({top:0,behavior:'smooth'})">↑</button>
 <footer class="colophon">
   <div class="colo-in">
-    <div class="colo-wm">Mi <b>Garage</b></div>
+    <div class="colo-wm"><span class="logo" translate="no"><svg class="plate" viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" translate="no"><rect x="1.5" y="1.5" width="397" height="97" rx="11" fill="var(--ink)"/><rect x="7" y="7" width="386" height="86" rx="7.5" fill="none" stroke="var(--bg)" stroke-width="3"/><rect x="10.5" y="10.5" width="379" height="79" rx="5" fill="none" stroke="var(--bg)" stroke-opacity=".14" stroke-width="1"/><path d="M14.5 7 H64 V93 H14.5 A7.5 7.5 0 0 1 7 85.5 V14.5 A7.5 7.5 0 0 1 14.5 7 Z" fill="var(--accent)"/><circle cx="36.00" cy="26.00" r="1.9" fill="var(--bg)"/><circle cx="42.47" cy="28.10" r="1.9" fill="var(--bg)"/><circle cx="46.46" cy="33.60" r="1.9" fill="var(--bg)"/><circle cx="46.46" cy="40.40" r="1.9" fill="var(--bg)"/><circle cx="42.47" cy="45.90" r="1.9" fill="var(--bg)"/><circle cx="36.00" cy="48.00" r="1.9" fill="var(--bg)"/><circle cx="29.53" cy="45.90" r="1.9" fill="var(--bg)"/><circle cx="25.54" cy="40.40" r="1.9" fill="var(--bg)"/><circle cx="25.54" cy="33.60" r="1.9" fill="var(--bg)"/><circle cx="29.53" cy="28.10" r="1.9" fill="var(--bg)"/><text x="36" y="80" text-anchor="middle" fill="var(--bg)" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="15" letter-spacing="1">MX</text><text x="229" y="23" text-anchor="middle" fill="var(--bg)" fill-opacity=".62" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="8.5" letter-spacing="3.2">CARCOLLECTION · CLUB</text><circle cx="84" cy="50" r="5.2" fill="var(--bg)" fill-opacity=".16" stroke="var(--bg)" stroke-opacity=".35" stroke-width="1"/><path d="M80.8 51.4 L87.2 48.6" stroke="var(--bg)" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/><circle cx="374" cy="50" r="5.2" fill="var(--bg)" fill-opacity=".16" stroke="var(--bg)" stroke-opacity=".35" stroke-width="1"/><path d="M370.8 51.4 L377.2 48.6" stroke="var(--bg)" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/><text x="229" y="75" text-anchor="middle" fill="var(--bg)" font-family="Archivo, sans-serif" font-weight="700" font-stretch="78%" font-size="64" letter-spacing="4">CC/00</text></svg><span class="logo-w">carcollection<em>.</em></span></span></div>
     <nav class="colo-nav" aria-label="Secciones">
       <button onclick="showTab('garage');scrollTo(0,0)">Garage</button>
       <button onclick="showTab('market');scrollTo(0,0)">Marketplace</button>

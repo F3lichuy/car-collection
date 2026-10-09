@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Identidad · Car Collection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--page:#0f1110;--pink:#ece6d6;--pdim:#9a9a90;--pline:#2a2d2b}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--pink);font:15px/1.55 "Archivo",system-ui,sans-serif}
+  .wrap{max-width:1240px;margin:0 auto;padding:48px 24px 120px}
+  h1{font:400 clamp(40px,6vw,72px)/1 "Bodoni Moda",serif;letter-spacing:-.02em;margin:0 0 12px}
+  h2{font:400 34px/1.05 "Bodoni Moda",serif;letter-spacing:-.02em;margin:6px 0 10px}
+  .lead,.p{color:var(--pdim);max-width:72ch;margin:0}
+  .k{font:500 11px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--pdim)}
+  section{margin-top:64px;border-top:1px solid var(--pline);padding-top:26px}
+  .grid5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:20px}
+  .t{border-radius:4px;background:var(--bg);color:var(--ink);padding:22px 16px 18px;display:flex;flex-direction:column;gap:20px;align-items:center;justify-content:center;min-height:200px;position:relative}
+  .t .tn{position:absolute;left:14px;top:12px;font:500 10px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:20px}
+  .opt{border-radius:4px;background:var(--bg);padding:30px 22px 20px;display:flex;flex-direction:column;align-items:center;gap:16px}
+  .opt .lbl{font:500 11px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .opt.rec{outline:1px solid var(--accent)}
+  .row{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:10px;margin-top:10px}
+  .tile{border-radius:4px;background:var(--bg);color:var(--ink);padding:18px;display:flex;flex-direction:column;gap:14px}
+  .hdr{display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .hdr .sp{flex:1}
+  .pill{font:500 10px/1 "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);padding:8px 10px;border-radius:2px;color:var(--ink)}
+  .pill.a{background:var(--accent);border-color:var(--accent);color:var(--on)}
+  .phone{width:300px;max-width:100%;border:1px solid var(--line);border-radius:22px;padding:12px 14px;background:var(--bg)}
+  .icons{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+  .app{width:96px;height:96px;border-radius:22px;overflow:hidden;box-shadow:0 10px 30px -10px rgba(0,0,0,.6)}
+  .app svg{width:100%;height:100%;display:block}
+  .fav{display:flex;align-items:center;gap:8px;background:#e9e7e2;border-radius:8px 8px 0 0;padding:7px 12px;color:#222;font:12px system-ui}
+  .photo{position:relative;border-radius:4px;overflow:hidden;min-height:200px;background:#222 center/cover}
+  .photo .on{position:absolute;left:18px;bottom:16px}
+  .anat{display:grid;grid-template-columns:1.3fr 1fr;gap:28px;align-items:center;margin-top:20px}
+  .anat ol{margin:0;padding-left:20px;color:var(--pdim);display:flex;flex-direction:column;gap:8px}
+  .anat b{color:var(--pink);font-weight:600}
+  .t-paddock{--bg:#0c1712;--ink:#ece6d6;--faint:#8e968a;--line:#26392f;--accent:#dda13a;--on:#1a1205}
+  .t-retro{--bg:#19130e;--ink:#f0e4cc;--faint:#927d63;--line:#3e3125;--accent:#cf5d2e;--on:#fff6ee}
+  .t-dark{--bg:#0b0c0e;--ink:#eef1f5;--faint:#717b89;--line:#262a31;--accent:#3fb8ff;--on:#03131d}
+  .t-light{--bg:#f1f0ec;--ink:#17181a;--faint:#787b81;--line:#d3d0c8;--accent:#b3261e;--on:#fff}
+  .t-rosso{--bg:#160807;--ink:#f8ebe4;--faint:#a07b72;--line:#4a1f19;--accent:#f2c230;--on:#1d1400}
+  /* lockup: la placa mide lo mismo que la altura de las mayúsculas + ascendentes del wordmark */
+  .lk{display:inline-flex;align-items:center;gap:.42em;color:var(--ink);white-space:nowrap}
+  .lk svg{height:1.02em;width:auto;display:block;flex-shrink:0}
+  .lk .w{font-family:"Archivo",sans-serif;font-stretch:100%;font-weight:700;letter-spacing:-.035em;line-height:1}
+  .lk .w em{font-style:normal;color:var(--accent)}
+  .lk.stack{flex-direction:column;align-items:flex-start;gap:.3em}
+  .lk.stack svg{height:1.5em}
+  @media(max-width:900px){ .grid5,.opts{grid-template-columns:1fr 1fr} .row,.anat{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="k">Car Collection · identidad · versión 2</div>
+  <h1>La placa, bien hecha</h1>
+  <p class="lead">Proporción de placa real (4:1), texto centrado entre los remaches, relieve, banda de país con emblema y leyenda. En tamaños chicos se usa una versión simplificada para que se lea. Los colores siguen al tema; la letra del logo es fija.</p>
+
+  <section>
+    <div class="k">1 · Qué dice la placa</div>
+    <h2>Tres opciones de matrícula</h2>
+    <p class="p">Recomiendo <b>CC/00</b>: conserva el monograma CC de la marca y la diagonal con el 00 conecta directamente con tu evento <b>Chasis 00</b> — se lee como “Car Collection, chasis cero”. C/00 es más corta y más abstracta; CC·00 es la más tranquila.</p>
+    <div class="opts t-paddock" id="opts"></div>
+  </section>
+
+  <section>
+    <div class="k">2 · Anatomía</div>
+    <h2>Los detalles de una placa de verdad</h2>
+    <div class="anat t-paddock"><div class="t" style="min-height:240px" id="big"></div>
+      <ol>
+        <li><b>Relieve:</b> borde levantado con un filete de luz, como la lámina estampada.</li>
+        <li><b>Banda de país</b> en el color del tema, con un emblema de 10 puntos (guiño a las placas europeas sin copiar ninguna) y “MX”.</li>
+        <li><b>Remaches con ranura</b>, simétricos: el texto queda centrado entre ellos.</li>
+        <li><b>Leyenda superior</b> “CARCOLLECTION · CLUB”, como el nombre del estado en una placa.</li>
+        <li><b>Caracteres estrechos y pesados</b>, de placa, con buena separación.</li>
+      </ol></div>
+  </section>
+
+  <section>
+    <div class="k">3 · En los cinco temas</div>
+    <h2>El logo completo</h2>
+    <div class="grid5" id="themes"></div>
+  </section>
+
+  <section>
+    <div class="k">4 · En uso</div>
+    <h2>Encabezado, celular, ícono y foto</h2>
+    <div class="row" id="use"></div>
+  </section>
+
+  <section>
+    <div class="k">5 · El sistema</div>
+    <h2>Chasis 00 y la placa de cada coleccionista</h2>
+    <p class="p">La misma placa sirve para el evento y para los perfiles: cada coleccionista tiene la suya con letras de su usuario.</p>
+    <div class="grid5" id="system"></div>
+  </section>
+</div>
+
+<script>
+const THEMES=[["paddock","Paddock"],["retro","Garage retro"],["dark","Oscuro deportivo"],["light","Claro minimalista"],["rosso","Rosso Corsa"]];
+/* Placa 400×100. full = con leyenda y remaches; compact = para tamaños chicos */
+function plate(text="CC/00",{full=true,band="MX",legend="CARCOLLECTION · CLUB",c={}}={}){
+  const ink=c.ink||"var(--ink)", bg=c.bg||"var(--bg)", ac=c.accent||"var(--accent)";
+  const n=text.replace(/[·\/\s]/g,"").length+ (text.match(/[\/·]/g)||[]).length*.5;
+  const fs=Math.min(64, 300/(n*.62)), cx=229;   // centro entre la banda (x 64) y el borde derecho (x 394)
+  const dots=Array.from({length:10},(_,i)=>{ const a=i/10*Math.PI*2-Math.PI/2; return `<circle cx="${(36+Math.cos(a)*11).toFixed(2)}" cy="${(37+Math.sin(a)*11).toFixed(2)}" r="1.9" fill="${bg}"/>`; }).join("");
+  const screw=x=>`<g><circle cx="${x}" cy="50" r="5.2" fill="${bg}" opacity=".16"/><circle cx="${x}" cy="50" r="5.2" fill="none" stroke="${bg}" stroke-opacity=".35" stroke-width="1"/><path d="M${x-3.2} ${50+1.4} L${x+3.2} ${50-1.4}" stroke="${bg}" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></g>`;
+  return `<svg viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Car Collection ${text}">
+    <rect x="1.5" y="1.5" width="397" height="97" rx="11" fill="${ink}"/>
+    <rect x="7" y="7" width="386" height="86" rx="7.5" fill="none" stroke="${bg}" stroke-width="${full?3:4}"/>
+    ${full?`<rect x="10.5" y="10.5" width="379" height="79" rx="5" fill="none" stroke="${bg}" stroke-opacity=".14" stroke-width="1"/>`:""}
+    <path d="M14.5 7 H64 V93 H14.5 A7.5 7.5 0 0 1 7 85.5 V14.5 A7.5 7.5 0 0 1 14.5 7 Z" fill="${ac}"/>
+    ${full?dots:`<circle cx="36" cy="37" r="9" fill="none" stroke="${bg}" stroke-width="3"/>`}
+    <text x="36" y="${full?80:81}" text-anchor="middle" fill="${bg}" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="${full?15:17}" letter-spacing="1">${band}</text>
+    ${full?`<text x="${cx}" y="23" text-anchor="middle" fill="${bg}" fill-opacity=".62" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="8.5" letter-spacing="3.2">${legend}</text>`:""}
+    ${full?screw(84)+screw(374):""}
+    <text x="${cx}" y="${full?75:74}" text-anchor="middle" fill="${bg}" font-family="Archivo, sans-serif" font-weight="${full?700:800}" font-stretch="${full?78:82}%" font-size="${full?fs:fs*1.06}" letter-spacing="${full?4:3}">${text}</text>
+  </svg>`;
+}
+const lock=(size,text="CC/00",o={})=>`<span class="lk" style="font-size:${size}px">${plate(text,{full:size>=34,...o})}<span class="w">carcollection<em>.</em></span></span>`;
+const P={bg:"#0c1712",ink:"#ece6d6",accent:"#dda13a"};
+function appIcon(){ return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="${P.bg}"/><g transform="translate(7 39.25) scale(.215)">${plate("CC/00",{full:false,c:P}).replace(/^<svg[^>]*>|<\/svg>$/g,"")}</g></svg>`; }
+function favicon(){ return `<svg width="16" height="16" viewBox="0 0 100 100"><rect x="0" y="14" width="100" height="72" rx="12" fill="${P.ink}"/><path d="M12 14 H30 V86 H12 A12 12 0 0 1 0 74 V26 A12 12 0 0 1 12 14 Z" fill="${P.accent}"/><text x="65" y="66" text-anchor="middle" fill="${P.bg}" font-family="Archivo, sans-serif" font-weight="900" font-stretch="85%" font-size="44">CC</text></svg>`; }
+
+document.getElementById("opts").innerHTML=[["CC/00","Recomendada",true],["CC·00","Tranquila",false],["C/00","Abstracta",false]].map(([t,l,r])=>`<div class="opt ${r?"rec":""}" style="color:var(--ink)"><span class="lbl">${l}</span>${lock(34,t)}${lock(20,t)}</div>`).join("");
+document.getElementById("big").innerHTML=`<div style="width:100%">${plate("CC/00")}</div>`;
+document.getElementById("themes").innerHTML=THEMES.map(([id,l])=>`<div class="t t-${id}"><span class="tn">${l}</span>${lock(19)}<div style="width:86%">${plate("CC/00")}</div></div>`).join("");
+document.getElementById("use").innerHTML=`
+  <div class="tile t-paddock"><div class="k">Encabezado de escritorio</div>
+    <div class="hdr">${lock(26)}<span class="sp"></span><span class="pill">Buscar</span><span class="pill a">Entrar</span></div>
+    <div class="hdr t-light" style="background:var(--bg);padding:12px;border-radius:3px;border:0">${lock(22)}<span class="sp"></span><span class="pill a">Entrar</span></div>
+    <div class="k" style="margin-top:6px">Celular</div>
+    <div class="phone t-rosso"><div style="display:flex;align-items:center;gap:8px">${lock(20)}<span style="flex:1"></span><span class="pill">⌕</span></div></div></div>
+  <div class="tile t-retro"><div class="k">Ícono de app y pestaña</div>
+    <div class="icons"><div class="app">${appIcon()}</div><div class="app" style="width:60px;height:60px;border-radius:14px">${appIcon()}</div></div>
+    <div class="fav">${favicon()}<span>Car Collection</span><span style="margin-left:auto;opacity:.5">×</span></div></div>
+  <div class="photo" style="background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/1962_Ferrari_250_GTO_SP25.jpg/1280px-1962_Ferrari_250_GTO_SP25.jpg')"><div class="on t-paddock" style="--ink:#f3efe6;--bg:#0c1712">${lock(34)}</div></div>`;
+document.getElementById("system").innerHTML=[
+  ["paddock","Evento",plate("CHASIS 00",{legend:"COLECCIONISTAS · EVENTO"})],
+  ["rosso","Evento (rosso)",plate("CHASIS 00",{legend:"COLECCIONISTAS · EVENTO"})],
+  ["retro","Perfil @feli_chuy",plate("FELI/CHUY")],
+  ["dark","Perfil @misa",plate("MISA")],
+  ["light","Perfil @london",plate("LON/DON")]].map(([id,l,svg])=>`<div class="t t-${id}"><span class="tn">${l}</span><div style="width:92%">${svg}</div></div>`).join("");
+</script>
+</body>
+</html>

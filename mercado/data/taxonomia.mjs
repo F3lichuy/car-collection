@@ -34,6 +34,14 @@ export const makes = [
   { id: 'ford', name: 'Ford', country: 'US', sort: 20 },
   { id: 'chevrolet', name: 'Chevrolet', country: 'US', sort: 21 },
   { id: 'jaguar', name: 'Jaguar', country: 'GB', sort: 22 },
+  { id: 'volvo', name: 'Volvo', country: 'SE', sort: 23 },
+  { id: 'alfa-romeo', name: 'Alfa Romeo', country: 'IT', sort: 24 },
+  { id: 'volkswagen', name: 'Volkswagen', country: 'DE', sort: 25 },
+  { id: 'land-rover', name: 'Land Rover', country: 'GB', sort: 26 },
+  { id: 'peugeot', name: 'Peugeot', country: 'FR', sort: 27 },
+  { id: 'mini', name: 'Mini', country: 'GB', sort: 28 },
+  { id: 'audi', name: 'Audi', country: 'DE', sort: 29 },
+  { id: 'bmw', name: 'BMW', country: 'DE', sort: 30 },
 ];
 
 export const makeAliases = {
@@ -48,6 +56,14 @@ export const makeAliases = {
   ford: ['ford'],
   chevrolet: ['chevrolet', 'chevy'],
   jaguar: ['jaguar', 'jag'],
+  volvo: ['volvo'],
+  'alfa-romeo': ['alfa romeo', 'alfa-romeo', 'alfa'],
+  volkswagen: ['volkswagen', 'vw'],
+  'land-rover': ['land rover', 'land-rover', 'landrover'],
+  peugeot: ['peugeot'],
+  mini: ['mini', 'rover mini', 'austin mini', 'morris mini', 'austin morris mini'],
+  audi: ['audi'],
+  bmw: ['bmw'],
 };
 
 // segment: moderno | exotico | gran_turismo | ultra_lujo
@@ -312,7 +328,7 @@ export const models = [
     { code: 'c197', name: 'C197 / R197', from: 2010, to: 2014, tx: D, v: [['SLS AMG', 2010, 2014], ['SLS AMG GT', 2013, 2014], ['SLS AMG Black Series', 2014, 2014]] },
   ] },
   { make: 'mercedes-benz', name: '300 SL', segment: 'gran_turismo', aliases: ['300sl', 'alas de gaviota', 'gullwing'], gens: [
-    { code: 'w198', name: 'W198', from: 1954, to: 1963, tx: M, v: [['Gullwing (Coupé)', 1954, 1957], ['Roadster', 1957, 1963]] },
+    { code: 'w198', name: 'W198', from: 1954, to: 1963, tx: M, v: [['Gullwing', 1954, 1957, M, 'Coupé alas de gaviota'], ['Roadster', 1957, 1963]] },
   ] },
   { make: 'mercedes-benz', name: 'SL Pagoda', segment: 'gran_turismo', aliases: ['pagoda', 'w113'], gens: [
     { code: 'w113', name: 'W113', from: 1963, to: 1971, tx: MA, v: [['230 SL', 1963, 1967], ['250 SL', 1966, 1968], ['280 SL', 1967, 1971]] },
@@ -333,6 +349,50 @@ export const models = [
     { code: 's1', name: 'Serie 1', from: 1961, to: 1968, tx: M, v: [['3.8', 1961, 1964], ['4.2', 1964, 1968]] },
     { code: 's2', name: 'Serie 2', from: 1968, to: 1971, tx: MA, v: [['4.2', 1968, 1971]] },
     { code: 's3', name: 'Serie 3', from: 1971, to: 1975, tx: MA, v: [['V12', 1971, 1975]] },
+  ] },
+
+  // ── Clásicos de colección agregados el 2026-11-11 (inventario real en México) ──
+  { make: 'mercedes-benz', name: 'SL (R107)', segment: 'gran_turismo', aliases: ['r107', 'sl r107'], gens: [
+    { code: 'r107', name: 'R107', from: 1971, to: 1989, tx: MA, v: [
+      ['350 SL', 1971, 1980], ['450 SL', 1971, 1980], ['280 SL', 1974, 1985], ['380 SL', 1980, 1985],
+      ['500 SL', 1980, 1989], ['300 SL', 1985, 1989, MA, 'R107: no confundir con el 300 SL W198'], ['420 SL', 1985, 1989], ['560 SL', 1986, 1989, A]] },
+  ] },
+  { make: 'mercedes-benz', name: 'Clase G clásica', segment: 'moderno', aliases: ['w460', 'w461', 'puch', 'steyr puch'], gens: [
+    { code: 'w460', name: 'W460', from: 1979, to: 1991, tx: MA, notes: 'Años por verificar', v: [
+      ['230 G', 1979, 1982], ['230 GE', 1982, 1991], ['280 GE', 1979, 1990], ['240 GD', 1979, 1987], ['300 GD', 1979, 1991]] },
+    { code: 'w461', name: 'W461', from: 1992, to: 2001, tx: MA, notes: 'Años por verificar', v: [
+      ['230 GE', 1992, 1994], ['290 GD', 1992, 2001], ['290 GDT', 1997, 2001]] },
+  ] },
+  { make: 'volvo', name: 'P1800', segment: 'gran_turismo', aliases: ['p1800', 'p 1800'], gens: [
+    { code: 'p1800', name: 'P1800', from: 1961, to: 1973, tx: M, v: [
+      ['P1800 (Jensen)', 1961, 1963], ['1800S', 1963, 1969], ['1800E', 1970, 1972], ['1800ES', 1972, 1973]] },
+  ] },
+  { make: 'alfa-romeo', name: 'Spider', segment: 'moderno', aliases: ['spider', 'duetto', 'spider veloce'], gens: [
+    { code: 's1', name: 'Serie 1 (Duetto / Osso di Seppia)', from: 1966, to: 1969, tx: M, v: [['1600 Duetto', 1966, 1967], ['1750 Spider Veloce', 1967, 1969], ['1300 Junior', 1968, 1969]] },
+    { code: 's2', name: 'Serie 2 (Coda Tronca)', from: 1970, to: 1982, tx: M, v: [['1300 Junior', 1970, 1977], ['1600', 1972, 1982], ['1750', 1970, 1971], ['2000', 1971, 1982, M, 'Spider Veloce 2000']] },
+    { code: 's3', name: 'Serie 3 (Aerodinamica)', from: 1983, to: 1989, tx: M, v: [['1600', 1983, 1989], ['2000', 1983, 1989], ['Quadrifoglio Verde', 1986, 1989]] },
+    { code: 's4', name: 'Serie 4', from: 1990, to: 1993, tx: MA, v: [['1600', 1990, 1993], ['2000', 1990, 1993]] },
+  ] },
+  { make: 'volkswagen', name: 'Karmann Ghia', segment: 'moderno', aliases: ['karmann ghia', 'karman ghia', 'karmann-ghia', 'typ 14'], gens: [
+    { code: 'typ14', name: 'Typ 14', from: 1955, to: 1974, tx: MA, notes: 'automatica = Automatic Stick Shift (1968+)', v: [['Typ 14', 1955, 1974]] },
+  ] },
+  { make: 'land-rover', name: 'Defender', segment: 'moderno', aliases: ['defender', 'ninety', 'one ten'], gens: [
+    { code: '90-110', name: 'Ninety / One Ten', from: 1983, to: 1990, tx: M, v: [['90', 1984, 1990], ['110', 1983, 1990], ['127', 1985, 1990]] },
+    { code: '1991-2016', name: 'Defender (1991–2016)', from: 1991, to: 2016, tx: M, v: [['90', 1991, 2016], ['110', 1991, 2016], ['130', 1991, 2016]] },
+  ] },
+  { make: 'peugeot', name: '205 GTI', segment: 'moderno', aliases: ['205 gti', '205gti'], gens: [
+    { code: '205gti', name: '205 GTI', from: 1984, to: 1994, tx: M, v: [['1.6', 1984, 1992], ['1.9', 1986, 1994]] },
+  ] },
+  { make: 'mini', name: 'Mini clásico', segment: 'moderno', aliases: ['mini'], gens: [
+    { code: 'clasico', name: 'Mini (1959–2000)', from: 1959, to: 2000, tx: MA, v: [
+      ['Cooper', 1961, 2000, MA, 'Cooper original 1961–1971; regresó en 1990'], ['Cooper S', 1963, 1971], ['British Open', 1992, 1992, MA, 'Edición especial']] },
+  ] },
+  { make: 'audi', name: 'RS6', segment: 'moderno', aliases: ['rs6', 'rs 6'], gens: [
+    { code: 'c5', name: 'C5', from: 2002, to: 2004, tx: A, v: [['RS6 (C5)', 2002, 2004]] },
+  ] },
+  { make: 'bmw', name: 'Serie 3 (E30)', segment: 'moderno', aliases: ['e30'], gens: [
+    { code: 'e30', name: 'E30', from: 1982, to: 1994, tx: MA, notes: 'Touring/Cabrio = carrocería', v: [
+      ['318i', 1983, 1994], ['320i', 1982, 1991], ['325i', 1985, 1993], ['M3', 1986, 1991, M]] },
   ] },
 ];
 

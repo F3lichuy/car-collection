@@ -2,3 +2,4 @@ models/*.src.glb
 .claude/
 supabase/.temp/
 node_modules/
+mercado/.capturas/

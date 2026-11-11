@@ -103,6 +103,14 @@ export class IdentityIndex {
     for (const l of v.listings ?? []) for (const k of listingKeys(l)) this.byListing.set(k, v.id);
     return this;
   }
+  // Suma evidencia a un vehículo ya indexado (fotos y llaves de un anuncio nuevo).
+  addEvidence(id, { photos = [], listings = [] } = {}) {
+    const v = this.vehicles.get(id);
+    if (!v) return this;
+    v.photos.push(...photos.map(prepPhoto).filter(Boolean));
+    for (const l of listings) for (const k of listingKeys(l)) this.byListing.set(k, id);
+    return this;
+  }
   addDistinct(a, b) { this.distinct.add(pairKey(a, b)); return this; }
   isDistinct(a, b) { return this.distinct.has(pairKey(a, b)); }
 

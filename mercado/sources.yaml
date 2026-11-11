@@ -1,0 +1,444 @@
+# ════════════════════════════════════════════════════════════════════════
+# Mercado MX · Catálogo de fuentes
+#
+# enabled: false en todas hasta que las apruebes. Investigadas el 2026-11-10
+# (búsqueda web + revisión técnica de cada sitio: respuesta, robots.txt,
+# sitemap y datos estructurados).
+#
+# capture_mode
+#   scraper       HTTP simple (GitHub Actions, diario)
+#   playwright    necesita navegador real (el sitio rechaza lectores simples)
+#   script_local  corre en tu computadora con tu sesión (Facebook)
+#   manual        sin inventario web: Instagram / WhatsApp / Facebook → captura rápida
+# data: dónde están los datos del auto en el sitio (lo que usará el adaptador)
+# verify: lo que falta confirmar antes de activarla
+# ════════════════════════════════════════════════════════════════════════
+
+defaults:
+  user_agent: "MercadoMX/0.1 (+https://carcollection.app; contacto por el sitio)"
+  min_delay_seconds: 3        # 1 petición cada 3 s como mínimo
+  max_pages_per_run: 40
+  retries: 3
+
+sources:
+
+  # ── Programas oficiales de seminuevos certificados ──────────────────────
+  - id: porsche-approved-mx
+    name: Porsche Approved México (todos los Porsche Centre)
+    kind: agencia_oficial
+    cities: [CDMX, Monterrey, Guadalajara, Puebla, Querétaro, León, Cancún, Mérida, Tijuana]
+    base_url: https://finder.porsche.com/mx/es-MX
+    capture_mode: playwright
+    data: "Buscador oficial; responde 429 a lectores simples"
+    verify: "Probar con navegador real a baja frecuencia; buscar API interna del finder"
+    enabled: false
+
+  - id: ferrari-approved-mx
+    name: Ferrari Approved (Ferrari Mexico City)
+    kind: agencia_oficial
+    cities: [CDMX]
+    base_url: https://preowned.ferrari.com/es-MX/r/latin-america/used-ferrari/mexico
+    capture_mode: playwright
+    data: "Fichas con VIN en la URL; responde 405 a lectores simples"
+    verify: "Probar con navegador real"
+    enabled: false
+
+  - id: lamborghini-selezione-mx
+    name: Lamborghini Selezione (CDMX y Monterrey)
+    kind: agencia_oficial
+    cities: [CDMX, Monterrey]
+    base_url: https://www.lamborghini.com/es-en
+    capture_mode: scraper
+    data: "Sitio Next.js (__NEXT_DATA__)"
+    verify: "Ubicar el localizador de seminuevos y si lista inventario de México"
+    enabled: false
+
+  - id: mclaren-qualified
+    name: McLaren Qualified
+    kind: agencia_oficial
+    cities: []
+    base_url: https://preowned.mclaren.com
+    capture_mode: scraper
+    verify: "No encontré un retailer McLaren en México con inventario publicado"
+    enabled: false
+
+  - id: bentley-polanco
+    name: Bentley Polanco
+    kind: agencia_oficial
+    cities: [CDMX]
+    base_url: https://www.bentleymotors.com/en/apps/locate.bentley-polanco.retailer-3262.html
+    capture_mode: playwright
+    data: "Responde 403 a lectores simples"
+    verify: "Confirmar si publica seminuevos en el localizador de Bentley"
+    enabled: false
+
+  - id: rolls-royce-provenance
+    name: Rolls-Royce Provenance (pre-owned)
+    kind: agencia_oficial
+    cities: []
+    base_url: https://www.rolls-roycemotorcars.com
+    capture_mode: playwright
+    verify: "Confirmar si hay distribuidor en México con inventario en el localizador"
+    enabled: false
+
+  - id: aston-martin-timeless
+    name: Aston Martin Timeless (pre-owned)
+    kind: agencia_oficial
+    cities: []
+    base_url: https://www.astonmartin.com
+    capture_mode: playwright
+    verify: "Confirmar distribuidor en México con inventario publicado"
+    enabled: false
+
+  - id: mercedes-certified-mx
+    name: Mercedes-Benz seminuevos certificados (AMG)
+    kind: agencia_oficial
+    cities: []
+    base_url: https://www.mercedes-benz.com.mx
+    capture_mode: scraper
+    verify: "Ubicar el buscador de seminuevos certificados; filtrar solo AMG de la taxonomía"
+    enabled: false
+
+  # ── Portales (concentran muchas agencias a la vez) ──────────────────────
+  - id: seminuevos-com
+    name: Seminuevos.com
+    adapter: seminuevos
+    min_delay_seconds: 5      # el sitio responde lento (3-7 s) y corta conexiones si se le apura
+    kind: portal
+    cities: [nacional]
+    base_url: https://www.seminuevos.com
+    capture_mode: scraper
+    data: "JSON-LD schema.org ItemList de Vehicle en el HTML (año, km, transmisión, color, precio, moneda, URL con id)"
+    robots: "Permite /usados/-/autos/-/<marca>; prohíbe ?seller= ?transmission= ?fuel= ?rText="
+    verify: "Paginación; ficha de detalle (vendedor, ciudad, fotos)"
+    enabled: false
+
+  - id: mercadolibre-autos
+    name: Mercado Libre Autos (incluye tiendas de agencias e Iconic Broker)
+    kind: portal
+    cities: [nacional]
+    base_url: https://autos.mercadolibre.com.mx
+    capture_mode: scraper
+    data: "API oficial requiere app de desarrollador (gratis, OAuth). El listado HTML trae JSON-LD Product (48 por página)"
+    verify: "Preferir API con app gratuita que crees tú; respaldo HTML"
+    enabled: false
+
+  - id: kavak
+    name: Kavak (solo marcas de la taxonomía)
+    kind: portal
+    cities: [nacional]
+    base_url: https://www.kavak.com/mx/seminuevos
+    capture_mode: scraper
+    data: "Sitio Next.js con JSON-LD; 83 sitemaps"
+    robots: "Crawl-delay: 20"
+    min_delay_seconds: 20
+    enabled: false
+
+  - id: autocosmos
+    name: Autocosmos (páginas de agencias, p. ej. Porsche Centre Mérida, San Ángel, Cancún)
+    kind: portal
+    cities: [nacional]
+    base_url: https://www.autocosmos.com.mx
+    capture_mode: scraper
+    robots: "Crawl-delay: 20; prohíbe /search"
+    min_delay_seconds: 20
+    enabled: false
+
+  - id: autoclasico
+    name: AutoClasico.com.mx (portal de clásicos)
+    kind: portal
+    cities: [nacional]
+    base_url: https://www.autoclasico.com.mx/site/
+    capture_mode: playwright
+    data: "Reto de Cloudflare a lectores simples"
+    enabled: false
+
+  - id: facebook-marketplace
+    name: Facebook Marketplace
+    kind: marketplace
+    cities: [Monterrey, CDMX, Guadalajara, Querétaro, Puebla, León, San Luis Potosí, Cancún, Tijuana]
+    base_url: https://www.facebook.com/marketplace
+    capture_mode: script_local
+    data: "Script Playwright en tu computadora con tu sesión + bookmarklet de respaldo"
+    enabled: false
+
+  # ── Subastas (ventas reales, no solo precio pedido) ─────────────────────
+  - id: morton-subastas
+    name: Morton Subastas · Autos y Camiones (clásicos y colección)
+    kind: subasta
+    cities: [CDMX]
+    base_url: https://mortonautosycamiones.com
+    capture_mode: scraper
+    data: "Catálogos de subasta; buscar resultados (precio de martillo) → transacciones"
+    verify: "Si publica precios de venta, entran como ventas confirmadas con confianza media"
+    enabled: false
+
+  # ── Brokers y agencias · CDMX y área metropolitana ──────────────────────
+  - id: exotic-avenue
+    name: Exotic Avenue
+    kind: broker
+    cities: [CDMX]
+    base_url: https://exoticavenue.mx
+    capture_mode: scraper
+    verify: "Ubicar la página de inventario (/inventario da 404)"
+    enabled: false
+
+  - id: jah-motors
+    name: JAH Motors
+    kind: broker
+    cities: [CDMX]
+    base_url: https://jahmotors.com
+    capture_mode: scraper
+    data: "WordPress con JSON-LD y sitemap"
+    notes: "Posiblemente el 'JA Motors' que mencionaste — confirmar"
+    enabled: false
+
+  - id: autos-consigna
+    name: Autos Consigna
+    kind: broker
+    cities: [CDMX]
+    base_url: https://autosconsigna.pro
+    capture_mode: playwright
+    data: "Responde 456 (bloqueo) a lectores simples"
+    enabled: false
+
+  - id: luxury-in-motion
+    name: Luxury in Motion
+    kind: broker
+    cities: [CDMX, Guadalajara]
+    base_url: https://www.luxuryinmotionmx.com
+    capture_mode: scraper
+    data: "Wix con JSON-LD"
+    enabled: false
+
+  - id: mulsanne
+    name: Mulsanne Venta de Autos (Santa Fe)
+    kind: broker
+    cities: [CDMX]
+    base_url: https://mulsanne.com.mx
+    capture_mode: scraper
+    data: "WordPress, 21 sitemaps"
+    enabled: false
+
+  - id: rich-wonders
+    name: Rich Wonders
+    kind: broker
+    cities: [CDMX]
+    base_url: https://richwonders.com
+    capture_mode: scraper
+    data: "WordPress con JSON-LD"
+    enabled: false
+
+  - id: euroclassic-import
+    name: EuroClassic Import (clásicos europeos, Porsche refrigerados)
+    adapter: shopify
+    config:
+      collection: autos-disponibles-en-mexico   # solo autos ya en México (no precios de otros mercados)
+    kind: broker
+    cities: [CDMX]
+    base_url: https://euroclassic-import.com
+    capture_mode: scraper
+    data: "Shopify: /products.json estructurado"
+    enabled: false
+
+  - id: netmotors-garage
+    name: NetMotors Garage (clásicos)
+    kind: broker
+    cities: [CDMX]
+    base_url: https://netmotorsgarage.com
+    capture_mode: scraper
+    data: "WordPress con JSON-LD y sitemap"
+    enabled: false
+
+  - id: parkmate-mx
+    name: ParkMate MX
+    kind: broker
+    cities: [CDMX, Monterrey, Guadalajara, Puebla, Querétaro, Cancún]
+    base_url: https://www.parkmatemx.com
+    capture_mode: scraper
+    data: "Wix con JSON-LD"
+    verify: "Mezcla renta y venta: filtrar solo venta"
+    enabled: false
+
+  # ── Monterrey / San Pedro ───────────────────────────────────────────────
+  - id: iconic-broker
+    name: Iconic Broker (Grand Chelem)
+    kind: broker
+    cities: [CDMX, Monterrey, Puebla]
+    base_url: https://www.mercadolibre.com.mx/pagina/iconicbroker
+    capture_mode: scraper
+    data: "Su dominio está estacionado; vende por su tienda de Mercado Libre → se cubre con mercadolibre-autos"
+    enabled: false
+
+  - id: elegance-consignaciones
+    name: Elegance Consignaciones (Plaza San Pedro)
+    kind: broker
+    cities: [Monterrey]
+    base_url: https://eleganceconsignaciones.com/catalogo
+    capture_mode: scraper
+    data: "Nuxt (window.__NUXT__)"
+    enabled: false
+
+  - id: refran-premium-cars
+    name: Refran Premium Cars (San Pedro)
+    kind: broker
+    cities: [Monterrey]
+    base_url: https://www.seminuevos.com
+    capture_mode: scraper
+    data: "Publica en Seminuevos.com → se cubre con seminuevos-com"
+    enabled: false
+
+  - id: aumobil
+    name: Aumobil
+    kind: broker
+    cities: [Monterrey]
+    base_url: https://aumobil.com/showroom/
+    capture_mode: scraper
+    verify: "Su contenido indexado es viejo; confirmar que siga activo"
+    enabled: false
+
+  - id: motorstalgia-mty
+    name: Motorstalgia Monterrey
+    kind: broker
+    cities: [Monterrey]
+    base_url: https://vehiculos.mercadolibre.com.mx/_CustId_3163409841
+    capture_mode: script_local
+    data: "Vende en Mercado Libre (vendedor 3163409841). Su robots.txt prohíbe leer páginas de vendedor: solo por la API oficial con tu app (scripts/ml-vendedor.mjs)"
+    enabled: false
+
+  - id: cars-and-more-mty
+    name: Cars and More
+    kind: broker
+    cities: [Monterrey]
+    capture_mode: manual
+    verify: "No encontré sitio web: pásame su Instagram"
+    enabled: false
+
+  - id: auto-san-pedro
+    name: Auto San Pedro
+    kind: broker
+    cities: [Monterrey]
+    capture_mode: manual
+    verify: "No encontré sitio web: pásame su Instagram"
+    enabled: false
+
+  # ── Guadalajara / Zapopan ───────────────────────────────────────────────
+  - id: alvarez-exotics
+    name: Alvarez Exotics (Zapopan)
+    kind: broker
+    cities: [Guadalajara]
+    base_url: https://alvarez-exotics.com/inventario
+    capture_mode: playwright
+    data: "JSON-LD, pero con reto de Cloudflare"
+    enabled: false
+
+  - id: abg-luxury-car
+    name: ABG Luxury Car Galería (Puerta de Hierro)
+    kind: broker
+    cities: [Guadalajara]
+    base_url: https://abgluxurycar.com
+    capture_mode: scraper
+    verify: "La URL encontrada da 404: ubicar el inventario actual"
+    enabled: false
+
+  # ── Puebla ──────────────────────────────────────────────────────────────
+  - id: autos-rodeo-drive
+    name: Autos Rodeo Drive
+    kind: broker
+    cities: [Puebla]
+    base_url: https://www.autosrodeodrive.mx
+    capture_mode: scraper
+    data: "Wix con JSON-LD"
+    enabled: false
+
+  - id: miura-motors
+    name: Miura Motors
+    kind: broker
+    cities: [Puebla]
+    base_url: https://miuramotors.com.mx
+    capture_mode: scraper
+    data: "WordPress con JSON-LD"
+    enabled: false
+
+  - id: luxury-cars-puebla
+    name: Luxury Cars Puebla (Chipilo)
+    kind: broker
+    cities: [Puebla]
+    capture_mode: scraper
+    data: "Publica en Mercado Libre → se cubre con mercadolibre-autos"
+    enabled: false
+
+  - id: seminuevos-lujo-31-poniente
+    name: Autos de Lujo Seminuevos 31 Poniente
+    kind: broker
+    cities: [Puebla]
+    base_url: https://www.facebook.com/seminuevoslujo31poniente/
+    capture_mode: manual
+    enabled: false
+
+  # ── Querétaro ───────────────────────────────────────────────────────────
+  - id: automotores-del-bajio
+    name: Automotores del Bajío (sección Premium)
+    kind: broker
+    cities: [Querétaro]
+    base_url: https://automotoresdelbajio.com.mx/autos/premium
+    capture_mode: scraper
+    enabled: false
+
+  - id: montecarlo-autos-de-lujo
+    name: Montecarlo Autos de Lujo
+    kind: broker
+    cities: [Querétaro]
+    base_url: https://montecarlo.mx
+    capture_mode: scraper
+    data: "WordPress con JSON-LD"
+    verify: "Mucho premium alemán general: filtrar solo modelos de la taxonomía"
+    enabled: false
+
+  - id: imperia-motors
+    name: Imperia Motors
+    kind: broker
+    cities: []
+    base_url: https://imperiamotors.mx
+    capture_mode: scraper
+    data: "WordPress"
+    verify: "Confirmar ciudad"
+    enabled: false
+
+  # ── Tijuana / Mérida ────────────────────────────────────────────────────
+  - id: dlux-seminuevos-tijuana
+    name: D'LUX Seminuevos
+    kind: broker
+    cities: [Tijuana]
+    base_url: https://www.facebook.com/DLUXSeminuevos/
+    capture_mode: manual
+    enabled: false
+
+  - id: carxico
+    name: Carxico
+    kind: portal
+    cities: [Mérida]
+    base_url: https://carxico.com.mx/inventario
+    capture_mode: scraper
+    enabled: false
+
+  - id: eurocars-merida
+    name: Eurocars Mérida
+    kind: broker
+    cities: [Mérida]
+    capture_mode: manual
+    verify: "Solo Facebook; pásame el perfil"
+    enabled: false
+
+  # ── Genéricas (ya existen en la base) ───────────────────────────────────
+  - id: instagram
+    name: Instagram (cualquier cuenta)
+    kind: red_social
+    capture_mode: manual
+    enabled: true
+
+  - id: contacto-directo
+    name: Contacto directo (WhatsApp, llamada, evento)
+    kind: directo
+    capture_mode: manual
+    enabled: true

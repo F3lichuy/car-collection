@@ -1891,7 +1891,8 @@
     <button data-tab="garage">Garage</button>
     <button data-tab="irl">Manejados</button>
     <button data-tab="activities">Juegos</button>
-    <button data-tab="market">Mercado</button>
+    <button data-tab="market">Marketplace</button>
+    <button data-tab="calle">Precio de Calle</button>
     <button data-tab="battle">Spec Battle</button>
     <button data-tab="rare">Rarezas</button>
     <button data-tab="historia">Historias</button>
@@ -1965,6 +1966,8 @@
   </section>
   <!-- ============ MARKETPLACE TAB ============ -->
   <section id="tab-market" style="display:none"></section>
+  <!-- ============ PRECIO DE CALLE (se carga desde precio-calle.js al abrirla) ============ -->
+  <section id="tab-calle" style="display:none"></section>
   <!-- ============ SPEC BATTLE TAB ============ -->
   <section id="tab-battle" style="display:none"></section>
   <!-- ============ HISTORIA TAB ============ -->
@@ -2003,6 +2006,8 @@
   try{ LANG = localStorage.getItem("mg-lang") || (/^es\b/i.test(navigator.language||"")?"es":"en"); }catch(e){}
 
   var DICT = {
+    // Precio de Calle (precio-calle.js) y Marketplace
+    "Marketplace":"Marketplace","Precio de Calle":"Street Price","Precio":"Price","Lo que de verdad piden por autos de entusiasta en México.":"What enthusiast cars really list for in Mexico.","Lo que de verdad piden por autos de entusiasta en México. Contamos autos, no anuncios: si el mismo coche está en tres agencias, cuenta una vez.":"What enthusiast cars really list for in Mexico. We count cars, not ads: if the same car is listed at three dealers, it counts once.","Autos en venta":"Cars for sale","Anuncios":"Listings","Fuentes":"Sources","Actualizado":"Updated","Buscar: 993, GT3, Testarossa…":"Search: 993, GT3, Testarossa…","Todos los modelos":"All models","Cualquier caja":"Any gearbox","Todos los segmentos":"All segments","Más recientes":"Newest","Precio: menor a mayor":"Price: low to high","Precio: mayor a menor":"Price: high to low","Año: más antiguos":"Year: oldest","Año: más nuevos":"Year: newest","Menos km":"Lowest mileage","Nada con esos filtros.":"Nothing matches those filters.","Todavía no hay autos":"No cars yet","En cuanto corra la primera captura de las fuentes, aquí aparece el mercado.":"As soon as the first source capture runs, the market shows up here.","Por modelo":"By model","Autos (n)":"Cars (n)","Mediana pedida":"Median asking price","Datos insuficientes":"Not enough data","Datos por confirmar":"Data to be confirmed","Precio a tratar":"Price on request","Sin precio":"No price","Sin dato":"No data","Kilometraje":"Mileage","Transmisión":"Transmission","Color exterior":"Exterior color","Interior":"Interior","Factura":"Invoice","Origen":"Origin","Dueños":"Owners","Servicios":"Service history","Placas de auto antiguo":"Antique plates","Registrado":"On file","De dónde sale esta información":"Where this information comes from","Ver anuncio original ↗":"View original listing ↗","Activo":"Active","Ya no aparece":"No longer listed","Vendido (confirmado)":"Sold (confirmed)","Vendido (inferido)":"Sold (inferred)","Republicado":"Relisted","Versión por confirmar":"Version to be confirmed","versión por confirmar":"version to be confirmed","De agencia":"Dealer invoice","De aseguradora":"Insurer invoice","Refacturado":"Re-invoiced","Nacional":"Domestic","Importado":"Imported","Fronterizo":"Border-zone","Legalizado":"Legalized","En agencia, completos":"Dealer, complete","En agencia, parciales":"Dealer, partial","Taller externo":"Independent shop","Sin historial":"No records","Modernos":"Modern","Exóticos":"Exotic","Gran Turismo":"Grand Touring","Ultra-lujo":"Ultra-luxury","Doble embrague":"Dual-clutch","Automatizada":"Automated manual","Automática":"Automatic","· negociable":"· negotiable","No se pudo cargar el mercado":"Couldn't load the market","Reintentar":"Retry","No se pudo cargar Precio de Calle":"Couldn't load Street Price","Revisa tu conexión y vuelve a intentar.":"Check your connection and try again.","Falta el tipo de cambio FIX de Banxico":"Banxico FIX exchange rate not loaded yet","Moneda":"Currency",
     // header / tabs
     "MI":"MY","GARAGE":"GARAGE","colección personal":"personal collection",
     "Garage":"Garage","Manejados IRL":"Driven IRL","Actividades":"Activities",
@@ -5271,7 +5276,7 @@ document.addEventListener("keydown",e=>{ const el=$("#rareView"); if(!el||el.hid
 
 function showTab(t){
   if(t!=="home"){ if(typeof stopStoryTimer==="function")stopStoryTimer(); if(typeof stopHeroRotator==="function")stopHeroRotator(); }
-  ["home","garage","irl","activities","market","battle","historia","discover","rare"].forEach(x=>{const el=$("#tab-"+x); if(el) el.style.display=x===t?"":"none";});
+  ["home","garage","irl","activities","market","calle","battle","historia","discover","rare"].forEach(x=>{const el=$("#tab-"+x); if(el) el.style.display=x===t?"":"none";});
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===t));
   try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){}
   if(window.ccMotion) ccMotion.tab($("#tab-"+t));
@@ -5283,6 +5288,17 @@ function showTab(t){
   else if(t==="historia")renderHistoria();
   else if(t==="discover")renderDiscover();
   else if(t==="rare")renderRare(true);
+  else if(t==="calle")loadPrecioCalle();
+}
+/* Precio de Calle vive en precio-calle.js: se descarga solo la primera vez que se abre. */
+function loadPrecioCalle(){
+  const el=$("#tab-calle"); if(!el) return;
+  if(window.PrecioCalle) return PrecioCalle.render(el);
+  el.innerHTML='<p style="color:var(--ink-faint);margin:28px 0">Cargando…</p>';
+  const s=document.createElement("script"); s.src="precio-calle.js?v=1";
+  s.onload=()=>PrecioCalle.render(el);
+  s.onerror=()=>{ el.innerHTML='<div class="empty"><h2>No se pudo cargar Precio de Calle</h2><p>Revisa tu conexión y vuelve a intentar.</p></div>'; };
+  document.head.appendChild(s);
 }
 function closeAll(){try{clearInterval(rareTimer);}catch(e){}document.querySelectorAll(".scrim").forEach(s=>s.classList.remove("show"));}
 function wire(){
@@ -6698,7 +6714,7 @@ async function renderHome(){
       <div class="home-sechead"><h2>Explora</h2></div>
       <div class="home-tiles">
         <button class="home-tile" onclick="showTab('battle')"><span class="ic"></span><span class="t">Spec Battle</span><span class="d">Enfrenta dos coches y elige al ganador.</span></button>
-        <button class="home-tile" onclick="showTab('market')"><span class="ic"></span><span class="t">Mercado</span><span class="d">Añade coches que la comunidad publicó.</span></button>
+        <button class="home-tile" onclick="showTab('market')"><span class="ic"></span><span class="t">Marketplace</span><span class="d">Añade coches que la comunidad publicó.</span></button>
         <button class="home-tile" onclick="showTab('discover')"><span class="ic"></span><span class="t">Comunidad</span><span class="d">Colecciones y coleccionistas.</span></button>
         <button class="home-tile" onclick="showTab('activities')"><span class="ic"></span><span class="t">Juegos</span><span class="d">Draft, tier list, torneo, duelos y quiz.</span></button>
       </div>
@@ -6946,7 +6962,7 @@ window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredP
     <nav class="colo-nav" aria-label="Secciones">
       <button onclick="showTab('garage');scrollTo(0,0)">Garage</button>
       <button onclick="showTab('activities');scrollTo(0,0)">Juegos</button>
-      <button onclick="showTab('market');scrollTo(0,0)">Mercado</button>
+      <button onclick="showTab('market');scrollTo(0,0)">Marketplace</button>
       <button onclick="showTab('historia');scrollTo(0,0)">Historias</button>
       <button onclick="showTab('battle');scrollTo(0,0)">Spec Battle</button>
       <button onclick="showTab('discover');scrollTo(0,0)">Comunidad</button>
@@ -7067,7 +7083,7 @@ if(document.readyState==="loading") document.addEventListener("DOMContentLoaded"
   <button data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span>Inicio</span></button>
   <button data-tab="garage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M7 21v-7h10v7"/><path d="M7 17h10"/></svg><span>Garage</span></button>
   <button data-tab="activities"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="11" rx="5"/><path d="M8 11v3M6.5 12.5h3"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="13.5" r=".6" fill="currentColor"/></svg><span>Juegos</span></button>
-  <button data-tab="rare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg><span>Rarezas</span></button>
+  <button data-tab="calle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12.5 11.5 4H20v8.5L11.5 21z"/><circle cx="15.5" cy="8.5" r="1.4"/><path d="M8.5 13.5h5"/></svg><span>Precio</span></button>
   <button data-more><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg><span>Más</span></button>
 </nav>
 <div class="scrim" id="moreScrim"><div class="modal" id="moreModal">
@@ -7075,7 +7091,8 @@ if(document.readyState==="loading") document.addEventListener("DOMContentLoaded"
   <div class="mb">
     <div class="more-list">
       <button data-go="irl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3v6.5M4.5 15.5l5.4-2.3M19.5 15.5l-5.4-2.3"/></svg>Manejados</button>
-      <button data-go="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v6H4z"/><path d="M6 10v10h12V10"/><path d="M10 14h4"/></svg>Mercado</button>
+      <button data-go="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v6H4z"/><path d="M6 10v10h12V10"/><path d="M10 14h4"/></svg>Marketplace</button>
+      <button data-go="rare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>Rarezas</button>
       <button data-go="battle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 14 10M14 10l2-6 4 4-6 2"/><path d="M20 20 10 10M10 10 8 4 4 8l6 2"/></svg>Spec Battle</button>
       <button data-go="historia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11l3 3v13H5z"/><path d="M9 10h7M9 14h7M9 18h4"/></svg>Historias</button>
       <button data-go="discover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>Comunidad</button>

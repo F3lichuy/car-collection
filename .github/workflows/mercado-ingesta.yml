@@ -1,0 +1,63 @@
+# Mercado MX · ingesta diaria de las fuentes web (gratis en un repo público).
+# Corre solo las fuentes con enabled: true en mercado/sources.yaml.
+# Secret necesario (Settings → Secrets and variables → Actions):
+#   SUPABASE_DB_URL  = cadena de conexión del pooler de Supabase (con contraseña)
+# Nota: GitHub solo ejecuta el cron desde la rama principal (main).
+name: Mercado MX · ingesta
+
+on:
+  schedule:
+    - cron: '17 12 * * *'        # 06:17 en CDMX
+  workflow_dispatch:
+    inputs:
+      fuente:
+        description: 'Fuentes separadas por coma (vacío = todas las activas)'
+        required: false
+      limite:
+        description: 'Máximo de anuncios por fuente (vacío = sin límite)'
+        required: false
+
+concurrency:
+  group: mercado-ingesta
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ingesta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        working-directory: mercado
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mercado/package-lock.json
+      - run: npm ci
+      - name: Pruebas (si fallan, no se toca la base)
+        run: npm test
+      - name: Ingesta
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          FUENTE: ${{ inputs.fuente }}
+          LIMITE: ${{ inputs.limite }}
+        run: |
+          ARGS=(--reporte reporte.json)
+          if [[ "$FUENTE" =~ ^[a-z0-9,-]+$ ]]; then ARGS+=(--fuente "$FUENTE"); fi
+          if [[ "$LIMITE" =~ ^[0-9]+$ ]]; then ARGS+=(--limite "$LIMITE"); fi
+          node scripts/ingest.mjs "${ARGS[@]}"
+      - name: Resumen
+        if: always()
+        run: node scripts/report-md.mjs reporte.json >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reporte-${{ github.run_id }}
+          path: mercado/reporte.json
+          retention-days: 30
+          if-no-files-found: ignore

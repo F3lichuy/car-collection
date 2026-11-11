@@ -31,6 +31,29 @@ Tras editar `data/taxonomia.mjs`:
 npm run build:taxonomia
 ```
 
+## Ingesta (Fase 3)
+
+Probar una fuente de verdad, sin tocar Supabase (base temporal en memoria):
+
+```bash
+node scripts/ingest.mjs --seco --fuente seminuevos-com --limite 20
+```
+
+Opciones: `--fuente a,b` · `--limite N` · `--sin-fotos` · `--hoy AAAA-MM-DD` · `--reporte archivo.json`.
+
+| Pieza | Archivo |
+|---|---|
+| Catálogo de fuentes (todas `enabled: false` hasta tu OK) | `sources.yaml` |
+| Cliente HTTP: user-agent honesto, espera por sitio, robots.txt, reintentos, freno si el sitio deja de responder | `core/http.mjs` |
+| Extractores: JSON-LD, Next.js (`__NEXT_DATA__` y RSC), sitemaps | `core/extract.mjs` |
+| Normalizador por reglas y diccionarios | `core/normalize.mjs`, `data/diccionarios.mjs` |
+| Pipeline: normaliza → deduplica → guarda (una transacción por anuncio; una fuente rota no tumba a las demás) | `core/pipeline.mjs`, `core/store.mjs` |
+| Adaptadores | `adapters/seminuevos.mjs`, `adapters/shopify.mjs` |
+| Cron diario | `../.github/workflows/mercado-ingesta.yml` (secret `SUPABASE_DB_URL`) |
+
+Un anuncio con confianza menor a 0.7, o con versión ambigua, transmisión imposible o VIN
+dudoso, entra igual pero queda en la cola de normalización para que lo revises.
+
 ## Aplicar en Supabase (solo con tu OK)
 
 ```bash

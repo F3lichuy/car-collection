@@ -13,7 +13,8 @@ before(async () => { db = await freshDb(); });
 
 describe('instalación', () => {
   test('el SQL generado de la taxonomía está al día con taxonomia.mjs', () => {
-    const file = readFileSync(new URL('../../supabase/mercado/002_taxonomia.sql', import.meta.url), 'utf8');
+    // sin \r: Git en Windows puede convertir los saltos de línea a CRLF al clonar
+    const file = readFileSync(new URL('../../supabase/mercado/002_taxonomia.sql', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
     assert.equal(file, buildSql(), 'Corre `npm run build:taxonomia`');
     assert.deepEqual(expand().errors, []);
   });

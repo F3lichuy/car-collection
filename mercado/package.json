@@ -1,0 +1,16 @@
+{
+  "name": "mercado-mx",
+  "private": true,
+  "type": "module",
+  "description": "Mercado MX: base de datos, ingesta y analítica (sin dependencias de pago)",
+  "scripts": {
+    "build:taxonomia": "node scripts/build-taxonomy-sql.mjs",
+    "test": "node --test \"tests/**/*.test.mjs\""
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16"
+  },
+  "dependencies": {
+    "sharp": "^0.35.5"
+  }
+}

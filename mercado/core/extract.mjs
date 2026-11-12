@@ -91,7 +91,8 @@ export function schemaInText(text) {
 
 // <loc> de un sitemap (urlset o sitemapindex).
 export function sitemapLocs(xml) {
-  return [...String(xml).matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map(m => decodeEntities(m[1]));
+  // PrestaShop las envuelve en <![CDATA[ … ]]>
+  return [...String(xml).matchAll(/<loc>\s*(?:<!\[CDATA\[\s*)?([^<\s\]]+)\s*(?:\]\]>\s*)?<\/loc>/gi)].map(m => decodeEntities(m[1]));
 }
 
 export const stripHtml = s => s == null ? '' : decodeEntities(String(s).replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n').replace(/<[^>]+>/g, ' ')).replace(/[ \t]+/g, ' ').replace(/\n\s+/g, '\n').trim();

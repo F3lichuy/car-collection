@@ -640,12 +640,55 @@
         <p class="pc-foot" style="margin-top:0">Arrastra este botón a tu barra de favoritos (si no la ves: Ctrl + Shift + B). Luego, en una página de Facebook Marketplace o Mercado Libre con autos, dale clic.</p>
         <p><a class="btn primary sm pc-marcador" id="pcMarcador" href="#" onclick="event.preventDefault();alert('Arrástralo a tu barra de favoritos; no se usa aquí.')">Guardar en Precio de Calle</a></p>
         <p class="pc-foot">En una página de resultados guarda todos los autos que se ven; dentro de un anuncio, ese auto con fotos y descripción.</p>
-      </div><div><h4 class="pc-h4">Últimas capturas</h4><div id="pcCapturas"><p class="pc-foot">Cargando…</p></div></div></div></section>`;
+      </div><div><h4 class="pc-h4">Últimas capturas</h4><div id="pcCapturas"><p class="pc-foot">Cargando…</p></div></div></div>
+      <div class="pc-sub"><h4 class="pc-h4">Buscar más autos por ciudad</h4>
+        <p class="pc-foot" style="margin-top:0">Elige un modelo: se abre la búsqueda en cada ciudad. Ahí da clic en el botón de tu barra para guardar lo que veas. Arriba van los modelos con menos autos para comparar.</p>
+        <div class="toolbar"><select class="ctrl grow" id="pcBuscaModelo" aria-label="Modelo a buscar" onchange="PrecioCalle.renderBusqueda()"><option>Cargando modelos…</option></select></div>
+        <div id="pcBuscaLigas"></div></div></section>`;
   }
+  // Búsquedas listas para abrir (las abre la persona; nosotros no entramos a Facebook ni a Mercado Libre).
+  // Ciudades con el nombre que Facebook usa en sus direcciones (verificadas 2026-11-12).
+  const FB_CITIES = [["mexicocity", "CDMX"], ["guadalajara", "Guadalajara"], ["monterrey", "Monterrey"], ["queretaro", "Querétaro"],
+    ["puebla", "Puebla"], ["merida", "Mérida"], ["cancun", "Cancún"]];
+  const slugify = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  // minPrice: fuera los anuncios gancho de "$1"
+  const fbSearch = (q, city) => `https://www.facebook.com/marketplace/${city ? city + "/" : ""}search?query=${encodeURIComponent(q)}&minPrice=100000&exact=false`;
+  const mlSearch = q => `https://autos.mercadolibre.com.mx/${slugify(q)}/`;
+  let busqModels = null;
+  PC.loadBusqueda = async function () {
+    const sel = document.getElementById("pcBuscaModelo");
+    if (!sel) return;
+    if (!busqModels) {
+      const { data, error } = await client().from("mx_models").select("name,make:mx_makes(name)");
+      if (error) { sel.innerHTML = `<option>No se pudieron leer los modelos</option>`; return; }
+      busqModels = (data || []).map(m => modelLabel(m.make && m.make.name, m.name));
+    }
+    const priced = new Map();
+    for (const x of S.vehicles.filter(v => v.active && v.price && v.price.price != null)) {
+      const k = modelLabel(x.make, x.model); priced.set(k, (priced.get(k) || 0) + 1);
+    }
+    const minN = Number(S.settings.min_n_for_stats ?? 5);
+    const prev = sel.value;
+    const rows = [...new Set(busqModels)].map(k => [k, priced.get(k) || 0]).sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0], "es"));
+    sel.innerHTML = `<option value="">Elige un modelo…</option>` + rows.map(([k, n]) =>
+      `<option value="${h(k)}"${k === prev ? " selected" : ""}>${h(k)} · ${n >= minN ? `${n} con precio` : `faltan ${minN - n}`}</option>`).join("");
+    PC.renderBusqueda();
+  };
+  PC.renderBusqueda = function () {
+    const sel = document.getElementById("pcBuscaModelo"), box = document.getElementById("pcBuscaLigas");
+    if (!sel || !box) return;
+    const q = sel.value;
+    if (!q) { box.innerHTML = ""; return; }
+    const link = (href, label) => `<a class="btn sm" href="${h(href)}" target="_blank" rel="noopener">${h(label)}</a>`;
+    box.innerHTML = `<p class="pc-foot">Facebook Marketplace (desde $100,000):</p>
+      <div class="pc-ligas">${FB_CITIES.map(([slug, name]) => link(fbSearch(q, slug), name)).join("")}${link(fbSearch(q, ""), "Cerca de mí")}</div>
+      <p class="pc-foot">Mercado Libre, todo el país (ahí puedes filtrar por estado): ${link(mlSearch(q), q)}</p>`;
+  };
   PC.loadCapturas = async function () {
     const box = document.getElementById("pcCapturas");
     const a = document.getElementById("pcMarcador");
     if (a) ensureMarcador().then(href => { if (href) a.href = href; });
+    PC.loadBusqueda();
     if (!box) return;
     const { data, error } = await client().from("mx_capturas").select("id,captured_at,source_id,items,status,result").order("id", { ascending: false }).limit(8);
     if (error) { box.innerHTML = `<p class="pc-foot">No se pudieron leer las capturas (${h(error.message)}).</p>`; return; }
@@ -714,6 +757,7 @@
     .pc-ficha{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}
     .pc-specs{margin-top:14px}
     .pc-specs tbody th{color:var(--ink-dim);font-weight:400;width:46%}
+    .pc-ligas{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
     .pc-h4{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;margin:0 0 10px}
     .pc-listing{border-top:1px solid var(--line);padding:12px 0}
     .pc-l1{display:flex;justify-content:space-between;gap:10px;align-items:baseline}

@@ -6,6 +6,8 @@ import archivoJson from './archivo-json.mjs';
 import ficha from './ficha.mjs';
 import { wooStore, vehica, stmListings } from './wordpress.mjs';
 import capturas from './capturas.mjs';
+import cardealer from './cardealer.mjs';
+import nextInventario from './next-inventario.mjs';
 
 export const adapters = {
   seminuevos,
@@ -16,4 +18,6 @@ export const adapters = {
   'stm-listings': stmListings,
   ficha,
   capturas,
+  cardealer,
+  'next-inventario': nextInventario,
 };

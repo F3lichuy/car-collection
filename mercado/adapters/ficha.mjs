@@ -19,6 +19,15 @@ const clean = html => stripHtml(String(html).replace(/<script[\s\S]*?<\/script>|
 const yearOf = v => { const m = String(v ?? '').match(/\b(19[4-9]\d|20[0-3]\d)\b/); return m ? Number(m[1]) : null; };
 const knownCurrency = c => (/^(MXN|USD)$/i.test(c ?? '') ? c.toUpperCase() : null);
 const first = v => (Array.isArray(v) ? v[0] : v);
+// texto de JSON-LD; "—" o vacío = sin dato
+const ldText = v => { const s = stripHtml(String(v ?? '')).trim(); return s && !/^[—–\-]+$/.test(s) ? s : null; };
+const MESES = { enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6, julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12 };
+// "25/Octubre/2023" o "25 de octubre de 2023" → "2023-10-25"; lo demás, null
+export function spanishDate(s) {
+  const m = String(s ?? '').toLowerCase().match(/(\d{1,2})\s*(?:\/|\s+de\s+|\s+)\s*([a-záé]+)\s*(?:\/|\s+de\s+|\s+)\s*(\d{4})/);
+  const mm = m && MESES[m[2]];
+  return mm ? `${m[3]}-${String(mm).padStart(2, '0')}-${m[1].padStart(2, '0')}` : null;
+}
 // "1,700 km", "14mil km", "con 14,000 kilómetros" en el título o la descripción del propio auto
 // (no en toda la página: ahí hay "0-100 km/h" y autos relacionados). Uno solo; si hay varios distintos, no se adivina.
 export function kmInText(s) {
@@ -36,6 +45,8 @@ export class FichaAdapter {
     this.include = new RegExp(this.cfg.include ?? '.');
     this.contentEnd = this.cfg.content_end ? new RegExp(this.cfg.content_end, 'i') : null;
     this.sold = this.cfg.sold ? new RegExp(this.cfg.sold, 'i') : null;
+    this.cityRe = this.cfg.city_re ? new RegExp(this.cfg.city_re, 'i') : null;
+    this.publishedRe = this.cfg.published_re ? new RegExp(this.cfg.published_re, 'i') : null;
   }
 
   async urls(ctx) {
@@ -65,7 +76,13 @@ export class FichaAdapter {
         yield { external_id, url, title: slug.replace(/[-_]+/g, ' ') };   // el pipeline la cuenta como fuera de taxonomía
         continue;
       }
-      const html = (await ctx.fetcher.get(url)).text;
+      let html;
+      try { html = (await ctx.fetcher.get(url)).text; }
+      catch (e) {
+        // ficha que ya no existe (el sitemap a veces trae autos retirados): se salta, no tumba la fuente
+        if (e.status === 404 || e.status === 410) { ctx.log?.(`    ${e.status} ${url} · ficha retirada`); continue; }
+        throw e;
+      }
       const raw = this.parse(html, url, external_id);
       if (raw) yield raw;
     }
@@ -98,7 +115,9 @@ export class FichaAdapter {
     }
     currency = currency ?? knownCurrency(this.cfg.currency);
 
-    const ldImages = [].concat(ld?.image ?? []).map(i => (typeof i === 'string' ? i : i?.url)).filter(Boolean);
+    // Prestige DLC publica "https://prestigedlc.comhttps://…blob…": se toma la URL de adentro
+    const ldImages = [].concat(ld?.image ?? []).map(i => (typeof i === 'string' ? i : i?.url)).filter(Boolean)
+      .map(u => String(u).replace(/^https?:\/\/[^/]+(?=https?:\/\/)/i, ''));
     // una foto por archivo: WordPress repite cada imagen en tamaños (-300x200, -scaled, -Grande)
     const byBase = new Map();
     // config.photo_path: carpeta de las fotos de autos en ese sitio (WordPress: /wp-content/uploads/)
@@ -121,15 +140,20 @@ export class FichaAdapter {
       model: [f.model, title].filter(Boolean).join(' '), version: f.version ?? null,
       year: yearOf(f.year) ?? yearOf(ld?.vehicleModelDate ?? ld?.modelDate) ?? null,
       km: f.km ?? (ld?.mileageFromOdometer ? String(ld.mileageFromOdometer.value ?? ld.mileageFromOdometer) : null) ?? kmInText(`${title}\n${stripHtml(ld?.description ?? '')}`),
-      transmission: f.transmission ?? null, color_ext: f.color_ext ?? null, color_int: f.color_int ?? null,
+      transmission: f.transmission ?? ldText(ld?.vehicleTransmission), color_ext: f.color_ext ?? ldText(ld?.color),
+      color_int: f.color_int ?? ldText(ld?.vehicleInteriorColor),
       vin: ld?.vehicleIdentificationNumber ?? f.vin ?? null,
       price: price > 0 && currency ? price : null, currency: price > 0 ? currency : null,
       description: [stripHtml(ld?.description ?? ''), text.slice(0, 4000)].filter(Boolean).join('\n'),
       photos: photos.slice(0, 40),
       // fecha de publicación que declara la página (JSON-LD del auto o de la página, o la meta de WordPress/Yoast)
       published_on: ld?.datePosted ?? ld?.datePublished ?? findSchemaObjects(jsonLdBlocks(html), ['WebPage', 'ItemPage'])[0]?.datePublished
-        ?? html.match(/<meta[^>]+property=["']article:published_time["'][^>]+content=["']([^"']+)/i)?.[1] ?? null,
-      city: this.source.cities?.[0] ?? null, seller_type: 'broker', seller_name: this.source.name,
+        ?? html.match(/<meta[^>]+property=["']article:published_time["'][^>]+content=["']([^"']+)/i)?.[1]
+        ?? (this.publishedRe ? spanishDate(`${text}\n${stripHtml(ld?.description ?? '')}`.match(this.publishedRe)?.[1]) : null) ?? null,
+      // config.city_re: la ciudad viene en cada ficha (portales nacionales: "Ubicación: Guadalajara, Jalisco")
+      city: (this.cityRe ? `${text}\n${stripHtml(ld?.description ?? '')}`.match(this.cityRe)?.[1]?.trim() : null)
+        ?? ('city' in this.cfg ? this.cfg.city : this.source.cities?.[0] ?? null),
+      seller_type: this.cfg.seller_type ?? 'broker', seller_name: this.source.name,
       extra: {},
     };
   }

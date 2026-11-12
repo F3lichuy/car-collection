@@ -441,6 +441,148 @@ sources:
     verify: "Confirmar ciudad"
     enabled: true
 
+  # ── Agregadas el 2026-11-12 (búsqueda nacional) ────────────────────────
+  - id: euromotors
+    name: Euromotors (Santa Fe, San Pedro y León)
+    kind: broker
+    cities: [CDMX, Monterrey, León]
+    base_url: https://euromotors.mx
+    adapter: cardealer
+    config:
+      sitemaps: [/wp-sitemap-posts-cars-1.xml]
+      include: "/inventario/[^/]+/?$"
+      city: null           # la ficha no dice en cuál de las 3 sucursales está cada auto
+    capture_mode: scraper
+    data: "Tema Car Dealer (WordPress): ficha con li.car_year/car_make/car_mileage…, precio con clase currency-MXN; ~199 autos (sitemap = inventario de 17 páginas)"
+    notes: "robots.txt permite a todos (bloquea solo bots de entrenamiento de IA); Content-Signal search=yes, ai-train=no"
+    enabled: true
+
+  - id: elegance-company-motors
+    name: Elegance Company Motors (San Pedro Garza García)
+    kind: broker
+    cities: [Monterrey]
+    base_url: https://www.elegancecompanymotors.com
+    adapter: ficha
+    config:
+      sitemaps: [/sitemap.xml]
+      include: "/catalogo/[^/]+--rec[A-Za-z0-9]+$"
+    capture_mode: scraper
+    data: "Next.js con JSON-LD Car + Offer (priceCurrency MXN, InStock) en cada ficha; ~150 autos, casi todos exóticos (Ferrari, McLaren, Lamborghini, Rolls-Royce)"
+    verify: "El JSON-LD trae una sola foto por auto (las demás no tienen extensión de imagen)"
+    enabled: true
+
+  - id: prestige-dlc
+    name: Prestige DLC (Guadalajara)
+    kind: broker
+    cities: [Guadalajara]
+    base_url: https://prestigedlc.com
+    adapter: ficha
+    config:
+      sitemaps: [/sitemap.xml]
+      include: "/vehiculo/\\d+$"
+    capture_mode: scraper
+    data: "Next.js con JSON-LD Vehicle + Offer (moneda por auto: casi todo MXN, algunos USD que se descartan); 69 autos"
+    enabled: true
+
+  - id: gm-motors
+    name: GM Motors (Torre Nómad, Monterrey)
+    kind: broker
+    cities: [Monterrey]
+    base_url: https://www.gmmotors.mx
+    adapter: next-inventario
+    config:
+      list_page: /inventario
+      currency: MXN      # el sitio muestra "$5,769,000" sin moneda; es agencia de Monterrey y por magnitud son pesos (911 GT3 Touring 2026 = $5,769,000)
+    capture_mode: scraper
+    data: "Next.js: los 160 autos vienen en __NEXT_DATA__ de /inventario (marca, modelo, versión, km, public_price, fotos); la ficha /auto/{id} añade color, estado y factura"
+    verify: "Mucho seminuevo general (Amarok, GLE): la taxonomía deja solo los de entusiasta"
+    enabled: true
+
+  - id: el-auto-clasico
+    name: El Auto Clásico (portal nacional de clásicos)
+    kind: portal
+    cities: []
+    base_url: https://elautoclasico.com.mx
+    adapter: ficha
+    config:
+      sitemaps: [/1_mx_0_sitemap.xml]
+      include: "/\\d+-[^/]+\\.html$"
+      city_re: "Ubicaci[oó]n:\\s*(.+?)\\s*(?:Publicado|\\n|$)"
+      published_re: "Publicado desde:\\s*(\\d{1,2}/[A-Za-zé]+/\\d{4})"
+      seller_type: desconocido      # mezcla particulares y lotes
+      photo_path: "-large_default/"
+    capture_mode: scraper
+    data: "PrestaShop con JSON-LD Product (MXN); ~350 anuncios de todo el país (Torreón, Guadalajara…). La descripción trae Ubicación y 'Publicado desde'"
+    verify: "Muchos anuncios dicen 'Último refrendo' de 2024 y aun así 'Refrendo: Vigente'. Activada el 2026-11-12 por decisión del usuario sin filtrar por refrendo"
+    enabled: true
+
+  # Encontradas pero sin lectura automática por ahora
+  - id: grand-chelem
+    name: Grand Chelem / Iconic Broker (seminuevos exóticos CDMX, Monterrey, Puebla)
+    kind: agencia_oficial
+    cities: [CDMX, Monterrey, Puebla]
+    base_url: https://www.grandchelem.mx
+    capture_mode: manual
+    data: "El sitio pide resolver un reto de JavaScript (Sucuri) antes de mostrar nada: no se rodea. Entra con el botón 'Guardar en Precio de Calle'"
+    enabled: false
+
+  - id: hcollection
+    name: HCollection (McLaren, Rolls-Royce, Lotus, Maserati · seminuevos)
+    kind: agencia_oficial
+    cities: [CDMX, Monterrey, Guadalajara]
+    base_url: https://hcollection.mx
+    capture_mode: playwright
+    data: "Laravel + Vue: el inventario se pinta en el navegador y su sitemap responde 'Not Found'"
+    enabled: false
+
+  - id: lusso-seminuevos
+    name: Lusso Seminuevos (Zapopan)
+    kind: broker
+    cities: [Guadalajara]
+    base_url: https://www.facebook.com/lussomotors/
+    capture_mode: manual
+    data: "Solo Facebook: con el botón desde su página"
+    enabled: false
+
+  - id: terra-motors
+    name: Terra Motors (Monterrey)
+    kind: broker
+    cities: [Monterrey]
+    base_url: https://www.terramotors.mx
+    capture_mode: playwright
+    data: "Wix: precios en MXN, pero el inventario se carga con JavaScript"
+    enabled: false
+
+  - id: mapa-motors
+    name: MAPA Motors (Zapopan)
+    kind: broker
+    cities: [Guadalajara]
+    base_url: https://mapamotors.mx
+    capture_mode: scraper
+    data: "Next.js, 55 autos en sitemap /auto/…; sin JSON-LD. Casi todo seminuevo general"
+    verify: "TODO adaptador si llega a tener autos de la taxonomía"
+    enabled: false
+
+  - id: seminuevos-haro
+    name: Seminuevos Haro (Guadalajara)
+    kind: broker
+    cities: [Guadalajara]
+    base_url: https://seminuevosharo.mx
+    capture_mode: scraper
+    data: "PHP propio: inventory-list.php?pagina=N → vehicle-details.php?auto=N; robots pide 20 s entre peticiones. Algunos Porsche, mayormente general"
+    verify: "TODO adaptador"
+    enabled: false
+
+  - id: alme-automotriz
+    name: Alme Automotriz (Guadalajara)
+    kind: broker
+    cities: [Guadalajara]
+    base_url: https://www.almeautomotriz.com
+    capture_mode: scraper
+    data: "Mismo tema Car Dealer que Euromotors, pero su sitemap no se actualiza desde 2024-01 (las fichas dan 404)"
+    verify: "TODO: leer /automoviles/ en vez del sitemap si interesa; casi todo seminuevo general"
+    enabled: false
+
   # ── Tijuana / Mérida ────────────────────────────────────────────────────
   - id: dlux-seminuevos-tijuana
     name: D'LUX Seminuevos

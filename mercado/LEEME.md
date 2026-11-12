@@ -58,7 +58,7 @@ El SQL exportado deja fuera las filas que venían de la semilla: solo lleva lo n
 | Extractores: JSON-LD, Next.js (`__NEXT_DATA__` y RSC), sitemaps | `core/extract.mjs` |
 | Normalizador por reglas y diccionarios | `core/normalize.mjs`, `data/diccionarios.mjs` |
 | Pipeline: normaliza → deduplica → guarda (una transacción por anuncio; una fuente rota no tumba a las demás) | `core/pipeline.mjs`, `core/store.mjs` |
-| Adaptadores por plataforma (uno sirve a varias agencias; se elige con `adapter:` en `sources.yaml`) | `shopify` (EuroClassic) · `woocommerce` (JAH) · `vehica` (NetMotors) · `stm-listings` (Montecarlo) · `ficha` = sitemap + JSON-LD o etiquetas de la ficha (Miura, Imperia, Mulsanne) · `seminuevos` (en pausa) |
+| Adaptadores por plataforma (uno sirve a varias agencias; se elige con `adapter:` en `sources.yaml`) | `shopify` (EuroClassic) · `woocommerce` (JAH) · `vehica` (NetMotors) · `stm-listings` (Montecarlo) · `ficha` = sitemap + JSON-LD o etiquetas de la ficha (Miura, Imperia, Mulsanne, Elegance Company Motors, Prestige DLC, El Auto Clásico) · `cardealer` = tema Car Dealer de WordPress (Euromotors) · `next-inventario` = inventario en `__NEXT_DATA__` (GM Motors) · `seminuevos` (en pausa) |
 | Cron diario | `../.github/workflows/mercado-ingesta.yml` (secret `SUPABASE_DB_URL`) |
 
 Un anuncio con confianza menor a 0.7, o con versión ambigua, transmisión imposible o VIN
@@ -106,6 +106,10 @@ se guarda en `mx_capturas` (migración 006, solo admin). La corrida diaria la pa
 `capturas` (`core/capturas.mjs`): normalizador, anti-duplicados, solo pesos; deja el resumen en la captura.
 Volver a capturar el mismo auto otro día registra su precio de ese día (así se ven las bajadas).
 Páginas de prueba del botón: `tests/fixtures/captura/`.
+
+En el mismo panel, **Buscar más autos por ciudad** arma las búsquedas de un modelo en Facebook Marketplace
+(CDMX, Guadalajara, Monterrey, Querétaro, Puebla, Mérida, Cancún y "cerca de mí", desde $100,000) y en Mercado Libre.
+Solo son ligas que abre el admin; los modelos con menos autos para comparar salen primero.
 
 ## Aplicar en Supabase (solo con tu OK)
 

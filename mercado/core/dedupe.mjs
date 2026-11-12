@@ -167,7 +167,8 @@ export class IdentityIndex {
     const inc = [];
     for (const p of incomingPhotos.map(prepPhoto).filter(Boolean)) if (!inc.some(q => dist(p, q) <= S)) inc.push(p);
     // 2) pares candidatos (foto entrante, foto del vehículo, distancia)
-    const perVehicle = new Map(), strongVehiclesPerPhoto = inc.map(() => new Set());
+    const I = this.s.phash_identical_distance ?? 2;
+    const perVehicle = new Map(), strongVehiclesPerPhoto = inc.map(() => new Set()), identicalPerPhoto = inc.map(() => new Set());
     for (const [id, v] of this.vehicles) {
       if (id === exclude || (skipDeleted && v.deleted)) continue;
       for (let i = 0; i < inc.length; i++) for (let j = 0; j < v.photos.length; j++) {
@@ -176,10 +177,12 @@ export class IdentityIndex {
         if (!perVehicle.has(id)) perVehicle.set(id, []);
         perVehicle.get(id).push([i, j, d]);
         if (d <= S) strongVehiclesPerPhoto[i].add(id);
+        if (d <= I) identicalPerPhoto[i].add(id);
       }
     }
-    // 3) fotos genéricas: la misma toma aparece en muchos autos (banner, prensa)
-    const generic = new Set(strongVehiclesPerPhoto.flatMap((set, i) => set.size >= G ? [i] : []));
+    // 3) fotos genéricas: la misma toma aparece en muchos autos (banner, prensa). Una foto que se
+    //    "parece" a varias del mismo estudio pero es IDÉNTICA a una sola es esa gemela, no un banner.
+    const generic = new Set(strongVehiclesPerPhoto.flatMap((set, i) => set.size >= G && identicalPerPhoto[i].size !== 1 ? [i] : []));
     // 4) emparejamiento 1 a 1 (una foto no cuenta dos veces)
     const out = new Map();
     for (const [id, pairs] of perVehicle) {
@@ -239,9 +242,10 @@ export class IdentityIndex {
       const v = this.vehicles.get(id), c = compare(inc, v, s, this.isDistinct(id, exclude ?? ''));
       const few = Math.min(pm.usablePhotos, v.photos.length) <= 2;
       const identical = m.distances.length > 0 && Math.min(...m.distances) <= I;
-      // …y mismos km, o (anuncios sin km, como los clásicos) el mismo precio exacto
-      const incP = [].concat(inc.prices ?? [], inc.price != null ? [inc.price] : []);
-      const samePrice = incP.some(a => [].concat(v.prices ?? []).some(p => Math.abs(Number(a) - Number(p)) < 1));
+      // …y mismos km, o (anuncios sin km, como los clásicos y Marketplace) el mismo precio o uno que cambió
+      // poco (≤5 %: $5,299,000 contra $5,309,000): con la MISMA imagen, eso basta
+      const incP = [].concat(inc.prices ?? [], inc.price != null ? [inc.price] : []).map(Number).filter(p => p > 0);
+      const samePrice = incP.some(a => [].concat(v.prices ?? []).map(Number).filter(p => p > 0).some(p => Math.max(a, p) / Math.min(a, p) <= 1.05));
       const single = few && identical && c.agree.includes('anio') && (c.agree.includes('km') || samePrice);
       if (c.hard.some(h => PHOTO_BLOCKING.has(h))) continue;     // fotos reusadas o de estudio en otro auto
       if (m.strong < s.phash_min_matches && !single) {

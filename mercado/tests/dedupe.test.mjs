@@ -278,3 +278,16 @@ describe('repetidos evidentes sin km (clásicos)', () => {
     assert.equal(idx.resolve({ ...SL, specs: s, price: 350000, photos: [photos.agencia[0]] }).action, 'new');
   });
 });
+
+describe('foto "de estudio" con una gemela idéntica', () => {
+  test('se parece a varias del mismo sitio pero es idéntica solo a una → esa es el mismo auto (no es un banner)', () => {
+    const h = 0x5a5a_1234_9abc_def0n, near = x => ({ hash: h ^ x });   // 3–5 bits de diferencia: mismo fondo, otro auto
+    const CL = { model_id: 'ford-mustang', generation_id: null, version_id: null }, s = { year: 1966, observed_on: '2026-11-12' };
+    const idx = new IdentityIndex()
+      .addVehicle({ id: 'gemela', created_at: '2026-11-10', ...CL, specs: s, photos: [{ hash: h }], prices: [550000] })
+      .addVehicle({ id: 'otro1', created_at: '2026-11-10', ...CL, specs: { ...s, year: 1968 }, photos: [near(0b111n)], prices: [350000] })
+      .addVehicle({ id: 'otro2', created_at: '2026-11-10', ...CL, specs: { ...s, year: 1972 }, photos: [near(0b11111n)], prices: [350000] });
+    const r = idx.resolve({ ...CL, specs: s, price: 550000, photos: [{ hash: h }] });
+    assert.equal(r.action, 'match'); assert.equal(r.vehicleId, 'gemela');
+  });
+});

@@ -11,6 +11,9 @@
 //       Requiere SUPABASE_DB_URL (secret de GitHub, nunca en el código).
 //
 // Opciones: --fuente a,b · --limite N · --sin-fotos · --hoy AAAA-MM-DD · --reporte archivo.json
+//           --semilla .capturas/semilla-prod.json (solo con --seco): arranca la base temporal con
+//           lo que ya hay en Supabase (scripts/semilla-prod.mjs), para que el anti-duplicados
+//           compare contra producción; --exportar deja fuera esas filas.
 // ════════════════════════════════════════════════════════════════════════
 import { readFileSync, writeFileSync } from 'node:fs';
 import { parse as parseYaml } from 'yaml';
@@ -59,6 +62,29 @@ if (dry) {
 const store = new Store(db);
 await store.syncSources(all);
 
+const colsOf = async t => (await db.query(`select column_name from information_schema.columns where table_schema = 'public' and table_name = $1
+  and is_generated = 'NEVER' order by ordinal_position`, [t])).rows.map(r => r.column_name);
+const json = v => JSON.stringify(v, (k, x) => (typeof x === 'bigint' ? x.toString() : x));   // hashes de 64 bits
+const seeded = new Map();   // tabla → filas (JSON) que venían de producción: no se re-exportan
+if (opt('semilla')) {
+  if (!dry) { console.error('--semilla solo tiene sentido con --seco.'); process.exit(2); }
+  const { tablas } = JSON.parse(readFileSync(opt('semilla'), 'utf8'));
+  for (const [t, rows] of Object.entries(tablas)) {
+    if (!rows.length) continue;
+    const cols = await colsOf(t);
+    await db.query(`insert into public.${t} (${cols.join(', ')}) overriding system value
+      select ${cols.join(', ')} from json_populate_recordset(null::public.${t}, $1::json)`, [JSON.stringify(rows)]);
+  }
+  for (const t of Object.keys(tablas)) {
+    // ids de identidad: que los nuevos sigan después de los de producción
+    const idn = (await db.query(`select 1 from information_schema.columns where table_schema = 'public' and table_name = $1 and column_name = 'id' and is_identity = 'YES'`, [t])).rows.length;
+    if (idn && tablas[t].length) await db.query(`select setval(pg_get_serial_sequence('public.${t}', 'id'), (select max(id) from public.${t}))`);
+    const cols = await colsOf(t);
+    seeded.set(t, new Set((await db.query(`select ${cols.join(', ')} from ${t}`)).rows.map(json)));
+  }
+  console.log('Semilla de producción cargada:', Object.fromEntries(Object.entries(tablas).map(([t, r]) => [t, r.length])));
+}
+
 const makeFetcher = s => new PoliteFetcher({ userAgent: s.user_agent, minDelayMs: (s.min_delay_seconds ?? 3) * 1000, retries: s.retries ?? 3,
   log: e => { if (e.error || e.status >= 400) console.log(`    ${e.status ?? 'ERR'} ${e.url}${e.error ? ' · ' + e.error : ''}`); } });
 
@@ -68,7 +94,7 @@ console.log(`\n══ Reporte ${today} ${dry ? '(seco)' : ''} ══`);
 for (const r of reports) {
   console.log(`\n${r.ok ? '✓' : '✗'} ${r.fuente}${r.fatal ? ' · ' + r.fatal : ''}`);
   console.log(`  nuevos ${r.nuevos} (unidos a un auto ya conocido: ${r.unidos_a_auto_existente}) · actualizados ${r.actualizados} · sin cambio ${r.sin_cambio}`);
-  console.log(`  fuera de la taxonomía ${r.fuera_de_taxonomia} · a revisión: duplicado ${r.a_revision_duplicado}, normalización ${r.a_revision_normalizacion}`);
+  console.log(`  fuera de la taxonomía ${r.fuera_de_taxonomia} · marcados vendidos ${r.marcados_vendidos ?? 0} · a revisión: duplicado ${r.a_revision_duplicado}, normalización ${r.a_revision_normalizacion}`);
   console.log(`  activos no vistos hoy ${r.completa ? r.no_vistos : '(corrida parcial: no se cuenta)'} · errores ${r.errores.length} · peticiones ${r.resumen.peticiones}`);
   if (r.muestras.length) console.table(r.muestras);
 }
@@ -85,9 +111,10 @@ if (dry) {
 // inicial; el día a día lo hace GitHub Actions directo contra la base.
 if (dry && opt('exportar')) {
   const TABLES = ['mx_vehicles', 'mx_listings', 'mx_listing_private', 'mx_specs', 'mx_spec_options', 'mx_price_snapshots', 'mx_photos', 'mx_review_queue', 'mx_runs'];
+  const NATURAL_KEY = { mx_photos: ['listing_id', 'url'], mx_review_queue: ['kind', 'vehicle_a', 'vehicle_b', 'listing_id'],
+    mx_runs: ['source_id', 'started_at'], mx_price_snapshots: ['listing_id', 'observed_from'] };
   const ran = reports.map(r => r.fuente);
   const out = ['-- Carga generada por scripts/ingest.mjs --seco --exportar', `-- ${today} · fuentes: ${ran.join(', ')}`, 'begin;'];
-  const json = v => JSON.stringify(v, (k, x) => (typeof x === 'bigint' ? x.toString() : x));   // hashes de 64 bits
   const lit = v => `$mx$${json(v)}$mx$`;
   const src = (await db.query(`select * from mx_sources where id = any($1)`, [ran])).rows;
   out.push(`insert into public.mx_sources select * from json_populate_recordset(null::public.mx_sources, ${lit(src)}::json)
@@ -95,10 +122,17 @@ if (dry && opt('exportar')) {
   for (const t of TABLES) {
     const cols = (await db.query(`select column_name from information_schema.columns where table_schema = 'public' and table_name = $1
       and not (column_name = 'id' and is_identity = 'YES') and is_generated = 'NEVER' order by ordinal_position`, [t])).rows.map(r => r.column_name);
-    const rows = (await db.query(`select ${cols.join(', ')} from ${t}`)).rows;
+    const seen = seeded.get(t);
+    const rows = (await db.query(`select ${(await colsOf(t)).join(', ')} from ${t}`)).rows
+      .filter(r => !seen?.has(json(r)))
+      .map(r => Object.fromEntries(cols.map(c => [c, r[c]])));
     if (!rows.length) continue;
     if (json(rows).includes('$mx$')) throw new Error(`datos de ${t} contienen el delimitador $mx$`);
-    out.push(`insert into public.${t} (${cols.join(', ')})\n  select ${cols.join(', ')} from json_populate_recordset(null::public.${t}, ${lit(rows)}::json)\n  on conflict do nothing;`);
+    // Tablas con id autonumérico no chocan por id: se evita el duplicado por su llave natural,
+    // para que aplicar el mismo archivo dos veces no repita fotos ni revisiones.
+    const key = NATURAL_KEY[t];
+    const guard = key ? `\n  where not exists (select 1 from public.${t} x where ${key.map(c => `x.${c} is not distinct from r.${c}`).join(' and ')})` : '';
+    out.push(`insert into public.${t} (${cols.join(', ')})\n  select ${cols.map(c => `r.${c}`).join(', ')} from json_populate_recordset(null::public.${t}, ${lit(rows)}::json) r${guard}\n  on conflict do nothing;`);
   }
   out.push('commit;');
   writeFileSync(opt('exportar'), out.join('\n\n') + '\n');

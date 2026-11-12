@@ -51,6 +51,15 @@ describe('seguridad (RLS)', () => {
     });
   });
 
+  test('una fuente apagada con anuncios sigue visible (cada precio se rastrea a su fuente)', async () => {
+    await db.query(`insert into mx_sources (id, name, kind, capture_mode, enabled) values ('apagada-con-autos', 'Apagada', 'broker', 'scraper', false), ('apagada-vacia', 'Vacía', 'broker', 'scraper', false)`);
+    const { rows: [v] } = await db.query(`insert into mx_vehicles (model_id) values ('porsche-911') returning id`);
+    await db.query(`insert into mx_listings (vehicle_id, source_id, capture_method, url, url_canonical, first_seen, last_seen)
+      values ($1, 'apagada-con-autos', 'scraper', 'https://x.mx/a', 'https://x.mx/a', '2026-11-01', '2026-11-01')`, [v.id]);
+    const ids = await as(db, 'anon', async tx => (await tx.query(`select id from mx_sources_public where id like 'apagada-%'`)).rows.map(r => r.id));
+    assert.deepEqual(ids, ['apagada-con-autos']);
+  });
+
   test('anónimo y usuario normal no pueden escribir', async () => {
     for (const who of ['anon', 'user']) {
       await rejects(as(db, who, tx => tx.query(`insert into mx_vehicles (model_id) values ('porsche-911')`)), /row-level security|permission denied/);

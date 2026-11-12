@@ -1,6 +1,6 @@
 -- GENERADO por mercado/scripts/build-taxonomy-sql.mjs desde mercado/data/taxonomia.mjs.
 -- No lo edites a mano: edita el .mjs y corre `npm run build:taxonomia`.
--- 19 marcas · 58 modelos · 103 generaciones · 405 versiones · 914 alias
+-- 19 marcas · 58 modelos · 103 generaciones · 405 versiones · 918 alias
 begin;
 insert into public.mx_makes (id, name, country, sort) values
   ('porsche', 'Porsche', 'DE', 1),
@@ -1349,6 +1349,8 @@ insert into public.mx_aliases (alias, level, target_id) values
   ('sl pagoda', 'model', 'mercedes-benz-sl-pagoda'),
   ('pagoda', 'model', 'mercedes-benz-sl-pagoda'),
   ('w113', 'model', 'mercedes-benz-sl-pagoda'),
+  ('clase sl', 'model', 'mercedes-benz-sl-pagoda'),
+  ('sl', 'model', 'mercedes-benz-sl-pagoda'),
   ('w113', 'generation', 'mercedes-benz-sl-pagoda-w113'),
   ('230 sl', 'version', 'mercedes-benz-sl-pagoda-w113-230-sl'),
   ('230sl', 'version', 'mercedes-benz-sl-pagoda-w113-230-sl'),
@@ -1398,6 +1400,8 @@ insert into public.mx_aliases (alias, level, target_id) values
   ('v12', 'version', 'jaguar-e-type-s3-v12'),
   ('sl r107', 'model', 'mercedes-benz-sl-r107'),
   ('r107', 'model', 'mercedes-benz-sl-r107'),
+  ('clase sl', 'model', 'mercedes-benz-sl-r107'),
+  ('sl', 'model', 'mercedes-benz-sl-r107'),
   ('r107', 'generation', 'mercedes-benz-sl-r107-r107'),
   ('350 sl', 'version', 'mercedes-benz-sl-r107-r107-350-sl'),
   ('350sl', 'version', 'mercedes-benz-sl-r107-r107-350-sl'),

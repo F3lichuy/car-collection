@@ -17,9 +17,10 @@ import { loadSettings } from './settings.mjs';
 
 export const NORMALIZATION_REVIEW_BELOW = 0.7;
 const MAX_PHOTOS_TO_HASH = 6;
+const SOLD_IN_TITLE = /(^|[^a-z])(sold|vendid[oa])([^a-z]|$)/i;
 
 export async function runSource({ adapter, source, store, fetcher, today, trigger = 'cron', limit = Infinity, hashPhotos = true, log = console.log }) {
-  const r = { fuente: source.id, ok: false, nuevos: 0, actualizados: 0, sin_cambio: 0, fuera_de_taxonomia: 0, unidos_a_auto_existente: 0,
+  const r = { fuente: source.id, ok: false, nuevos: 0, actualizados: 0, sin_cambio: 0, fuera_de_taxonomia: 0, marcados_vendidos: 0, unidos_a_auto_existente: 0,
     a_revision_duplicado: 0, a_revision_normalizacion: 0, no_vistos: 0, completa: false, errores: [], resumen: {}, muestras: [] };
   const runId = await store.startRun(source.id, trigger);
   try {
@@ -36,6 +37,9 @@ export async function runSource({ adapter, source, store, fetcher, today, trigge
       if (seen >= limit) break;
       seen++;
       try {
+        // "Ferrari SF90 Spider SOLD": la agencia lo deja publicado pero ya no está en venta.
+        // No se toma como activo; si estaba activo, dejar de verlo es la señal de venta (Fase 5).
+        if (SOLD_IN_TITLE.test(String(raw.title ?? ''))) { r.marcados_vendidos++; continue; }
         const n = normalizeListing({ source_id: source.id, observed_on: today, ...raw });
         if (!n.inScope) { r.fuera_de_taxonomia++; continue; }
         await ingestOne({ n, store, index, today, hashPhotos, fetcher, r });
@@ -56,7 +60,7 @@ export async function runSource({ adapter, source, store, fetcher, today, trigge
     r.errores.push({ error: e.message });
     log(`✗ ${source.id}: ${e.message}`);
   }
-  r.resumen = { ...pick(r, ['nuevos', 'actualizados', 'sin_cambio', 'fuera_de_taxonomia', 'unidos_a_auto_existente', 'a_revision_duplicado', 'a_revision_normalizacion', 'no_vistos', 'completa']),
+  r.resumen = { ...pick(r, ['nuevos', 'actualizados', 'sin_cambio', 'fuera_de_taxonomia', 'marcados_vendidos', 'unidos_a_auto_existente', 'a_revision_duplicado', 'a_revision_normalizacion', 'no_vistos', 'completa']),
     peticiones: fetcher?.requests ?? null };
   await store.finishRun(runId, source.id, r);
   return r;

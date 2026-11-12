@@ -2,7 +2,14 @@
 // JSON-LD (schema.org), __NEXT_DATA__, datos RSC de Next.js App Router
 // (self.__next_f), sitemaps y objetos JSON incrustados en texto.
 
-const decodeEntities = s => s.replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+// &#036; (WordPress escribe así el "$"), &#8220;, &nbsp;, &eacute;…
+const NAMED = { quot: '"', apos: "'", lt: '<', gt: '>', nbsp: ' ', hellip: '…', ldquo: '“', rdquo: '”', lsquo: '‘', rsquo: '’', ndash: '–', mdash: '—',
+  aacute: 'á', eacute: 'é', iacute: 'í', oacute: 'ó', uacute: 'ú', ntilde: 'ñ', Aacute: 'Á', Eacute: 'É', Iacute: 'Í', Oacute: 'Ó', Uacute: 'Ú', Ntilde: 'Ñ', uuml: 'ü', deg: '°', middot: '·', reg: '®', copy: '©' };
+const decodeEntities = s => s
+  .replace(/&#(\d+);/g, (m, n) => { const c = Number(n); return c > 0 && c < 0x110000 ? String.fromCodePoint(c) : m; })
+  .replace(/&#x([0-9a-f]+);/gi, (m, h) => { const c = parseInt(h, 16); return c > 0 && c < 0x110000 ? String.fromCodePoint(c) : m; })
+  .replace(/&([a-z]+);/gi, (m, k) => NAMED[k] ?? m)
+  .replace(/&amp;/g, '&');
 
 // Todos los bloques <script type="application/ld+json"> parseados (los inválidos se omiten).
 export function jsonLdBlocks(html) {

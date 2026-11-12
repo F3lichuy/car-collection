@@ -179,17 +179,26 @@ sources:
     kind: broker
     cities: [CDMX]
     base_url: https://exoticavenue.mx
+    adapter: ficha
+    config:
+      list_pages: [/nuestros-autos]
+      include: "^/nuestros-autos/9-autos-exoticos/\\d+-"   # "uncategorised" trae autos de pista (Huracán Super Trofeo)
+      content_end: "Acerca del Auto"
+      labels: { year: [modelo, año], model: [] }
+      photo_path: "^/images/yootheme/autos/"
+      sold: "Precio\\s+VENDIDO"          # los vendidos siguen publicados con "Precio: VENDIDO"
     capture_mode: scraper
-    verify: "Ubicar la página de inventario (/inventario da 404)"
+    data: "Joomla: lista en /nuestros-autos + etiquetas de la ficha (Transmisión, Kilometraje, Color); precio '$1,450,000.00 MXN'. Ojo: su etiqueta 'Modelo:' es el año"
     enabled: false
 
   - id: jah-motors
     name: JAH Motors
+    adapter: woocommerce
     kind: broker
-    cities: [CDMX]
+    cities: [Monterrey]          # sus categorías de tienda son "jahmotors-monterrey", "auto-monterrey"
     base_url: https://jahmotors.com
     capture_mode: scraper
-    data: "WordPress con JSON-LD y sitemap"
+    data: "WooCommerce Store API pública (moneda MXN declarada). No publica precios (precio 0 → sin precio)"
     notes: "Posiblemente el 'JA Motors' que mencionaste — confirmar"
     enabled: false
 
@@ -216,8 +225,15 @@ sources:
     kind: broker
     cities: [CDMX]
     base_url: https://mulsanne.com.mx
+    adapter: ficha
+    config:
+      sitemaps: [/wp-sitemap-posts-pixad-autos-1.xml]
+      include: "/autos/[^/]+/?$"
+      content_end: "Ubicación del vendedor"
+      currency: MXN      # la ficha muestra "$395,000" sin moneda; por magnitud son pesos (BMW 325i convertible 1988 = $395,000)
     capture_mode: scraper
-    data: "WordPress, 21 sitemaps"
+    data: "Sitemap de autos (tema Pixad) + etiquetas de la ficha (Make, Model, Made Year, Kilometraje, Transmisión, Color)"
+    verify: "El sitio no marca vendidos: su lista /cars/ y el sitemap traen los mismos ~103. Se toma lo publicado como en venta"
     enabled: false
 
   - id: rich-wonders
@@ -226,7 +242,8 @@ sources:
     cities: [CDMX]
     base_url: https://richwonders.com
     capture_mode: scraper
-    data: "WordPress con JSON-LD"
+    data: "WooCommerce Store API (13 autos, mezcla yates y relojes)"
+    verify: "TODO: la tienda declara USD, pero un F430 2007 a 290,500 USD no cuadra ni en USD ni en MXN; descripciones de relleno. No se carga hasta confirmar la moneda"
     enabled: false
 
   - id: euroclassic-import
@@ -246,8 +263,13 @@ sources:
     kind: broker
     cities: [CDMX]
     base_url: https://netmotorsgarage.com
+    adapter: vehica
+    config:
+      rest_base: cars
+      currency: MXN      # la ficha muestra "$638,000" sin moneda; agencia de CDMX, precios en pesos por magnitud (F-100 1971 = $638,000)
+      fields: { year: vehica_14696, version: vehica_23407, km: vehica_6664, color: vehica_23408, price: vehica_6656, gallery: vehica_6673 }
     capture_mode: scraper
-    data: "WordPress con JSON-LD y sitemap"
+    data: "Tema Vehica: API REST /wp-json/wp/v2/cars (166 autos, la mayoría clásicos americanos fuera de la taxonomía)"
     enabled: false
 
   - id: parkmate-mx
@@ -356,8 +378,13 @@ sources:
     kind: broker
     cities: [Puebla]
     base_url: https://miuramotors.com.mx
+    adapter: ficha
+    config:
+      sitemaps: [/product-sitemap.xml]
+      include: "/vehiculo/"
+      content_end: "Valoraciones|te recomendamos|Productos relacionados"   # después vienen otros autos
     capture_mode: scraper
-    data: "WordPress con JSON-LD"
+    data: "Sitemap de productos + JSON-LD Product/Offer en cada ficha (precio y moneda MXN declarados)"
     enabled: false
 
   - id: luxury-cars-puebla
@@ -390,8 +417,11 @@ sources:
     kind: broker
     cities: [Querétaro]
     base_url: https://montecarlo.mx
+    adapter: stm-listings
+    config:
+      currency: MXN      # la ficha dice "MXN 638,000"
     capture_mode: scraper
-    data: "WordPress con JSON-LD"
+    data: "Tema Motors: API REST /wp-json/wp/v2/listings (103 autos; car_meta con precio, km y VIN; bandera 'vendido')"
     verify: "Mucho premium alemán general: filtrar solo modelos de la taxonomía"
     enabled: false
 
@@ -400,8 +430,13 @@ sources:
     kind: broker
     cities: []
     base_url: https://imperiamotors.mx
+    adapter: ficha
+    config:
+      sitemaps: [/wp-sitemap-posts-autos-1.xml]
+      include: "/autos/[^/]+/?$"
+      content_end: "También podría interesarte"
     capture_mode: scraper
-    data: "WordPress"
+    data: "Sitemap de autos + etiquetas de la ficha (Marca, Año, Kilometraje, Transmisión); precio '$ 950,000 MXN'"
     verify: "Confirmar ciudad"
     enabled: false
 

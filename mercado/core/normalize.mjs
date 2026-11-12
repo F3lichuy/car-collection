@@ -78,7 +78,8 @@ export function resolveTaxonomy({ make, model, version, title, year }) {
   const T = taxonomy(), issues = [];
   const makeId = resolveMake(make) ?? resolveMake(`${model ?? ''} ${title ?? ''}`);
   if (!makeId) return { make_id: null, issues: ['marca_fuera_de_taxonomia'] };
-  const text = [model, version, title].filter(Boolean).join(' ');
+  // "911 GTS look Sport Classic": lo que sigue a "look"/"estilo" describe la apariencia, no la versión.
+  const text = [model, version, title].filter(Boolean).join(' ').replace(/\b(look|estilo)\s+([^\s,/|-]+\s+){0,2}[^\s,/|-]+/gi, ' ');
   const tk = tokens(text);
   // modelos de la marca fuera de la taxonomía a propósito (Cayenne, Roma…)
   const out = (D.OUT_OF_SCOPE_MODELS[makeId] ?? []).find(m => containsSeq(tk, tokens(m)));
@@ -221,6 +222,8 @@ export function detectOptions(text, makeId) {
 //        km, km_unit, price, currency, price_text, negotiable, transmission, color_ext,
 //        color_int, body, city, state, seller_type, seller_name, seller_contact,
 //        description, photos, vin, observed_on, extra }
+const REPLICA = /(^|[^a-z])(replica|tribute|tributo|kit car|recreacion|recreation|evocation)([^a-z]|$)/;
+
 export function normalizeListing(raw) {
   const issues = [], unresolved = [];
   const desc = stripHtml(raw.description ?? '');
@@ -230,7 +233,9 @@ export function normalizeListing(raw) {
   const lastYear = s => { const a = [...String(s ?? '').matchAll(/\b(19[4-9]\d|20[0-3]\d)\b/g)].map(m => Number(m[1])); return a.length ? a[a.length - 1] : null; };
   const year = Number.isInteger(raw.year) ? raw.year : (lastYear(raw.year) ?? lastYear(raw.title));
 
-  const tax = resolveTaxonomy({ make: raw.make, model: raw.model, version: raw.version, title: raw.title, year });
+  // Réplicas, tributos y kit cars no son el auto que imitan: fuera de la taxonomía.
+  const replica = REPLICA.test(norm([raw.title, raw.model, raw.version].filter(Boolean).join(' ')));
+  const tax = replica ? { model_id: null, issues: ['replica'] } : resolveTaxonomy({ make: raw.make, model: raw.model, version: raw.version, title: raw.title, year });
   const inScope = !!tax.model_id;
   issues.push(...tax.issues);
 

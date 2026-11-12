@@ -330,7 +330,7 @@ export const models = [
   { make: 'mercedes-benz', name: '300 SL', segment: 'gran_turismo', aliases: ['300sl', 'alas de gaviota', 'gullwing'], gens: [
     { code: 'w198', name: 'W198', from: 1954, to: 1963, tx: M, v: [['Gullwing', 1954, 1957, M, 'Coupé alas de gaviota'], ['Roadster', 1957, 1963]] },
   ] },
-  { make: 'mercedes-benz', name: 'SL Pagoda', segment: 'gran_turismo', aliases: ['pagoda', 'w113'], gens: [
+  { make: 'mercedes-benz', name: 'SL Pagoda', segment: 'gran_turismo', aliases: ['pagoda', 'w113', 'clase sl', 'sl'], gens: [
     { code: 'w113', name: 'W113', from: 1963, to: 1971, tx: MA, v: [['230 SL', 1963, 1967], ['250 SL', 1966, 1968], ['280 SL', 1967, 1971]] },
   ] },
 
@@ -352,7 +352,7 @@ export const models = [
   ] },
 
   // ── Clásicos de colección agregados el 2026-11-11 (inventario real en México) ──
-  { make: 'mercedes-benz', name: 'SL (R107)', segment: 'gran_turismo', aliases: ['r107', 'sl r107'], gens: [
+  { make: 'mercedes-benz', name: 'SL (R107)', segment: 'gran_turismo', aliases: ['r107', 'sl r107', 'clase sl', 'sl'], gens: [
     { code: 'r107', name: 'R107', from: 1971, to: 1989, tx: MA, v: [
       ['350 SL', 1971, 1980], ['450 SL', 1971, 1980], ['280 SL', 1974, 1985], ['380 SL', 1980, 1985],
       ['500 SL', 1980, 1989], ['300 SL', 1985, 1989, MA, 'R107: no confundir con el 300 SL W198'], ['420 SL', 1985, 1989], ['560 SL', 1986, 1989, A]] },

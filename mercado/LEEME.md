@@ -39,7 +39,17 @@ Probar una fuente de verdad, sin tocar Supabase (base temporal en memoria):
 node scripts/ingest.mjs --seco --fuente seminuevos-com --limite 20
 ```
 
-Opciones: `--fuente a,b` · `--limite N` · `--sin-fotos` · `--hoy AAAA-MM-DD` · `--reporte archivo.json`.
+Opciones: `--fuente a,b` · `--limite N` · `--sin-fotos` · `--hoy AAAA-MM-DD` · `--reporte archivo.json`
+· `--exportar carga.sql` · `--semilla archivo.json`.
+
+Para que el anti-duplicados compare contra lo que **ya está en producción** (y no contra una base vacía):
+
+```bash
+node scripts/semilla-prod.mjs                       # copia de solo lectura → .capturas/semilla-prod.json
+node scripts/ingest.mjs --seco --semilla .capturas/semilla-prod.json --fuente miura-motors --exportar .capturas/carga.sql
+```
+
+El SQL exportado deja fuera las filas que venían de la semilla: solo lleva lo nuevo.
 
 | Pieza | Archivo |
 |---|---|
@@ -48,11 +58,19 @@ Opciones: `--fuente a,b` · `--limite N` · `--sin-fotos` · `--hoy AAAA-MM-DD` 
 | Extractores: JSON-LD, Next.js (`__NEXT_DATA__` y RSC), sitemaps | `core/extract.mjs` |
 | Normalizador por reglas y diccionarios | `core/normalize.mjs`, `data/diccionarios.mjs` |
 | Pipeline: normaliza → deduplica → guarda (una transacción por anuncio; una fuente rota no tumba a las demás) | `core/pipeline.mjs`, `core/store.mjs` |
-| Adaptadores | `adapters/seminuevos.mjs`, `adapters/shopify.mjs` |
+| Adaptadores por plataforma (uno sirve a varias agencias; se elige con `adapter:` en `sources.yaml`) | `shopify` (EuroClassic) · `woocommerce` (JAH) · `vehica` (NetMotors) · `stm-listings` (Montecarlo) · `ficha` = sitemap + JSON-LD o etiquetas de la ficha (Miura, Imperia, Mulsanne) · `seminuevos` (en pausa) |
 | Cron diario | `../.github/workflows/mercado-ingesta.yml` (secret `SUPABASE_DB_URL`) |
 
 Un anuncio con confianza menor a 0.7, o con versión ambigua, transmisión imposible o VIN
 dudoso, entra igual pero queda en la cola de normalización para que lo revises.
+
+Reglas de datos de los adaptadores:
+- **Moneda**: solo la que el sitio declara. Si muestra "$" sin moneda, `config.currency` en `sources.yaml`
+  la fija con una nota de cómo se verificó; sin eso el precio queda vacío (no se adivina).
+- **Precio 0** o "pregunta por él" = sin precio.
+- **Vendidos/agotados** (bandera del sitio o JSON-LD `SoldOut`) no se toman como en venta.
+- **Kilometraje de relleno**: si el mismo número exacto aparece en ≥20 % de los autos de una agencia, se trata como sin dato.
+- **Réplicas, tributos y kit cars** quedan fuera de la taxonomía; "look X" / "estilo X" no define la versión.
 
 ## Aplicar en Supabase (solo con tu OK)
 

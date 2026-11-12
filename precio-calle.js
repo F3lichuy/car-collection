@@ -84,6 +84,7 @@
     // Regla (2026-11-12): un auto sin precio ("pregunta por precio", "a tratar") no aparece en la página.
     S.vehicles = all.filter(x => !x.deleted && x.price && x.price.price != null);
     S.listings = S.vehicles.reduce((n, x) => n + x.listings.length, 0);
+    S.mk = null;   // los mercados se recalculan con los datos nuevos
     // solo pares cuyos dos autos se ven (un borrado o ya unido no se pregunta)
     const byId = new Map(S.vehicles.map(x => [x.id, x]));
     S.reviews = (rev && !rev.error ? rev.data || [] : []).filter(r => byId.has(r.vehicle_a) && byId.has(r.vehicle_b));
@@ -224,6 +225,8 @@
       try { S.loading = S.loading || load(); await S.loading; S.error = null; }
       catch (e) { S.error = e; S.loading = null; }
     }
+    const deep = location.hash.match(/^#calle\/([a-z0-9-]+)$/);
+    if (deep && !S.view) S.view = { mode: "mercados", market: deep[1], win: "1a" };
     draw(root);
     if (location.hash === "#capturar") PC.openCaptura();
   };
@@ -267,6 +270,9 @@
     const last = act.map(x => x.lastSeen).sort().pop();
     const list = filtered(), shown = list.slice(0, S.limit);
     const opt = (v, cur, label) => `<option value="${h(v)}"${v === cur ? " selected" : ""}>${h(label)}</option>`;
+    // vista: "mercados" (directorio por versión → página de cada mercado) o "autos" (la lista de siempre)
+    S.view = S.view || { mode: "mercados", market: null, win: "1a" };
+    const mode = S.view.mode || "mercados", market = S.view.market ? markets().find(m => m.slug === S.view.market) || null : null;
 
     root.innerHTML = `<div class="pc">
       <header class="pc-head">
@@ -284,7 +290,10 @@
         <div><dt>Actualizado</dt><dd>${h(fmtDate(last))}</dd></div>
       </dl>
       ${adminPanel()}
-      ${actAll.length ? `
+      ${actAll.length ? `<div class="pc-modes" role="tablist" aria-label="Vista">
+        <button role="tab" aria-selected="${mode === "mercados"}" class="${mode === "mercados" ? "on" : ""}" onclick="PrecioCalle.setView('mode','mercados')">Mercados</button>
+        <button role="tab" aria-selected="${mode === "autos"}" class="${mode === "autos" ? "on" : ""}" onclick="PrecioCalle.setView('mode','autos')">Todos los autos</button></div>` : ""}
+      ${actAll.length && mode === "mercados" ? (market ? marketPage(market) : directory()) : actAll.length ? `
       <div class="toolbar pc-filters">
         <input class="ctrl grow" placeholder="Buscar: 993, GT3, Testarossa…" value="${h(S.f.q)}" oninput="PrecioCalle.set('q', this.value)">
         <select class="ctrl" aria-label="Marca" onchange="PrecioCalle.set('make', this.value)">${opt("", S.f.make, "Todas las marcas")}${makes.map(m => opt(m, S.f.make, m)).join("")}</select>
@@ -307,6 +316,7 @@
       <p class="pc-foot">Precios <b>pedidos</b> en anuncios públicos, no precios de venta. Cada auto muestra de qué anuncios sale su información.</p>
     </div>`;
     wireTips(root.querySelector("#pcAnalisis"));
+    wireTips(root.querySelector("#pcMarket"));
     if (canEdit()) PC.loadCapturas();
   }
 
@@ -399,6 +409,233 @@
       <p class="pc-foot" style="margin:0 0 12px">${covered} de ${groups.size} versiones tienen ya ${minN} o más autos con precio para comparar.</p>
       <div class="pc-tablewrap"><table class="pc-table"><thead><tr><th>Modelo · versión</th><th class="num">Años</th><th class="num">Autos (n)</th><th class="num">Mediana pedida</th><th class="num">Tiempo publicado (mediana)</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="pc-foot">La mediana aparece cuando hay al menos ${minN} autos con precio de la misma versión; el tiempo publicado, cuando ${minN} de ellos traen la fecha de publicación de su fuente. El año pesa mucho: abre un auto para verlo contra los demás por año.</p></section>`;
+  }
+
+  // ══ Mercados (como classic.com): un mercado = marca · modelo · generación · versión ══════
+  // Directorio con foto → página de cada mercado con ventanas de tiempo (3 meses … 5 años),
+  // estadísticas, gráficas (precios en el tiempo, km, años, volumen, ubicación) y tarjetas de anuncios.
+  // Fecha de cada auto: la que publica el anuncio; si no la dice, el primer día que lo vimos (marcada con *).
+  const MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const pubDate = x => x.publishedOn || x.firstSeen;
+  const fmtDay = d => { if (!d) return "—"; const [y, m, dd] = String(d).split("-"); return `${Number(dd)} ${MES[Number(m) - 1]} ${y}`; };
+  const marketSlug = x => slugify(`${x.make} ${x.model} ${x.variant}`);
+  const WINDOWS = [["3m", "3 meses", 91], ["6m", "6 meses", 182], ["1a", "1 año", 365], ["3a", "3 años", 1096], ["5a", "5 años", 1826], ["todo", "Todo", null]];
+  const statusOf = x => (x.active && !x.stale ? "venta" : x.stale ? "vendido" : "fuera");
+  const STATUS_TXT = { venta: "En venta", vendido: "Prob. vendido", fuera: "Ya no aparece" };
+  // "Benito Juárez - Distrito Federal" → "CDMX"; "Monterrey, NL" → "Monterrey"
+  const place = x => {
+    const raw = String(x.city || "").trim(); if (!raw) return null;
+    const s = raw.includes(" - ") ? raw.split(" - ").pop() : raw.split(",")[0];
+    return /distrito federal|ciudad de m[eé]xico|cdmx/i.test(s) ? "CDMX" : s.replace(/\s+/g, " ").trim();
+  };
+
+  function markets() {
+    if (S.mk) return S.mk;
+    const by = new Map();
+    for (const x of S.vehicles) {
+      const slug = marketSlug(x);
+      if (!by.has(slug)) by.set(slug, { slug, make: x.make, model: x.model, gen: x.gen, variant: x.variant, label: modelLabel(x.make, x.model), vehicles: [] });
+      by.get(slug).vehicles.push(x);
+    }
+    for (const m of by.values()) {
+      m.live = m.vehicles.filter(v => statusOf(v) === "venta");
+      // foto del mercado: la del auto en venta visto más recientemente que tenga foto
+      const withPhoto = (m.live.length ? m.live : m.vehicles).filter(v => v.photo).sort((a, b) => String(b.lastSeen).localeCompare(String(a.lastSeen)));
+      m.photo = withPhoto[0] ? withPhoto[0].photo : null;
+      const yrs = m.vehicles.map(v => v.year).filter(Boolean);
+      m.years = yrs.length ? (Math.min(...yrs) === Math.max(...yrs) ? String(yrs[0]) : `${Math.min(...yrs)}–${Math.max(...yrs)}`) : "";
+      m.prices = m.live.map(v => toMxn(v.price)).filter(p => p != null);
+    }
+    return (S.mk = [...by.values()]);
+  }
+
+  PC.goMarket = function (slug) {
+    S.view = { ...(S.view || {}), market: slug || null, mode: "mercados" };
+    try { history.replaceState(null, "", slug ? `#calle/${slug}` : "#calle"); } catch (e) {}
+    draw(root());
+    const el = document.getElementById("pcMarket") || root().querySelector(".pc-mercados");
+    if (el) el.scrollIntoView({ block: "start", behavior: "smooth" });
+  };
+  PC.setView = function (k, v) { S.view = { ...(S.view || {}), [k]: v }; draw(root()); };
+
+  // ── directorio ──
+  function directory() {
+    const v = S.view, q = (v.dq || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+    let ms = markets().filter(m => !v.dmake || m.make === v.dmake)
+      .filter(m => !q || q.split(/\s+/).every(w => `${m.label} ${m.variant}`.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").includes(w)));
+    const sorters = {
+      autos: (a, b) => b.live.length - a.live.length || b.vehicles.length - a.vehicles.length,
+      precio: (a, b) => (median(b.prices) ?? -1) - (median(a.prices) ?? -1),
+      nombre: (a, b) => `${a.label} ${a.variant}`.localeCompare(`${b.label} ${b.variant}`, "es"),
+    };
+    ms = ms.sort(sorters[v.dsort || "autos"]);
+    // agrupado por modelo (Porsche 911 → sus versiones), los modelos con más autos primero
+    const groups = new Map();
+    for (const m of ms) { const k = m.label; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(m); }
+    const liveOf = list => list.reduce((n, m) => n + m.live.length, 0);
+    const ordered = (v.dsort || "autos") === "autos" ? [...groups.entries()].sort((a, b) => liveOf(b[1]) - liveOf(a[1])) : [...groups.entries()];
+    const makes = [...new Set(markets().map(m => m.make))].sort();
+    const opt = (val, cur, label) => `<option value="${h(val)}"${val === (cur || "") ? " selected" : ""}>${h(label)}</option>`;
+    const mcard = m => {
+      const med = m.prices.length >= 3 ? median(m.prices) : null, lo = Math.min(...m.prices), hi = Math.max(...m.prices);
+      const price = !m.prices.length ? "Sin autos en venta hoy" : med ? `Mediana ${short(med)}` : m.prices.length === 1 ? short(lo) : `${short(lo)} – ${short(hi)}`;
+      return `<button class="pc-mcard" onclick="PrecioCalle.goMarket('${m.slug}')">
+        <span class="pc-mph">${m.photo ? `<img src="${h(thumb(m.photo))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}</span>
+        <span class="pc-mtx"><b>${h(m.variant)}</b>
+          <small>${m.years ? `${h(m.years)} · ` : ""}${m.live.length === 1 ? "1 en venta" : `${m.live.length} en venta`}${m.vehicles.length !== m.live.length ? ` · ${m.vehicles.length} en total` : ""}</small>
+          <span class="pc-mprice">${h(price)}</span></span></button>`;
+    };
+    return `<div class="pc-mercados">
+      <div class="toolbar pc-filters">
+        <input class="ctrl grow" placeholder="Buscar: 911 GT3, Urus, 993…" value="${h(v.dq || "")}" oninput="PrecioCalle.dSearch(this.value)">
+        <select class="ctrl" aria-label="Marca" onchange="PrecioCalle.setView('dmake', this.value)">${opt("", v.dmake, "Todas las marcas")}${makes.map(m => opt(m, v.dmake, m)).join("")}</select>
+        <select class="ctrl" aria-label="Orden" onchange="PrecioCalle.setView('dsort', this.value)">${opt("autos", v.dsort, "Más autos en venta")}${opt("precio", v.dsort, "Precio (mediana)")}${opt("nombre", v.dsort, "Nombre")}</select>
+      </div>
+      <p class="pc-count">${ms.length === 1 ? "1 mercado" : `${nf.format(ms.length)} mercados`} · toca una versión para ver su historial</p>
+      ${ordered.map(([label, list]) => `<section class="pc-mgroup"><h3 class="pc-mgh">${h(label)} <span>${nf.format(list.reduce((n, m) => n + m.live.length, 0))} en venta</span></h3>
+        <div class="pc-mgrid">${list.map(mcard).join("")}</div></section>`).join("") || `<p class="pc-none">Nada con esa búsqueda.</p>`}
+    </div>`;
+  }
+  let dqTimer = null;
+  PC.dSearch = val => { S.view.dq = val; clearTimeout(dqTimer); dqTimer = setTimeout(() => { draw(root()); const i = root().querySelector(".pc-mercados input"); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 220); };
+
+  // ── página de un mercado ──
+  function marketPage(m) {
+    const v = S.view, win = WINDOWS.find(w => w[0] === (v.win || "1a")) || WINDOWS[2];
+    const from = win[2] ? new Date(Date.now() - win[2] * 864e5).toISOString().slice(0, 10) : "0000";
+    const txs = [...new Set(m.vehicles.map(x => x.tx).filter(Boolean))];
+    const inWin = m.vehicles.filter(x => String(pubDate(x)) >= from && (!v.mtx || x.tx === v.mtx));
+    const set = inWin.filter(x => !v.mst || v.mst === "todos" || statusOf(x) === v.mst);
+    const prices = set.map(x => toMxn(x.price)).filter(p => p != null);
+    const recent = set.slice().sort((a, b) => String(pubDate(b)).localeCompare(String(pubDate(a))))[0];
+    const mx = p => money({ price: p, currency: "MXN" });
+    const statRow = (k, val) => `<tr><th scope="row">${k}</th><td class="num">${val}</td></tr>`;
+    const chip = (k, cur, val, label, fn) => `<button class="pc-chip ${cur === val ? "on" : ""}" aria-pressed="${cur === val}" onclick="PrecioCalle.setView('${k}', '${val}')">${label}</button>`;
+    const tab = v.mtab || "precios";
+    const TABS = [["precios", "Precios"], ["km", "Kilometraje"], ["anios", "Años"], ["volumen", "Volumen"], ["ubicacion", "Ubicación"]];
+    const counts = { venta: inWin.filter(x => statusOf(x) === "venta").length, fuera: inWin.filter(x => statusOf(x) !== "venta").length };
+    return `<div class="pc-market" id="pcMarket">
+      <button class="btn ghost sm pc-back" onclick="PrecioCalle.goMarket(null)">← Todos los mercados</button>
+      <header class="pc-mhead">
+        ${m.photo ? `<img src="${h(thumb(m.photo))}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}
+        <div><p class="pc-path">${h(m.make)} › ${h(m.model)}${m.gen ? ` › ${h(m.gen)}` : ""}</p>
+          <h3 class="pc-mtitle">${h(m.label)} · ${h(m.variant)}</h3>
+          <p class="pc-foot" style="margin-top:4px">${m.years ? `${h(m.years)} · ` : ""}${m.live.length} en venta hoy · ${m.vehicles.length} en total desde que medimos</p></div>
+      </header>
+      <div class="pc-chips pc-wins" role="group" aria-label="Periodo">${WINDOWS.map(w => chip("win", win[0], w[0], w[1])).join("")}</div>
+      <div class="pc-chips" role="group" aria-label="Estado">
+        ${chip("mst", v.mst || "todos", "todos", `Todos <span class="pc-chipn">${inWin.length}</span>`)}
+        ${chip("mst", v.mst || "todos", "venta", `En venta <span class="pc-chipn">${counts.venta}</span>`)}
+        ${chip("mst", v.mst || "todos", "fuera", `Ya no aparecen <span class="pc-chipn">${counts.fuera}</span>`)}
+        ${txs.length > 1 ? `<select class="ctrl pc-mtxsel" aria-label="Transmisión" onchange="PrecioCalle.setView('mtx', this.value)"><option value="">Cualquier caja</option>${txs.map(t => `<option value="${h(t)}"${v.mtx === t ? " selected" : ""}>${h(TX[t] || t)}</option>`).join("")}</select>` : ""}
+      </div>
+      <table class="pc-table pc-mstats"><tbody>
+        ${statRow("Promedio pedido", prices.length ? h(mx(prices.reduce((a, b) => a + b, 0) / prices.length)) : "—")}
+        ${statRow("Autos publicados", nf.format(set.length))}
+        ${statRow("Volumen pedido", prices.length ? h(mx(prices.reduce((a, b) => a + b, 0))) : "—")}
+        ${statRow("Más bajo", prices.length ? h(mx(Math.min(...prices))) : "—")}
+        ${statRow("Más alto", prices.length ? h(mx(Math.max(...prices))) : "—")}
+        ${statRow("Más reciente", recent ? `${h(money(recent.price))}<br><small>${h(fmtDay(pubDate(recent)))}${recent.publishedOn ? "" : "*"}</small>` : "—")}
+      </tbody></table>
+      <div class="pc-mtabs" role="tablist">${TABS.map(([k, l]) => `<button role="tab" aria-selected="${tab === k}" class="${tab === k ? "on" : ""}" onclick="PrecioCalle.setView('mtab', '${k}')">${l}</button>`).join("")}</div>
+      <div class="pc-mchart">${set.length ? marketChart(tab, set, win) : `<p class="pc-foot">No hay autos publicados en este periodo. Prueba con un periodo más largo.</p>`}</div>
+      <h4 class="pc-h4" style="margin-top:22px">${set.length === 1 ? "1 auto" : `${nf.format(set.length)} autos`} · ${h(win[1].toLowerCase())}</h4>
+      <div class="pc-lcards">${set.slice().sort((a, b) => String(pubDate(b)).localeCompare(String(pubDate(a)))).map(lcard).join("")}</div>
+      <p class="pc-foot">Precios <b>pedidos</b> en anuncios, no precios de venta. Fecha: la que publica el anuncio; con * es el primer día que lo vimos (Marketplace y Mercado Libre la dicen solo dentro del anuncio). "Ya no aparece": dejó de estar publicado, probablemente se vendió.</p>
+      <div class="pc-tip" role="tooltip" hidden></div>
+    </div>`;
+  }
+
+  // tarjeta de anuncio al estilo classic.com
+  function lcard(x) {
+    const st = statusOf(x), src = x.listings[0] ? (S.sources[x.listings[0].source_id] ? S.sources[x.listings[0].source_id].name : sourceName(x.listings[0].source_id)) : "";
+    return `<article class="pc-lcard" onclick="PrecioCalle.open('${x.id}')" tabindex="0" onkeydown="if(event.key==='Enter')PrecioCalle.open('${x.id}')">
+      <div class="pc-lph">${x.photo ? `<img src="${h(thumb(x.photo))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}
+        ${place(x) ? `<span class="pc-lloc">${h(place(x))}</span>` : ""}${x.photos.length > 1 ? `<span class="pc-lnum">${x.photos.length} fotos</span>` : ""}</div>
+      <div class="pc-lbody">
+        <h5>${h([x.year, x.name].filter(Boolean).join(" "))}</h5>
+        <p class="pc-lmeta">${[x.km != null ? km(x.km) : null, x.tx ? TX[x.tx] || x.tx : null, x.colorExt].filter(Boolean).map(h).join(" · ") || "&nbsp;"}</p>
+        <div class="pc-lrow"><span class="pc-lst pc-lst-${st}">${STATUS_TXT[st]}</span><b class="pc-lprice">${h(money(x.price))}</b></div>
+        <div class="pc-lrow"><span class="pc-lsrc">${h(src)}${x.sourceIds.length > 1 ? ` +${x.sourceIds.length - 1}` : ""}</span><small>${h(fmtDay(pubDate(x)))}${x.publishedOn ? "" : "*"}</small></div>
+      </div></article>`;
+  }
+
+  // gráficas del mercado
+  function marketChart(tab, set, win) {
+    // en teléfono, un lienzo más angosto para que números y etiquetas se lean
+    const narrow = typeof window !== "undefined" && window.innerWidth < 560;
+    const W = narrow ? 380 : 640, H = narrow ? 280 : 250, L = narrow ? 52 : 64, R = 12, T = 14, B = 30;
+    if (tab === "volumen") {
+      // autos publicados por mes (o por trimestre en periodos largos)
+      const quarter = !win[2] || win[2] > 400;
+      const key = d => { const [y, m] = String(d).split("-"); return quarter ? `${y}-T${Math.floor((Number(m) - 1) / 3) + 1}` : `${y}-${m}`; };
+      const cnt = new Map(); for (const x of set) { const k = key(pubDate(x)); cnt.set(k, (cnt.get(k) || 0) + 1); }
+      const keys = [...cnt.keys()].sort(); if (!keys.length) return "";
+      // rellenar los meses/trimestres vacíos entre el primero y el último
+      const all = []; let [y, p] = keys[0].split(/-T?/).map(Number); const [y1, p1] = keys[keys.length - 1].split(/-T?/).map(Number);
+      while (y < y1 || (y === y1 && p <= p1)) { all.push(quarter ? `${y}-T${p}` : `${y}-${String(p).padStart(2, "0")}`); p++; if (p > (quarter ? 4 : 12)) { p = 1; y++; } if (all.length > 80) break; }
+      const max = Math.max(...all.map(k => cnt.get(k) || 0), 1), yt = ticks(0, max, Math.min(4, max)).filter(Number.isInteger), top = yt[yt.length - 1] || max;
+      const bw = (W - L - R) / all.length, Y = v => T + (1 - v / top) * (H - T - B);
+      const lab = k => (quarter ? k.replace("-", " ") : `${MES[Number(k.slice(5)) - 1]} ${k.slice(2, 4)}`);
+      return `<svg class="pc-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Autos publicados por ${quarter ? "trimestre" : "mes"}">
+        ${yt.map(v => `<line class="pc-grid" x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text class="pc-ax" x="${L - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${v}</text>`).join("")}
+        ${all.map((k, i) => { const c = cnt.get(k) || 0, x0 = L + i * bw, y = Y(c);
+          return `${c ? (() => { const w = Math.max(2, Math.min(bw - 4, 44)); return `<rect class="pc-bar" x="${(x0 + (bw - w) / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${(Y(0) - y).toFixed(1)}" rx="3"/>`; })() : ""}
+            <rect class="pc-hit" x="${x0.toFixed(1)}" y="${T}" width="${bw.toFixed(1)}" height="${H - T - B}" data-tip="${tip(`${lab(k)}\n${c === 1 ? "1 auto publicado" : `${c} autos publicados`}`)}"/>
+            ${all.length <= 8 || i % Math.ceil(all.length / 8) === 0 ? `<text class="pc-ax" x="${(x0 + bw / 2).toFixed(1)}" y="${H - 10}" text-anchor="middle">${lab(k)}</text>` : ""}`; }).join("")}
+        <line class="pc-base" x1="${L}" x2="${W - R}" y1="${Y(0).toFixed(1)}" y2="${Y(0).toFixed(1)}"/></svg>
+        <p class="pc-foot">Cuántos autos se publicaron cada ${quarter ? "trimestre" : "mes"} (fecha del anuncio o, con *, el primer día que lo vimos).</p>`;
+    }
+    if (tab === "ubicacion") {
+      const cnt = new Map(); for (const x of set) { const k = place(x) || "Sin ciudad"; cnt.set(k, (cnt.get(k) || 0) + 1); }
+      const rows = [...cnt.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12), max = rows[0][1];
+      return `<div class="pc-hbars">${rows.map(([k, c]) => `<div class="pc-hbar"><span>${h(k)}</span><i style="width:${Math.max(4, (c / max) * 100).toFixed(0)}%"></i><b>${c}</b></div>`).join("")}</div>
+        <p class="pc-foot">Dónde están publicados (la ciudad que dice el anuncio).</p>`;
+    }
+    // dispersión: precio contra fecha, km o año
+    const xv = tab === "km" ? x => x.km : tab === "anios" ? x => x.year : x => decYear(pubDate(x));
+    const pts = set.filter(x => xv(x) != null && toMxn(x.price) != null);
+    if (pts.length < 1) return `<p class="pc-foot">Ningún auto de este periodo trae ${tab === "km" ? "kilometraje" : "año"}.</p>`;
+    const ys = pts.map(x => toMxn(x.price)), lo = Math.min(...ys), hi = Math.max(...ys), pad = (hi - lo) * 0.12 || hi * 0.1;
+    const yt = ticks(Math.max(0, lo - pad), hi + pad), p0 = yt[0], p1 = yt[yt.length - 1];
+    const xsv = pts.map(xv); let xa = Math.min(...xsv), xb = Math.max(...xsv);
+    if (tab === "anios") { if (xa === xb) { xa -= 2; xb += 2; } else { xa -= 1; xb += 1; } }
+    else if (tab === "km") { xa = 0; xb = Math.max(xb * 1.06, 1000); }
+    else { const sp = Math.max(xb - xa, 0.08); xa -= sp * 0.08; xb += sp * 0.08; }
+    const X = v => L + ((v - xa) / (xb - xa || 1)) * (W - L - R), Y = v => T + (1 - (v - p0) / (p1 - p0 || 1)) * (H - T - B);
+    let xt, xl;
+    if (tab === "anios") { xt = ticks(xa, xb, Math.min(6, xb - xa)).filter(t => t >= xa && t <= xb && Number.isInteger(t)); xl = t => String(t); }
+    else if (tab === "km") { xt = ticks(0, xb, 5).filter(t => t <= xb); xl = t => (t >= 1000 ? `${nf.format(Math.round(t / 1000))} mil` : String(t)); }
+    else if (xb - xa > 2.5) { xt = ticks(xa, xb, 6).filter(t => t >= xa && t <= xb && Number.isInteger(t)); xl = t => String(t); }
+    else {
+      // periodo corto: etiquetas por día ("12 nov"); si no, por mes ("nov 26"); sin repetir etiquetas
+      const toD = t => new Date((t - 1970) * 365.2425 * 864e5), short = xb - xa < 0.3;
+      xl = t => { const d = toD(t); return short ? `${d.getUTCDate()} ${MES[d.getUTCMonth()]}` : `${MES[d.getUTCMonth()]} ${String(d.getUTCFullYear()).slice(2)}`; };
+      const seen = new Set(); xt = ticks(xa, xb, 5).filter(t => t >= xa && t <= xb).filter(t => { const k = xl(t); if (seen.has(k)) return false; seen.add(k); return true; });
+    }
+    // línea de precio esperado (km y años) con 3 o más autos en venta
+    const live = pts.filter(x => statusOf(x) === "venta");
+    let fit = tab !== "precios" && live.length >= (tab === "km" ? 5 : 3) ? trendFit(live.map(x => [xv(x), Math.log(toMxn(x.price))])) : null;
+    // por km, una línea que SUBE con el uso no es una tendencia (es la mezcla de años): no se dibuja
+    if (fit && tab === "km" && fit.b >= 0) fit = null;
+    let trend = "";
+    if (fit) {
+      const lx = live.map(xv), x0 = Math.min(...lx), x1 = Math.max(...lx), N = 40, xs = Array.from({ length: N + 1 }, (_, i) => x0 + ((x1 - x0) * i) / N);
+      const id = `pcMc${Math.random().toString(36).slice(2, 8)}`;
+      trend = `<defs><clipPath id="${id}"><rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}"/></clipPath></defs><g clip-path="url(#${id})">
+        <path class="pc-band" d="M${xs.map(v => `${X(v).toFixed(1)},${Y(fit.at(v) * Math.exp(fit.s)).toFixed(1)}`).join("L")}L${xs.slice().reverse().map(v => `${X(v).toFixed(1)},${Y(fit.at(v) / Math.exp(fit.s)).toFixed(1)}`).join("L")}Z"/>
+        <path class="pc-trend" d="${xs.map((v, i) => `${i ? "L" : "M"}${X(v).toFixed(1)},${Y(fit.at(v)).toFixed(1)}`).join("")}"/></g>`;
+    }
+    const dot = x => { const st = statusOf(x), cx = X(xv(x)).toFixed(1), cy = Y(toMxn(x.price)).toFixed(1);
+      return `<circle class="pc-dot ${st === "venta" ? "" : "stale"}" cx="${cx}" cy="${cy}" r="5"/><circle class="pc-hit" cx="${cx}" cy="${cy}" r="12" onclick="PrecioCalle.open('${x.id}')"
+        data-tip="${tip(`${[x.year, x.name].filter(Boolean).join(" ")}\n${km(x.km)}${x.colorExt ? ` · ${x.colorExt}` : ""}${place(x) ? `\n${place(x)}` : ""}\n${money(x.price)} · ${STATUS_TXT[st]}\nPublicado ${fmtDay(pubDate(x))}${x.publishedOn ? "" : "*"}`)}"${x.photo ? ` data-tip-img="${h(thumb(x.photo))}"` : ""}/>`; };
+    const what = { precios: "fecha de publicación", km: "kilometraje", anios: "año" }[tab];
+    return `<svg class="pc-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Precio pedido contra ${what}">
+      ${yt.map(v => `<line class="pc-grid" x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text class="pc-ax" x="${L - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${short(v)}</text>`).join("")}
+      ${xt.map(t => `<text class="pc-ax" x="${X(t).toFixed(1)}" y="${H - 10}" text-anchor="middle">${xl(t)}</text>`).join("")}
+      ${trend}${pts.filter(x => statusOf(x) !== "venta").map(dot).join("")}${pts.filter(x => statusOf(x) === "venta").map(dot).join("")}</svg>
+      <p class="pc-legend"><span class="pc-key"></span> En venta <span class="pc-key stale"></span> Ya no aparece / prob. vendido${fit ? ` <span class="pc-key trend"></span> Precio esperado${live.length < Number(S.settings.min_n_for_stats ?? 5) ? ` (orientativo: ${live.length} autos)` : ""}` : ""}</p>
+      <p class="pc-foot">${pts.length} de ${set.length} autos con ${what} y precio. Pasa el cursor para ver la foto; toca uno para abrirlo.</p>`;
   }
 
   // ── ficha de un auto ───────────────────────────────────────────────────
@@ -1178,6 +1415,59 @@
     .pc-dupalert summary b{color:var(--accent);font-weight:700}
     .pc-dupalert summary span{color:var(--ink-faint);font-size:12px}
     .pc-dupalert .pc-duplist{margin-top:10px}
+    .pc-modes{display:flex;gap:0;border-bottom:1px solid var(--line);margin:8px 0 18px}
+    .pc-modes button{background:transparent;border:0;border-bottom:2px solid transparent;color:var(--ink-dim);font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:12px 16px 10px;cursor:pointer}
+    .pc-modes button.on{color:var(--ink);border-bottom-color:var(--accent)}
+    .pc-mgroup{margin:22px 0 0}
+    .pc-mgh{font-family:var(--display);font-size:22px;font-weight:400;color:var(--ink);margin:0 0 10px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+    .pc-mgh span{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint)}
+    .pc-mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+    .pc-mcard{display:flex;flex-direction:column;text-align:left;border:1px solid var(--line);background:var(--card,transparent);color:inherit;font:inherit;padding:0;cursor:pointer;overflow:hidden}
+    .pc-mcard:hover{border-color:var(--ink-faint)}
+    .pc-mcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    .pc-mph{display:block;position:relative;overflow:hidden;aspect-ratio:16/10;background:var(--card2)}
+    .pc-mph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+    .pc-mtx{display:flex;flex-direction:column;gap:3px;padding:10px 12px 12px}
+    .pc-mtx b{font-weight:500;color:var(--ink);font-size:15px}
+    .pc-mtx small{color:var(--ink-faint);font-size:12px}
+    .pc-mprice{font-family:var(--display);font-size:18px;color:var(--ink);margin-top:2px}
+    .pc-back{margin:0 0 12px}
+    .pc-mhead{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:16px;align-items:center;margin:0 0 16px}
+    .pc-mhead img{width:100%;aspect-ratio:16/10;height:auto;max-height:240px;object-fit:cover;display:block;background:var(--card2)}
+    .pc-mhead .pc-path{margin:0}
+    .pc-mtitle{font-family:var(--display);font-size:clamp(24px,3.4vw,34px);font-weight:400;margin:4px 0 0;color:var(--ink)}
+    .pc-wins{margin-bottom:8px}
+    .pc-wins .pc-chip.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+    .pc-mtxsel{height:30px;padding:0 8px;font-size:12px;max-width:180px}
+    .pc-mstats{margin:12px 0 18px;max-width:560px}
+    .pc-mstats th{color:var(--ink-dim);font-weight:400}
+    .pc-mstats td{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+    .pc-mstats small{font-weight:400;color:var(--ink-faint)}
+    .pc-mtabs{display:flex;overflow-x:auto;gap:0;border-bottom:1px solid var(--line);margin:0 0 12px;-webkit-overflow-scrolling:touch}
+    .pc-mtabs button{flex:0 0 auto;background:transparent;border:0;border-bottom:3px solid transparent;color:var(--ink-dim);font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:10px 14px 8px;cursor:pointer}
+    .pc-mtabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+    .pc-hbars{display:flex;flex-direction:column;gap:8px;max-width:640px}
+    .pc-hbar{display:grid;grid-template-columns:minmax(90px,30%) minmax(0,1fr) 32px;gap:10px;align-items:center;font-size:13px;color:var(--ink-dim)}
+    .pc-hbar i{display:block;height:14px;background:var(--accent);border-radius:0 3px 3px 0}
+    .pc-hbar b{color:var(--ink);font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+    .pc-lcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:8px}
+    .pc-lcard{border:1px solid var(--line);background:var(--card,transparent);cursor:pointer;overflow:hidden}
+    .pc-lcard:hover{border-color:var(--ink-faint)}
+    .pc-lcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    .pc-lph{position:relative;overflow:hidden;aspect-ratio:4/3;background:var(--card2)}
+    .pc-lph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+    .pc-lloc,.pc-lnum{position:absolute;bottom:0;background:rgba(0,0,0,.62);color:#fff;font-size:12px;padding:5px 9px}
+    .pc-lloc{left:0;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pc-lnum{right:0}
+    .pc-lbody{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px}
+    .pc-lbody h5{margin:0;font-family:var(--display);font-size:19px;font-weight:400;color:var(--ink);line-height:1.2}
+    .pc-lmeta{margin:0;color:var(--ink-dim);font-size:13px}
+    .pc-lrow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .pc-lst{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 7px;border:1px solid var(--line);color:var(--ink-dim)}
+    .pc-lst-venta{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+    .pc-lprice{font-family:var(--display);font-size:20px;font-weight:400;color:var(--ink)}
+    .pc-lsrc{font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pc-lrow small{color:var(--ink-faint);font-size:12px;white-space:nowrap}
     .pc-duplist{display:flex;flex-direction:column;border-top:1px solid var(--line)}
     .pc-duprow{display:grid;grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr);gap:8px 12px;align-items:center;padding:10px 0;border:0;border-bottom:1px solid var(--line);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
     .pc-duprow:hover b{color:var(--accent)}
@@ -1212,6 +1502,16 @@
     .pc-out{cursor:pointer}
     @media (max-width:720px){
       .pc-pair,.pc-addrow{grid-template-columns:1fr}
+      .pc-mgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+      .pc-mtx{padding:8px 10px 10px}
+      .pc-mtx b{font-size:14px}
+      .pc-mprice{font-size:16px}
+      .pc-mhead{grid-template-columns:1fr;gap:10px}
+      .pc-lcards{grid-template-columns:1fr}
+      .pc-hbar{grid-template-columns:minmax(80px,38%) minmax(0,1fr) 28px}
+      .pc-wins{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+      .pc-wins .pc-chip{flex:0 0 auto}
+      .pc-mchart .pc-chart text{font-size:12px}
       .pc-duprow{grid-template-columns:1fr}
       .pc-dupvs{text-align:left}
       .pc-split,.pc-formgrid,.pc-tiles{grid-template-columns:1fr}

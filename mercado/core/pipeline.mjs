@@ -21,7 +21,7 @@ const MAX_PHOTOS_TO_HASH = 10;
 const SOLD_IN_TITLE = /(^|[^a-z])(sold|vendid[oa])([^a-z]|$)/i;
 
 export async function runSource({ adapter, source, store, fetcher, today, trigger = 'cron', limit = Infinity, hashPhotos = true, log = console.log }) {
-  const r = { fuente: source.id, ok: false, nuevos: 0, actualizados: 0, sin_cambio: 0, fuera_de_taxonomia: 0, marcados_vendidos: 0, unidos_a_auto_existente: 0,
+  const r = { fuente: source.id, ok: false, nuevos: 0, actualizados: 0, sin_cambio: 0, fuera_de_taxonomia: 0, sin_precio: 0, marcados_vendidos: 0, unidos_a_auto_existente: 0,
     a_revision_duplicado: 0, a_revision_normalizacion: 0, no_vistos: 0, completa: false, errores: [], resumen: {}, muestras: [] };
   const runId = await store.startRun(source.id, trigger);
   try {
@@ -61,7 +61,7 @@ export async function runSource({ adapter, source, store, fetcher, today, trigge
     r.errores.push({ error: e.message });
     log(`✗ ${source.id}: ${e.message}`);
   }
-  r.resumen = { ...pick(r, ['nuevos', 'actualizados', 'sin_cambio', 'fuera_de_taxonomia', 'marcados_vendidos', 'unidos_a_auto_existente', 'a_revision_duplicado', 'a_revision_normalizacion', 'no_vistos', 'completa']),
+  r.resumen = { ...pick(r, ['nuevos', 'actualizados', 'sin_cambio', 'fuera_de_taxonomia', 'sin_precio', 'marcados_vendidos', 'unidos_a_auto_existente', 'a_revision_duplicado', 'a_revision_normalizacion', 'no_vistos', 'completa']),
     peticiones: fetcher?.requests ?? null };
   await store.finishRun(runId, source.id, r);
   return r;
@@ -91,6 +91,9 @@ async function ingestOne({ n, store, index, today, hashPhotos, fetcher, r }) {
     if (res === 'nuevo') r.actualizados++; else r.sin_cambio++;
     return;
   }
+
+  // Tu regla (2026-11-12): un auto sin precio ("pregunta por precio", "a tratar") no entra a Precio de Calle.
+  if (n.price?.price == null) { r.sin_precio++; return; }
 
   // Fotos: se hashean antes de decidir identidad (los brokers reusan fotos).
   const photos = n.photos.map(url => ({ url }));

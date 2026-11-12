@@ -216,9 +216,22 @@ sources:
     kind: broker
     cities: [CDMX, Guadalajara]
     base_url: https://www.luxuryinmotionmx.com
+    adapter: ficha
+    config:
+      # Wix: un sitemap por sección (deportivos, clásicos, de lujo, SUVs…); el mismo auto puede estar en dos
+      sitemaps: [/sitemap.xml]
+      sitemap_index: true
+      # (sin "más recientes" ni "más populares": son los mismos autos de las otras secciones)
+      include: "luxuryinmotionmx[.]com/(deportivos|clasicos|de-lujo|delujo|suvs|blindados|otros|pickups)[^/]*/[^/]+$"
+      currency: MXN               # la ficha dice "$2,100,000" (911 Carrera 1975): pesos, verificado a mano
+      # el <h1> es el letrero de la sección; el auto va después de "VOLVER A LOS CLÁSICOS": "PORSCHE 911 Carrera 1975 $2,100,000"
+      title_re: "VOLVER A[^$]*?(?:CL[ÁA]SICOS|DEPORTIVOS|DE LUJO|SUVS|BLINDADOS|OTROS|PICKUPS)\\s+([^$]+?)\\s*\\$"
+      photos: og                  # las demás imágenes de la página son del diseño
+      open_all: true              # el slug no trae la marca; sitio chico
+      city: null                  # Guadalajara, CDMX y Morelia; la ficha no dice cuál
     capture_mode: scraper
-    data: "Wix con JSON-LD"
-    enabled: false
+    data: "Wix: ficha con título y precio en el HTML ('PORSCHE 911 Carrera 1975 $2,100,000'), sin km. ~30 autos (deportivos, clásicos, SUVs, blindados)"
+    enabled: true
 
   - id: mulsanne
     name: Mulsanne Venta de Autos (Santa Fe)
@@ -286,11 +299,23 @@ sources:
   - id: iconic-broker
     name: Iconic Broker (Grand Chelem)
     kind: broker
-    cities: [CDMX, Monterrey, Puebla]
-    base_url: https://www.mercadolibre.com.mx/pagina/iconicbroker
+    cities: [CDMX, Guadalajara, Monterrey]
+    base_url: https://www.iconic-broker.mx
+    adapter: ficha
+    config:
+      # la portada lista todo el inventario (~200, autos y motos) con enlaces /vehicles/N; robots.txt solo prohíbe /vehicle_instances
+      list_pages: [/]
+      include: "^/vehicles/\\d+$"
+      photo_path: "/db-imports/photos/"
+      # "Vendido" solo aparece en la tarjeta de la portada, no en la ficha
+      list_sold: { split: "car-thumb", marker: "car-status sold" }
+      # el <h1> es "Iconic Broker"; el auto son las 3 líneas antes de "Especificaciones técnicas": "Lamborghini / Urus S / 2024"
+      title_re: "\\n([^\\n]+\\n[^\\n]+\\n\\s*(?:19|20)\\d\\d)\\s*\\n\\s*Especificaciones t"
+      city: null                    # Santa Fe (CDMX), Guadalajara o Monterrey: la ficha no dice cuál
     capture_mode: scraper
-    data: "Su dominio está estacionado; vende por su tienda de Mercado Libre → se cubre con mercadolibre-autos"
-    enabled: false
+    data: "Sitio propio de Grand Chelem (iconic-broker.mx): ficha con año, km ('7947 KMs'), color y transmisión, SIN PRECIO (a tratar). También vende por su tienda de Mercado Libre, con precio"
+    verify: "2026-11-12: el dominio ya no está estacionado. Sin precios: sirve para inventario, km, color y repetidos contra Mercado Libre"
+    enabled: false              # 2026-11-12: sin precios → no entra (regla: sin precio no se publica)
 
   - id: elegance-consignaciones
     name: Elegance Consignaciones (Plaza San Pedro)
@@ -371,7 +396,7 @@ sources:
     cities: [Puebla]
     base_url: https://www.autosrodeodrive.mx
     capture_mode: scraper
-    data: "Wix con JSON-LD"
+    data: "Wix: su sitemap solo trae páginas por marca (Nissan, Changan, FAW…); casi todo seminuevo general (2026-11-12)"
     enabled: false
 
   - id: miura-motors
@@ -515,6 +540,71 @@ sources:
     data: "PrestaShop con JSON-LD Product (MXN); ~350 anuncios de todo el país (Torreón, Guadalajara…). La descripción trae Ubicación y 'Publicado desde'"
     verify: "Muchos anuncios dicen 'Último refrendo' de 2024 y aun así 'Refrendo: Vigente'. Activada el 2026-11-12 por decisión del usuario sin filtrar por refrendo"
     enabled: true
+
+  # ── Revisadas el 2026-11-12 (búsqueda nacional de agencias de entusiasta) ──
+  - id: 360-motors
+    name: 360 Motors (Morelia)
+    kind: broker
+    cities: [Morelia]
+    base_url: https://360motors.mx
+    capture_mode: scraper
+    data: "Seminuevos premium (algún 930, Vantage, Cayman); el inventario disponible se pinta con JavaScript y las fichas viejas redirigen a /vendido/"
+    verify: "TODO: su sitemap trae ~1,400 fichas (vendidas incluidas) con marca y año en la URL; se podría leer solo las de la taxonomía"
+    enabled: false
+
+  - id: legacy-motors-puebla
+    name: Legacy Motors (Puebla)
+    kind: broker
+    cities: [Puebla]
+    base_url: https://www.showroomseminuevospuebla.com
+    capture_mode: scraper
+    data: "Wix con precios (S 63 AMG, Cayenne Turbo); no publica sitemap de autos"
+    enabled: false
+
+  - id: camsa-puebla
+    name: Camsa Puebla
+    kind: broker
+    cities: [Puebla]
+    base_url: https://camsapuebla.com
+    capture_mode: scraper
+    data: "WordPress (cpt_cars); casi todo seminuevo general (Escalade, A1, Cayenne)"
+    enabled: false
+
+  - id: nova-broker
+    name: Nova Broker (Querétaro)
+    kind: broker
+    cities: [Querétaro]
+    base_url: https://novabrokermx.com
+    capture_mode: manual
+    data: "Broker por pedido (compra, consignación, importación): no publica inventario"
+    enabled: false
+
+  - id: ferrari-mexico-city
+    name: Ferrari Mexico City (seminuevos certificados)
+    kind: agencia_oficial
+    cities: [CDMX]
+    base_url: https://mexicocity.ferraridealers.com
+    capture_mode: manual
+    data: "Responde 405 a lectores simples y publica 'precio a solicitud'"
+    enabled: false
+
+  - id: porsche-centres-mx
+    name: Porsche Centre (Querétaro, Monterrey, CDMX…) · Porsche Approved
+    kind: agencia_oficial
+    cities: [CDMX, Monterrey, Guadalajara, Querétaro, Puebla, León]
+    base_url: https://queretaro.porsche.com
+    capture_mode: manual
+    data: "Inventario con precio en cada sitio de agencia, pero responde 429 (bloqueo) a lectores simples, igual que el finder"
+    enabled: false
+
+  - id: autos-rodriguez-puebla
+    name: Autos Rodríguez de Puebla
+    kind: broker
+    cities: [Puebla]
+    base_url: https://autosrodriguezdepuebla.com
+    capture_mode: scraper
+    data: "Catálogo con precios (CLA 45 S, Macan GTS); casi todo seminuevo general"
+    enabled: false
 
   # Encontradas pero sin lectura automática por ahora
   - id: grand-chelem

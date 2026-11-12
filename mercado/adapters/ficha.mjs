@@ -53,12 +53,19 @@ export class FichaAdapter {
     const out = new Set();
     // sin sitemap: config.list_pages = páginas de inventario cuyos enlaces son los autos
     const sitemaps = this.cfg.sitemaps ?? (this.cfg.list_pages ? [] : ['/sitemap.xml']);
+    const getLocs = async p => sitemapLocs((await ctx.fetcher.get(new URL(p, this.base).href, { accept: 'application/xml,text/xml' })).text);
     for (const p of sitemaps) {
-      const xml = (await ctx.fetcher.get(new URL(p, this.base).href, { accept: 'application/xml,text/xml' })).text;
-      for (const u of sitemapLocs(xml)) if (this.include.test(u)) out.add(u);
+      for (const u of await getLocs(p)) {
+        // índice de sitemaps (Wix: uno por sección): se abre un nivel más
+        if (this.cfg.sitemap_index && /\.xml(\?|$)/i.test(u)) { for (const v of await getLocs(u)) if (this.include.test(v)) out.add(v); }
+        else if (this.include.test(u)) out.add(u);
+      }
     }
     for (const p of this.cfg.list_pages ?? []) {
-      const html = (await ctx.fetcher.get(new URL(p, this.base).href)).text;
+      let html = (await ctx.fetcher.get(new URL(p, this.base).href)).text;
+      // config.list_sold: { split, marker } → en la lista, las tarjetas con la marca de vendido se quitan
+      // (Iconic Broker: <div class="car-status sold">Vendido</div> solo en la lista, no en la ficha)
+      if (this.cfg.list_sold) html = html.split(this.cfg.list_sold.split).filter(chunk => !chunk.includes(this.cfg.list_sold.marker)).join(' ');
       for (const [, href] of html.matchAll(/href="([^"#]+)"/gi)) {
         const u = new URL(href.replace(/&amp;/g, '&'), this.base);
         if (u.origin === this.base && this.include.test(u.pathname)) out.add(u.origin + u.pathname);
@@ -72,7 +79,8 @@ export class FichaAdapter {
       const slug = decodeURIComponent(new URL(url).pathname).split('/').filter(Boolean).pop() ?? '';
       const external_id = slug;
       // "porsche-macan-s-blindada" → fuera sin abrir la ficha. Slugs sin letras ("5459") sí se abren.
-      if (/[a-z]/i.test(slug) && !ctx.isKnown(external_id) && ctx.wanted && !ctx.wanted({ title: slug.replace(/[-_]+/g, ' ') })) {
+      // config.open_all: el slug no trae la marca ("911-carrera-1975"): se abren todas (solo en sitios chicos)
+      if (!this.cfg.open_all && /[a-z]/i.test(slug) && !ctx.isKnown(external_id) && ctx.wanted && !ctx.wanted({ title: slug.replace(/[-_]+/g, ' ') })) {
         yield { external_id, url, title: slug.replace(/[-_]+/g, ' ') };   // el pipeline la cuenta como fuera de taxonomía
         continue;
       }
@@ -101,7 +109,9 @@ export class FichaAdapter {
 
     const h1 = stripHtml(html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? '');
     // sin <h1> (Exotic Avenue): nombre del JSON-LD o <title>, sin el " - Nombre del sitio"
-    const title = h1 || stripHtml(ld?.name ?? html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '').replace(/\s+[-|–]\s+[^-|–]+$/, '');
+    // config.title_re: el <h1> del sitio es un letrero ("DEPORTIVOS" en Wix) y el nombre del auto va en el texto
+    const titleRe = this.cfg.title_re ? text.match(new RegExp(this.cfg.title_re, 'i'))?.[1]?.replace(/\s+/g, ' ').trim() : null;
+    const title = titleRe || h1 || stripHtml(ld?.name ?? html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '').replace(/\s+[-|–]\s+[^-|–]+$/, '');
     // config.labels reemplaza etiquetas de un sitio (Exotic Avenue llama "Modelo" al año)
     const f = labelFields(text, { ...LABELS, ...(this.cfg.labels ?? {}) });
 
@@ -136,7 +146,9 @@ export class FichaAdapter {
       if (!byBase.has(base) || (byBase.get(base).resized && !resized)) byBase.set(base, { u, resized });
     }
     const pageImages = [...byBase.values()].map(x => x.u);
-    const photos = ldImages.length ? ldImages : pageImages;
+    // config.photos: "og" = solo la foto de portada (og:image), para sitios donde las demás imágenes son del diseño
+    const ogImage = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/i)?.[1] ?? null;
+    const photos = this.cfg.photos === 'og' ? [ogImage].filter(Boolean) : ldImages.length ? ldImages : pageImages;
 
     return {
       external_id, url, title,

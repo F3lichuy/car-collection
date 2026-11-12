@@ -3,10 +3,10 @@ import { readFileSync } from 'node:fs';
 
 const rep = JSON.parse(readFileSync(process.argv[2], 'utf8'));
 const L = [`## Mercado MX · ingesta ${rep.fecha}${rep.seco ? ' (seco)' : ''}`, '',
-  '| Fuente | Estado | Nuevos | Unidos a auto conocido | Actualizados | Sin cambio | Fuera de taxonomía | Revisión dup. | Revisión norm. | No vistos hoy | Errores |',
-  '|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|'];
+  '| Fuente | Estado | Nuevos | Unidos a auto conocido | Actualizados | Sin cambio | Fuera de taxonomía | Sin precio | Revisión dup. | Revisión norm. | No vistos hoy | Errores |',
+  '|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|'];
 for (const r of rep.fuentes) {
-  L.push(`| ${r.fuente} | ${r.ok ? '✅' : '❌ ' + (r.fatal ?? '')} | ${r.nuevos} | ${r.unidos_a_auto_existente} | ${r.actualizados} | ${r.sin_cambio} | ${r.fuera_de_taxonomia} | ${r.a_revision_duplicado} | ${r.a_revision_normalizacion} | ${r.completa ? r.no_vistos : 'parcial'} | ${r.errores.length} |`);
+  L.push(`| ${r.fuente} | ${r.ok ? '✅' : '❌ ' + (r.fatal ?? '')} | ${r.nuevos} | ${r.unidos_a_auto_existente} | ${r.actualizados} | ${r.sin_cambio} | ${r.fuera_de_taxonomia} | ${r.sin_precio ?? 0} | ${r.a_revision_duplicado} | ${r.a_revision_normalizacion} | ${r.completa ? r.no_vistos : 'parcial'} | ${r.errores.length} |`);
 }
 const b = rep.barrido;
 if (b) {

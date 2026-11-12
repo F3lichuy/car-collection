@@ -68,8 +68,15 @@ describe('pipeline', () => {
     assert.equal((await one(pg, `select count(*)::int n from mx_review_queue where kind = 'duplicado' and status = 'pendiente'`)).n, 1);
   });
 
-  test('anuncio con datos pobres → entra, pero va a la cola de normalización', async () => {
-    const r = await runSource({ adapter: fakeAdapter([{ make: 'Porsche', model: '911', title: 'Porsche 911 impecable', external_id: 'A9', url: 'https://a.mx/autos/A9', price_text: 'a tratar' }])(),
+  test('sin precio ("a tratar", "pregunta por precio") → no entra (tu regla del 2026-11-12)', async () => {
+    const r = await runSource({ adapter: fakeAdapter([{ make: 'Porsche', model: '911', title: 'Porsche 911 GT3 2022', year: 2022, external_id: 'A8', url: 'https://a.mx/autos/A8', price_text: 'a tratar' }])(),
+      source: { id: 'agencia-a' }, store, fetcher: null, today: '2026-11-04', hashPhotos: false, log: silent });
+    assert.equal(r.sin_precio, 1); assert.equal(r.nuevos, 0);
+    assert.equal((await one(pg, `select count(*)::int n from mx_listings where external_id = 'A8'`)).n, 0);
+  });
+
+  test('anuncio con datos pobres (pero con precio) → entra, y va a la cola de normalización', async () => {
+    const r = await runSource({ adapter: fakeAdapter([{ make: 'Porsche', model: '911', title: 'Porsche 911 impecable', external_id: 'A9', url: 'https://a.mx/autos/A9', price: 2500000, currency: 'MXN' }])(),
       source: { id: 'agencia-a' }, store, fetcher: null, today: '2026-11-04', hashPhotos: false, log: silent });
     assert.equal(r.a_revision_normalizacion, 1);
     const q = await one(pg, `select q.reasons from mx_review_queue q join mx_listings l on l.id = q.listing_id where l.external_id = 'A9' and q.kind = 'normalizacion'`);

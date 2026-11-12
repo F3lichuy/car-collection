@@ -117,7 +117,7 @@ console.log(`\n══ Reporte ${today} ${dry ? '(seco)' : ''} ══`);
 for (const r of reports) {
   console.log(`\n${r.ok ? '✓' : '✗'} ${r.fuente}${r.fatal ? ' · ' + r.fatal : ''}`);
   console.log(`  nuevos ${r.nuevos} (unidos a un auto ya conocido: ${r.unidos_a_auto_existente}) · actualizados ${r.actualizados} · sin cambio ${r.sin_cambio}`);
-  console.log(`  fuera de la taxonomía ${r.fuera_de_taxonomia} · marcados vendidos ${r.marcados_vendidos ?? 0} · a revisión: duplicado ${r.a_revision_duplicado}, normalización ${r.a_revision_normalizacion}`);
+  console.log(`  fuera de la taxonomía ${r.fuera_de_taxonomia} · sin precio (no entran) ${r.sin_precio ?? 0} · marcados vendidos ${r.marcados_vendidos ?? 0} · a revisión: duplicado ${r.a_revision_duplicado}, normalización ${r.a_revision_normalizacion}`);
   console.log(`  activos no vistos hoy ${r.completa ? r.no_vistos : '(corrida parcial: no se cuenta)'} · errores ${r.errores.length} · peticiones ${r.resumen.peticiones}`);
   if (r.muestras.length) console.table(r.muestras);
 }

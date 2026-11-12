@@ -81,7 +81,8 @@
     S.fx = fx.data && fx.data[0] ? fx.data[0] : null;
     const all = groupVehicles(ls.data || []);
     S.deleted = all.filter(x => x.deleted);    // solo los ve la dueña (RLS), para restaurarlos
-    S.vehicles = all.filter(x => !x.deleted);
+    // Regla (2026-11-12): un auto sin precio ("pregunta por precio", "a tratar") no aparece en la página.
+    S.vehicles = all.filter(x => !x.deleted && x.price && x.price.price != null);
     S.listings = S.vehicles.reduce((n, x) => n + x.listings.length, 0);
     // solo pares cuyos dos autos se ven (un borrado o ya unido no se pregunta)
     const byId = new Map(S.vehicles.map(x => [x.id, x]));
@@ -111,7 +112,8 @@
   }
 
   function lastPrice(l) {
-    const p = (l.prices || []).slice().sort((a, b) => String(b.observed_to).localeCompare(String(a.observed_to)))[0];
+    const p = (l.prices || []).filter(x => x.price != null).sort((a, b) => String(b.observed_to).localeCompare(String(a.observed_to)))[0]
+      || (l.prices || []).slice().sort((a, b) => String(b.observed_to).localeCompare(String(a.observed_to)))[0];
     return p || null;
   }
 
@@ -146,7 +148,8 @@
       const pub = x.listings.filter(l => l.published_on).sort((a, b) => String(a.published_on).localeCompare(String(b.published_on)))[0];
       x.publishedOn = pub ? pub.published_on : null; x.publishedBy = pub ? pub.source_id : null;
       x.changes = x.listings.flatMap(priceChanges).sort((a, b) => String(b.day).localeCompare(String(a.day)));
-      x.price = lastPrice(main);
+      // precio: el del anuncio visto más recientemente que SÍ publica cifra
+      x.price = lastPrice(x.listings.find(l => (l.prices || []).some(p => p.price != null)) || main);
       x.active = x.listings.some(l => l.status === "activo");
       x.lastSeen = main.last_seen; x.firstSeen = x.listings.map(l => l.first_seen).sort()[0];
       x.days = daysBetween(x.publishedOn || x.firstSeen, today()); x.daysKnown = !!x.publishedOn;
@@ -295,7 +298,7 @@
           ${opt("recientes", S.f.sort, "Más recientes")}${opt("precio_asc", S.f.sort, "Precio: menor a mayor")}${opt("precio_desc", S.f.sort, "Precio: mayor a menor")}
           ${opt("anio_asc", S.f.sort, "Año: más antiguos")}${opt("anio_desc", S.f.sort, "Año: más nuevos")}${opt("km_asc", S.f.sort, "Menos km")}</select>
       </div>
-      <p class="pc-count">${list.length === 1 ? "1 auto" : `${nf.format(list.length)} autos`}${S.f.st === "vendidos" ? " publicados hace más de un año (probablemente vendidos)" : list.length !== act.length ? ` de ${nf.format(act.length)}` : ""}</p>
+      <p class="pc-count">${list.length === 1 ? "1 auto" : `${nf.format(list.length)} autos`}${S.f.st === "vendidos" ? " publicados hace más de un año (probablemente vendidos)" : (S.f.st === "todos" ? actAll : act).length !== list.length ? ` de ${nf.format((S.f.st === "todos" ? actAll : act).length)}` : ""}</p>
       <div class="grid pc-grid">${shown.map(card).join("") || `<p class="pc-none">Nada con esos filtros.</p>`}</div>
       ${list.length > shown.length ? `<div class="mk-more"><button class="btn" onclick="PrecioCalle.more()">Cargar más</button></div>` : ""}
       ${analysis(act)}
@@ -915,13 +918,13 @@
     const items = d.items.slice(0, 200);
     const ambiguous = items.some(x => x.currency_ambiguous);
     const row = (x, i) => {
-      const usd = x.currency === "USD";
-      return `<label class="pc-caprow${usd ? " off" : ""}">
-        <input type="checkbox" data-i="${i}" ${usd ? "disabled" : "checked"}>
+      const usd = x.currency === "USD", noPrice = !(Number(x.price) > 0);
+      return `<label class="pc-caprow${usd || noPrice ? " off" : ""}">
+        <input type="checkbox" data-i="${i}" ${usd || noPrice ? "disabled" : "checked"}>
         ${x.photos && x.photos[0] ? `<img src="${h(x.photos[0])}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="pc-capimg"></span>`}
         <span class="pc-captxt"><b>${h(x.title || "Sin título")}</b>
           <span>${[x.year, x.km ? `${nf.format(Number(x.km))} ${x.km_unit === "mi" ? "millas" : "km"}` : null, x.city].filter(Boolean).map(h).join(" · ") || "Sin año ni km en la página"}</span></span>
-        <span class="pc-capprice">${x.price ? h(money({ price: x.price, currency: x.currency || "MXN" })) : "Sin precio"}${usd ? `<small>En dólares: no se guarda</small>` : ""}</span>
+        <span class="pc-capprice">${x.price ? h(money({ price: x.price, currency: x.currency || "MXN" })) : "Sin precio"}${usd ? `<small>En dólares: no se guarda</small>` : noPrice ? `<small>Sin precio: no se guarda</small>` : ""}</span>
       </label>`;
     };
     capModal(`<p class="pc-foot" style="margin-top:0">De <b>${h(name)}</b> · ${items.length === 1 ? "1 auto" : `${items.length} autos`} en la página que estabas viendo. Quita la palomita a los que no quieras.</p>
@@ -939,7 +942,7 @@
   PC.saveCaptura = async function () {
     const d = window.pcCaptura, msg = document.getElementById("pcCapMsg"), btn = document.getElementById("pcCapSave");
     const pick = [...document.querySelectorAll(".pc-caplist input:checked")].map(i => d.items[Number(i.dataset.i)])
-      .filter(x => x && x.currency !== "USD").map(capClean).filter(x => x.url && x.title);
+      .filter(x => x && x.currency !== "USD" && Number(x.price) > 0).map(capClean).filter(x => x.url && x.title);
     if (!pick.length) { msg.textContent = "No hay autos marcados."; return; }
     btn.disabled = true; msg.textContent = "Guardando…";
     const { error } = await client().from("mx_capturas").insert({ source_id: capSource(d), page_url: String(d.page_url || "").slice(0, 2000), items: pick });

@@ -135,3 +135,27 @@ describe('ficha con JSON-LD (El Auto Clásico, Prestige DLC)', () => {
       ['https://blob.test/v/181/1.jpg', 'PDK', 'Gris Ágata', null, '12000', 'Guadalajara']);
   });
 });
+
+// 2026-11-12 · opciones del lector genérico para Wix (Luxury in Motion) e Iconic Broker
+describe('ficha: opciones nuevas', async () => {
+  const { FichaAdapter } = await import('../adapters/ficha.mjs');
+  const fakeCtx = pages => ({ fetcher: { get: async u => ({ text: pages[new URL(u).pathname] ?? '' }) } });
+
+  test('Wix: título después del letrero, solo la foto de portada, índice de sitemaps y abrir todas', async () => {
+    const src = { id: 'lim', name: 'LIM', base_url: 'https://lim.mx', config: { sitemaps: ['/sitemap.xml'], sitemap_index: true, include: 'lim[.]mx/clasicos/[^/]+$', currency: 'MXN', photos: 'og', open_all: true,
+      title_re: String.raw`VOLVER A[^$]*?(?:CL[ÁA]SICOS)\s+([^$]+?)\s*\$` } };
+    const a = new FichaAdapter(src);
+    const urls = await a.urls(fakeCtx({ '/sitemap.xml': '<loc>https://lim.mx/dynamic-clasicos-sitemap.xml</loc>', '/dynamic-clasicos-sitemap.xml': '<loc>https://lim.mx/clasicos/911-carrera-1975</loc><loc>https://lim.mx/quienes-somos</loc>' }));
+    assert.deepEqual(urls, ['https://lim.mx/clasicos/911-carrera-1975']);
+    const html = '<meta property="og:image" content="https://static.wixstatic.com/media/a~mv2.jpg"><h1>DEPORTIVOS</h1><p>VOLVER A LOS CLÁSICOS PORSCHE</p><p>911 Carrera 1975</p><p>$2,100,000</p><img src="https://static.wixstatic.com/media/logo~mv2.png">';
+    const r = a.parse(html, urls[0], '911-carrera-1975');
+    assert.equal(r.title, 'PORSCHE 911 Carrera 1975'); assert.equal(r.price, 2100000); assert.equal(r.currency, 'MXN');
+    assert.deepEqual(r.photos, ['https://static.wixstatic.com/media/a~mv2.jpg']);
+  });
+
+  test('Iconic Broker: los "Vendido" de la portada no se abren', async () => {
+    const a = new FichaAdapter({ id: 'ib', name: 'IB', base_url: 'https://ib.mx', config: { list_pages: ['/'], include: String.raw`^/vehicles/\d+$`, list_sold: { split: 'car-thumb', marker: 'car-status sold' } } });
+    const home = '<div class="car-thumb"><a href="/vehicles/1">A</a></div><div class="car-thumb"><a href="/vehicles/2">B</a><div class="car-status sold">Vendido</div></div><div class="car-thumb"><a href="/vehicles/3">C</a></div>';
+    assert.deepEqual(await a.urls(fakeCtx({ '/': home })), ['https://ib.mx/vehicles/1', 'https://ib.mx/vehicles/3']);
+  });
+});

@@ -20,6 +20,10 @@ on:
         description: 'Solo buscar repetidos entre lo ya guardado (no visita fuentes)'
         type: boolean
         default: false
+      seco:
+        description: 'En seco: base temporal, no toca Supabase (para probar una fuente nueva)'
+        type: boolean
+        default: false
 
 concurrency:
   group: mercado-ingesta
@@ -45,18 +49,31 @@ jobs:
       - run: npm ci
       - name: Pruebas (si fallan, no se toca la base)
         run: npm test
+      # Avance de Wayback (qué copias ya se leyeron): se guarda entre corridas en la caché de Actions
+      - uses: actions/cache/restore@v4
+        with:
+          path: mercado/.capturas/wayback-estado.json
+          key: wayback-estado-${{ github.run_id }}
+          restore-keys: wayback-estado-
       - name: Ingesta
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
           FUENTE: ${{ inputs.fuente }}
           LIMITE: ${{ inputs.limite }}
           SOLO_BARRIDO: ${{ inputs.solo_barrido }}
+          SECO: ${{ inputs.seco }}
         run: |
           ARGS=(--reporte reporte.json)
+          if [[ "$SECO" == "true" ]]; then ARGS+=(--seco); export WAYBACK_ESTADO="$RUNNER_TEMP/wayback-prueba.json"; fi
           if [[ "$SOLO_BARRIDO" == "true" ]]; then ARGS+=(--solo-barrido); fi
           if [[ "$FUENTE" =~ ^[a-z0-9,-]+$ ]]; then ARGS+=(--fuente "$FUENTE"); fi
           if [[ "$LIMITE" =~ ^[0-9]+$ ]]; then ARGS+=(--limite "$LIMITE"); fi
           node scripts/ingest.mjs "${ARGS[@]}"
+      - uses: actions/cache/save@v4
+        if: always() && inputs.seco != true && hashFiles('mercado/.capturas/wayback-estado.json') != ''
+        with:
+          path: mercado/.capturas/wayback-estado.json
+          key: wayback-estado-${{ github.run_id }}
       - name: Resumen
         if: always()
         run: node scripts/report-md.mjs reporte.json >> "$GITHUB_STEP_SUMMARY" || true

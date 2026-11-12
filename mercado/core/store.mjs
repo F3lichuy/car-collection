@@ -94,13 +94,20 @@ export class Store {
       [vehicleId, l.source_id, l.capture_method, l.external_id, l.url, l.url_canonical, l.title, l.city, l.state, l.seller_type, day, l.published_on ?? null])).id;
   }
 
-  async touchListing(db, listingId, l, day) {
+  // reactivate: false para observaciones viejas (una copia de Wayback de 2019, una publicación de un grupo
+  // de hace meses): que el anuncio existiera entonces no dice que siga en venta hoy.
+  async touchListing(db, listingId, l, day, { reactivate = true } = {}) {
     await db.query(`update mx_listings set last_seen = greatest(last_seen, $2::date), first_seen = least(first_seen, $2::date),
         title = coalesce($3, title), city = coalesce($4, city), state = coalesce($5, state),
         published_on = coalesce(published_on, $6::date),   -- la primera fecha que dio la fuente no se reescribe
-        status = case when status in ('desaparecido') then 'activo' else status end,
-        status_changed_at = case when status in ('desaparecido') then now() else status_changed_at end
-      where id = $1`, [listingId, day, l.title, l.city, l.state, l.published_on ?? null]);
+        status = case when status in ('desaparecido') and $7 then 'activo' else status end,
+        status_changed_at = case when status in ('desaparecido') and $7 then now() else status_changed_at end
+      where id = $1`, [listingId, day, l.title, l.city, l.state, l.published_on ?? null, reactivate]);
+  }
+
+  // Anuncio que solo conocemos por una observación vieja: entra como "ya no aparece".
+  async markGone(db, listingId) {
+    await db.query(`update mx_listings set status = 'desaparecido', status_changed_at = now() where id = $1 and status = 'activo'`, [listingId]);
   }
 
   async upsertPrivate(db, listingId, p) {

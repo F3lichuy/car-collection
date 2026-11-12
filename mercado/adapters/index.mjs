@@ -8,6 +8,7 @@ import { wooStore, vehica, stmListings } from './wordpress.mjs';
 import capturas from './capturas.mjs';
 import cardealer from './cardealer.mjs';
 import nextInventario from './next-inventario.mjs';
+import wayback from './wayback.mjs';
 
 export const adapters = {
   seminuevos,
@@ -20,4 +21,5 @@ export const adapters = {
   capturas,
   cardealer,
   'next-inventario': nextInventario,
+  wayback,
 };

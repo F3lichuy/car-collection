@@ -16,6 +16,10 @@ on:
       limite:
         description: 'Máximo de anuncios por fuente (vacío = sin límite)'
         required: false
+      solo_barrido:
+        description: 'Solo buscar repetidos entre lo ya guardado (no visita fuentes)'
+        type: boolean
+        default: false
 
 concurrency:
   group: mercado-ingesta
@@ -46,8 +50,10 @@ jobs:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
           FUENTE: ${{ inputs.fuente }}
           LIMITE: ${{ inputs.limite }}
+          SOLO_BARRIDO: ${{ inputs.solo_barrido }}
         run: |
           ARGS=(--reporte reporte.json)
+          if [[ "$SOLO_BARRIDO" == "true" ]]; then ARGS+=(--solo-barrido); fi
           if [[ "$FUENTE" =~ ^[a-z0-9,-]+$ ]]; then ARGS+=(--fuente "$FUENTE"); fi
           if [[ "$LIMITE" =~ ^[0-9]+$ ]]; then ARGS+=(--limite "$LIMITE"); fi
           node scripts/ingest.mjs "${ARGS[@]}"

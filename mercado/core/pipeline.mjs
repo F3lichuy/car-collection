@@ -16,7 +16,7 @@ import { phash } from './phash.mjs';
 import { loadSettings } from './settings.mjs';
 
 export const NORMALIZATION_REVIEW_BELOW = 0.7;
-const MAX_PHOTOS_TO_HASH = 6;
+const MAX_PHOTOS_TO_HASH = 10;
 const SOLD_IN_TITLE = /(^|[^a-z])(sold|vendid[oa])([^a-z]|$)/i;
 
 export async function runSource({ adapter, source, store, fetcher, today, trigger = 'cron', limit = Infinity, hashPhotos = true, log = console.log }) {
@@ -69,26 +69,34 @@ export async function runSource({ adapter, source, store, fetcher, today, trigge
 async function ingestOne({ n, store, index, today, hashPhotos, fetcher, r }) {
   const existing = await store.findListing(store.db, n.listing);
   if (existing) {
+    // Si ahora trae fotos que no teníamos (p. ej. el botón leyó el anuncio completo), se suman
+    // con su hash: el barrido del final las usa para encontrar repetidos.
+    // (Mercado Libre sirve la misma foto con varias direcciones: se compara por su id de imagen)
+    const key = u => String(u).match(/(\d{5,}-MLM\d+_\d+)/)?.[1] ?? u;
+    const have = new Set((await store.db.query(`select url from mx_photos where listing_id = $1`, [existing.id])).rows.map(x => key(x.url)));
+    const added = [...new Map(n.photos.filter(u => !have.has(key(u))).map(u => [key(u), u])).values()].map(url => ({ url }));
+    if (added.length) await hashAll(added, { hashPhotos, fetcher });
     const res = await store.db.transaction(async tx => {
       await store.touchListing(tx, existing.id, n.listing, today);
       if (n.private.description || n.private.seller_name) await store.upsertPrivate(tx, existing.id, n.private);
       await store.upsertSpecs(tx, existing.vehicle_id, existing.id, n.specs);
+      if (added.length) await store.insertPhotos(tx, existing.id, added, have.size);
       return store.recordPrice(tx, existing.id, n.price, today);
     });
+    if (added.length) {
+      index.addEvidence(existing.vehicle_id, { photos: added.filter(p => p.hash != null) });
+      r.fotos_agregadas = (r.fotos_agregadas ?? 0) + added.length;
+    }
     if (res === 'nuevo') r.actualizados++; else r.sin_cambio++;
     return;
   }
 
   // Fotos: se hashean antes de decidir identidad (los brokers reusan fotos).
   const photos = n.photos.map(url => ({ url }));
-  if (hashPhotos && fetcher) {
-    for (const p of photos.slice(0, MAX_PHOTOS_TO_HASH)) {
-      try { Object.assign(p, await phash((await fetcher.get(p.url, { as: 'buffer', accept: 'image/*', checkRobots: false, minDelayMs: 500 })).buffer)); }
-      catch { /* foto caída: se guarda sin hash y se reintenta en otra corrida */ }
-    }
-  }
+  await hashAll(photos, { hashPhotos, fetcher });
 
-  const decision = index.resolve({ ...n.vehicle, is_demo: false, specs: n.specs, photos: photos.filter(p => p.hash != null), listing: n.listing });
+  const mxn = n.price?.currency === 'MXN' && n.price.price != null ? Number(n.price.price) : null;
+  const decision = index.resolve({ ...n.vehicle, is_demo: false, specs: n.specs, price: mxn, photos: photos.filter(p => p.hash != null), listing: n.listing });
   const result = await store.db.transaction(async tx => {
     let vehicleId, isNewVehicle = false;
     if (decision.action === 'match') vehicleId = decision.vehicleId;
@@ -113,7 +121,7 @@ async function ingestOne({ n, store, index, today, hashPhotos, fetcher, r }) {
 
   // El índice aprende en la misma corrida (el mismo auto dos veces en una fuente).
   const hashed = photos.filter(p => p.hash != null).map(p => ({ hash: p.hash, center: p.center, lowInfo: p.lowInfo }));
-  if (result.isNewVehicle) index.addVehicle({ id: result.vehicleId, ...n.vehicle, is_demo: false, created_at: new Date().toISOString(), specs: n.specs, photos: hashed, listings: [n.listing] });
+  if (result.isNewVehicle) index.addVehicle({ id: result.vehicleId, ...n.vehicle, is_demo: false, created_at: new Date().toISOString(), specs: n.specs, prices: mxn != null ? [mxn] : [], photos: hashed, listings: [n.listing] });
   else index.addEvidence(result.vehicleId, { photos: hashed, listings: [n.listing] });
 
   r.nuevos++;
@@ -123,6 +131,58 @@ async function ingestOne({ n, store, index, today, hashPhotos, fetcher, r }) {
   if (r.muestras.length < 12) r.muestras.push({ titulo: n.listing.title, version: n.vehicle.version_id, anio: n.specs.year, km: n.specs.km,
     precio: n.price?.price ?? null, moneda: n.price?.currency ?? null, transmision: n.specs.transmission, confianza: n.confidence,
     identidad: decision.action === 'match' ? `mismo auto (${decision.reason})` : decision.reviews.length ? 'nuevo · a revisión' : 'nuevo' });
+}
+
+async function hashAll(photos, { hashPhotos, fetcher }) {
+  if (!hashPhotos || !fetcher) return;
+  for (const p of photos.slice(0, MAX_PHOTOS_TO_HASH)) {
+    try { Object.assign(p, await phash((await fetcher.get(p.url, { as: 'buffer', accept: 'image/*', checkRobots: false, minDelayMs: 500 })).buffer)); }
+    catch { /* foto caída: se guarda sin hash y el barrido la reintenta */ }
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Barrido de repetidos (al final de cada corrida, sobre TODO lo guardado)
+//   1. hashea fotos que quedaron sin hash (hasta hashBudget)
+//   2. descarta revisiones que ya no tienen sentido (fusionados, borrados, otro modelo/año)
+//   3. une los repetidos seguros (VIN, fotos, mismos km exactos) y propone el resto a revisión
+// Si una fusión choca con una regla de la base, se deja como revisión: nunca se fuerza.
+// ════════════════════════════════════════════════════════════════════════
+export async function rescan({ store, fetcher, hashBudget = 400, log = console.log }) {
+  const out = { fuente: 'barrido-de-repetidos', ok: false, fotos_hasheadas: 0, fusionados: 0, a_revision: 0, revisiones_descartadas: 0, uniones: [], errores: [] };
+  try {
+    if (fetcher && hashBudget > 0) {
+      for (const p of await store.unhashedPhotos(hashBudget)) {
+        try { await store.setPhotoHash(p.id, await phash((await fetcher.get(p.url, { as: 'buffer', accept: 'image/*', checkRobots: false, minDelayMs: 300 })).buffer)); out.fotos_hasheadas++; }
+        catch { /* sigue caída */ }
+      }
+    }
+    const settings = loadSettings((await store.db.query(`select key, value from mx_settings`)).rows);
+    const index = IdentityIndex.fromRows(await store.loadIndexRows(), settings);
+    const pending = new Set();
+    for (const rv of await store.pendingDuplicateReviews()) {
+      const v = index.reviewStillValid(rv.vehicle_a, rv.vehicle_b);
+      if (!v.ok) { await store.discardReview(rv.id, v.why); out.revisiones_descartadas++; }
+      else pending.add([rv.vehicle_a, rv.vehicle_b].sort().join('|'));
+    }
+    const { merges, reviews } = index.scanAll();
+    for (const m of merges) {
+      try {
+        await store.mergeVehicles(m.keep, m.drop, m.reason, m.evidence);   // una sola función en la base: todo o nada
+        out.fusionados++; out.uniones.push({ queda: m.keep, se_une: m.drop, motivo: m.reason });
+        log(`  ⇢ unidos (${m.reason}): ${m.drop} → ${m.keep}`);
+      } catch (e) {
+        out.errores.push({ error: e.message });
+        if (await store.enqueueDuplicate(store.db, m.keep, m.drop, 0.95, ['no_se_pudo_unir', m.reason], { error: e.message })) out.a_revision++;
+      }
+    }
+    for (const rv of reviews) {
+      const isNew = !pending.has([rv.a, rv.b].sort().join('|'));
+      if (await store.enqueueDuplicate(store.db, rv.a, rv.b, rv.score, rv.reasons, { origen: 'barrido' }) && isNew) out.a_revision++;
+    }
+    out.ok = true;
+  } catch (e) { out.fatal = e.message; out.errores.push({ error: e.message }); log(`✗ barrido: ${e.message}`); }
+  return out;
 }
 
 const pick = (o, keys) => Object.fromEntries(keys.map(k => [k, o[k]]));

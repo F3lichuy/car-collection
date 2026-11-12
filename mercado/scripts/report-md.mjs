@@ -8,6 +8,13 @@ const L = [`## Mercado MX · ingesta ${rep.fecha}${rep.seco ? ' (seco)' : ''}`, 
 for (const r of rep.fuentes) {
   L.push(`| ${r.fuente} | ${r.ok ? '✅' : '❌ ' + (r.fatal ?? '')} | ${r.nuevos} | ${r.unidos_a_auto_existente} | ${r.actualizados} | ${r.sin_cambio} | ${r.fuera_de_taxonomia} | ${r.a_revision_duplicado} | ${r.a_revision_normalizacion} | ${r.completa ? r.no_vistos : 'parcial'} | ${r.errores.length} |`);
 }
+const b = rep.barrido;
+if (b) {
+  L.push('', '### Barrido de repetidos', '',
+    `${b.ok ? '✅' : '❌ ' + (b.fatal ?? '')} · unidos automáticamente: **${b.fusionados}** · nuevos a revisión: **${b.a_revision}** · revisiones descartadas: ${b.revisiones_descartadas} · fotos con hash nuevo: ${b.fotos_hasheadas}`);
+  for (const u of (b.uniones ?? []).slice(0, 30)) L.push(`- ${u.motivo}: ${u.se_une} → ${u.queda}`);
+  for (const e of (b.errores ?? []).slice(0, 5)) L.push(`- ⚠️ ${e.error}`);
+}
 const errs = rep.fuentes.flatMap(r => r.errores.slice(0, 5).map(e => `- **${r.fuente}**: ${e.error}${e.url ? ` (${e.url})` : ''}`));
 if (errs.length) L.push('', '### Errores (primeros 5 por fuente)', ...errs);
 console.log(L.join('\n'));

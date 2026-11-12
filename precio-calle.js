@@ -12,7 +12,8 @@
   const PC = (window.PrecioCalle = {});
   const S = {
     loaded: false, loading: null, error: null, vehicles: [], listings: 0, sources: {}, settings: {}, fx: null,
-    f: { q: "", make: "", model: "", variant: "", tx: "", seg: "", sort: "recientes" }, usd: false, limit: 48,
+    f: { q: "", make: "", model: "", variant: "", tx: "", seg: "", st: "venta", sort: "recientes" }, usd: false, limit: 48,
+    reviews: [], revBy: new Map(),
   };
   const h = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const client = () => (typeof supa !== "undefined" ? supa : null);
@@ -53,7 +54,7 @@
       }
       return { data: out, error: null };
     };
-    const [ls0, manual, src, st, fx, own] = await Promise.all([
+    const [ls0, manual, src, st, fx, own, rev] = await Promise.all([
       listingsAll(7),
       // fichas capturadas a mano (sin anuncio): mandan sobre lo que dijo el anuncio
       c.from("mx_specs").select(`vehicle_id,${SPEC_COLS},notes,updated_at`).is("listing_id", null).order("updated_at", { ascending: false }),
@@ -62,6 +63,9 @@
       c.from("mx_fx_rates").select("day,usd_mxn").order("day", { ascending: false }).limit(1),
       // ¿esta cuenta es la dueña? (solo ella borra y restaura autos; la base lo vuelve a revisar)
       signedIn ? c.rpc("mx_is_owner") : Promise.resolve({ data: false }),
+      // posibles repetidos que esperan tu decisión (la base solo se los enseña a admin)
+      signedIn ? c.from("mx_review_queue").select("id,vehicle_a,vehicle_b,score,reasons,created_at").eq("kind", "duplicado").eq("status", "pendiente")
+        .order("score", { ascending: false }).limit(500) : Promise.resolve({ data: [] }),
     ]);
     let ls = ls0;
     // columnas que llegan con las migraciones 007 y 005: sin ellas, todo lo demás funciona igual
@@ -78,6 +82,11 @@
     S.deleted = all.filter(x => x.deleted);    // solo los ve la dueña (RLS), para restaurarlos
     S.vehicles = all.filter(x => !x.deleted);
     S.listings = S.vehicles.reduce((n, x) => n + x.listings.length, 0);
+    // solo pares cuyos dos autos se ven (un borrado o ya unido no se pregunta)
+    const byId = new Map(S.vehicles.map(x => [x.id, x]));
+    S.reviews = (rev && !rev.error ? rev.data || [] : []).filter(r => byId.has(r.vehicle_a) && byId.has(r.vehicle_b));
+    S.revBy = new Map();
+    for (const r of S.reviews) for (const id of [r.vehicle_a, r.vehicle_b]) { if (!S.revBy.has(id)) S.revBy.set(id, []); S.revBy.get(id).push(r); }
     S.loaded = true;
   }
 
@@ -140,9 +149,15 @@
       x.active = x.listings.some(l => l.status === "activo");
       x.lastSeen = main.last_seen; x.firstSeen = x.listings.map(l => l.first_seen).sort()[0];
       x.days = daysBetween(x.publishedOn || x.firstSeen, today()); x.daysKnown = !!x.publishedOn;
+      // Publicado hace más de un año (El Auto Clásico deja anuncios desde 2009): probablemente ya se vendió.
+      // No cuenta como "en venta" ni entra a medianas; se ve aparte como referencia.
+      x.stale = !!(x.publishedOn && x.days > 365);
+      x.colorExt = colorTxt(merged.exterior_color, merged.exterior_color_family, merged.exterior_color_raw);
+      x.colorInt = colorTxt(merged.interior_color, merged.interior_color_family, merged.interior_color_raw);
       x.city = main.city || main.state || "";
       x.demo = !!(x.v.is_demo || main.is_demo);
-      x.photo = x.listings.flatMap(l => (l.photos || []).slice().sort((a, b) => (a.position ?? 99) - (b.position ?? 99))).map(p => p.url)[0] || null;
+      x.photos = [...new Set(x.listings.flatMap(l => (l.photos || []).slice().sort((a, b) => (a.position ?? 99) - (b.position ?? 99)).map(p => p.url)))];
+      x.photo = x.photos[0] || null;
       x.sourceIds = [...new Set(x.listings.map(l => l.source_id))];
       x.seg = x.year && x.year <= now - classicAge ? "clasico" : (m.segment || "");
       // "Ferrari 328 GTB / GTS", no "Ferrari 308 / 328 328 GTB / GTS": si la versión ya trae el código del modelo, no se repite.
@@ -177,6 +192,9 @@
   // Fuentes que aún no están activas no salen en la vista pública: nombre legible desde su id.
   const sourceName = id => String(id || "").replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
   const fmtDate = d => { if (!d) return "—"; const [y, m, dd] = String(d).split("-"); return `${dd}/${m}/${y}`; };
+  // "Rojo Guardia" · "GT Silver" · "Rojo" (familia) · null
+  const colorTxt = (name, fam, raw) => name || (raw && String(raw).trim()) || (fam ? fam[0].toUpperCase() + fam.slice(1) : null);
+  const yearsAgo = d => { const n = Math.floor(daysBetween(d, today()) / 365.25); return n <= 1 ? "hace más de un año" : `hace ${n} años`; };
 
   // ── vista ──────────────────────────────────────────────────────────────
   PC.render = async function (root) {
@@ -195,7 +213,9 @@
 
   function filtered() {
     const f = S.f, q = f.q.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
-    let a = S.vehicles.filter(x => x.active
+    // Estado: en venta (por omisión) · probablemente vendidos (publicados hace más de un año) · todos
+    const stOk = x => f.st === "todos" || (f.st === "vendidos" ? x.stale : !x.stale);
+    let a = S.vehicles.filter(x => x.active && stOk(x)
       && (!f.make || x.make === f.make) && (!f.model || x.model === f.model) && (!f.variant || x.variant === f.variant)
       && (!f.tx || x.tx === f.tx) && (!f.seg || x.seg === f.seg) && (!q || q.split(/\s+/).every(w => x.search.includes(w))));
     const pv = x => (x.price && x.price.price != null ? Number(x.price.price) * (x.price.currency === "USD" && S.fx ? Number(S.fx.usd_mxn) : 1) : null);
@@ -217,12 +237,13 @@
         <button class="btn" onclick="PrecioCalle.reload()">Reintentar</button></div></div>`;
       return;
     }
-    const act = S.vehicles.filter(x => x.active);
-    const makes = [...new Set(act.map(x => x.make))].sort();
-    const models = [...new Set(act.filter(x => !S.f.make || x.make === S.f.make).map(x => x.model))].sort();
-    const variants = S.f.model ? [...new Set(act.filter(x => x.model === S.f.model && (!S.f.make || x.make === S.f.make)).map(x => x.variant))].sort((a, b) => (/por confirmar/.test(a) - /por confirmar/.test(b)) || a.localeCompare(b, "es")) : [];
-    const txs = [...new Set(act.map(x => x.tx).filter(Boolean))];
-    const segs = [...new Set(act.map(x => x.seg).filter(Boolean))];
+    // "act" = en venta de verdad: activos y publicados hace menos de un año (lo demás es referencia)
+    const actAll = S.vehicles.filter(x => x.active), act = actAll.filter(x => !x.stale), staleN = actAll.length - act.length;
+    const makes = [...new Set(actAll.map(x => x.make))].sort();
+    const models = [...new Set(actAll.filter(x => !S.f.make || x.make === S.f.make).map(x => x.model))].sort();
+    const variants = S.f.model ? [...new Set(actAll.filter(x => x.model === S.f.model && (!S.f.make || x.make === S.f.make)).map(x => x.variant))].sort((a, b) => (/por confirmar/.test(a) - /por confirmar/.test(b)) || a.localeCompare(b, "es")) : [];
+    const txs = [...new Set(actAll.map(x => x.tx).filter(Boolean))];
+    const segs = [...new Set(actAll.map(x => x.seg).filter(Boolean))];
     const srcN = new Set(act.flatMap(x => x.sourceIds)).size;
     const last = act.map(x => x.lastSeen).sort().pop();
     const list = filtered(), shown = list.slice(0, S.limit);
@@ -244,7 +265,7 @@
         <div><dt>Actualizado</dt><dd>${h(fmtDate(last))}</dd></div>
       </dl>
       ${adminPanel()}
-      ${act.length ? `
+      ${actAll.length ? `
       <div class="toolbar pc-filters">
         <input class="ctrl grow" placeholder="Buscar: 993, GT3, Testarossa…" value="${h(S.f.q)}" oninput="PrecioCalle.set('q', this.value)">
         <select class="ctrl" aria-label="Marca" onchange="PrecioCalle.set('make', this.value)">${opt("", S.f.make, "Todas las marcas")}${makes.map(m => opt(m, S.f.make, m)).join("")}</select>
@@ -252,11 +273,12 @@
         ${variants.length > 1 ? `<select class="ctrl" aria-label="Versión" onchange="PrecioCalle.set('variant', this.value)">${opt("", S.f.variant, "Todas las versiones")}${variants.map(v => opt(v, S.f.variant, v)).join("")}</select>` : ""}
         <select class="ctrl" aria-label="Transmisión" onchange="PrecioCalle.set('tx', this.value)">${opt("", S.f.tx, "Cualquier caja")}${txs.map(t => opt(t, S.f.tx, TX[t] || t)).join("")}</select>
         <select class="ctrl" aria-label="Segmento" onchange="PrecioCalle.set('seg', this.value)">${opt("", S.f.seg, "Todos los segmentos")}${segs.map(t => opt(t, S.f.seg, SEG[t] || t)).join("")}</select>
+        ${staleN ? `<select class="ctrl" aria-label="Estado" onchange="PrecioCalle.set('st', this.value)">${opt("venta", S.f.st, "En venta")}${opt("vendidos", S.f.st, `Probablemente vendidos (${staleN})`)}${opt("todos", S.f.st, "En venta y vendidos")}</select>` : ""}
         <select class="ctrl" aria-label="Orden" onchange="PrecioCalle.set('sort', this.value)">
           ${opt("recientes", S.f.sort, "Más recientes")}${opt("precio_asc", S.f.sort, "Precio: menor a mayor")}${opt("precio_desc", S.f.sort, "Precio: mayor a menor")}
           ${opt("anio_asc", S.f.sort, "Año: más antiguos")}${opt("anio_desc", S.f.sort, "Año: más nuevos")}${opt("km_asc", S.f.sort, "Menos km")}</select>
       </div>
-      <p class="pc-count">${list.length === 1 ? "1 auto" : `${nf.format(list.length)} autos`}${list.length !== act.length ? ` de ${nf.format(act.length)}` : ""}</p>
+      <p class="pc-count">${list.length === 1 ? "1 auto" : `${nf.format(list.length)} autos`}${S.f.st === "vendidos" ? " publicados hace más de un año (probablemente vendidos)" : list.length !== act.length ? ` de ${nf.format(act.length)}` : ""}</p>
       <div class="grid pc-grid">${shown.map(card).join("") || `<p class="pc-none">Nada con esos filtros.</p>`}</div>
       ${list.length > shown.length ? `<div class="mk-more"><button class="btn" onclick="PrecioCalle.more()">Cargar más</button></div>` : ""}
       ${analysis(act)}
@@ -272,11 +294,13 @@
     const p = x.price, low = x.confidence < 0.7;
     return `<article class="car pc-card" onclick="PrecioCalle.open('${x.id}')" tabindex="0" onkeydown="if(event.key==='Enter')PrecioCalle.open('${x.id}')">
       <div class="ph">${x.photo ? `<img src="${h(thumb(x.photo))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<div class="noimg"></div>`}
-        ${x.demo ? `<span class="pc-badge pc-demo">DEMO</span>` : ""}
-        ${x.sourceIds.length > 1 ? `<span class="pc-badge">En ${x.sourceIds.length} fuentes</span>` : ""}</div>
+        <div class="pc-badges">${[x.demo ? `<span class="pc-badge pc-demo">DEMO</span>` : "",
+          x.sourceIds.length > 1 ? `<span class="pc-badge">En ${x.sourceIds.length} fuentes</span>` : "",
+          x.stale ? `<span class="pc-badge" title="Publicado el ${h(fmtDate(x.publishedOn))}">Prob. vendido · ${h(String(x.publishedOn).slice(0, 4))}</span>` : "",
+          canEdit() && S.revBy.has(x.id) ? `<span class="pc-badge pc-dup" title="Puede ser el mismo auto que otro anuncio: revísalo en Agregar autos › Posibles repetidos">¿Repetido?</span>` : ""].join("")}</div></div>
       <div class="body">
         <div class="nm">${h(x.name || x.listings[0].title)}</div>
-        <div class="meta"><b>${h(x.year ?? "—")}</b><span>${h(km(x.km))}</span>${x.tx ? `<span>${h(TX[x.tx] || x.tx)}</span>` : ""}${x.city ? `<span>${h(x.city)}</span>` : ""}</div>
+        <div class="meta"><b>${h(x.year ?? "—")}</b><span>${h(km(x.km))}</span>${x.tx ? `<span>${h(TX[x.tx] || x.tx)}</span>` : ""}${x.colorExt ? `<span>${h(x.colorExt)}</span>` : ""}${x.city ? `<span>${h(x.city)}</span>` : ""}</div>
         <div class="pc-price">${h(money(p))}${p && p.negotiable && p.price != null ? ` <small>· negociable</small>` : ""}</div>
         ${low ? `<div class="pc-note">Datos por confirmar</div>` : ""}
       </div></article>`;
@@ -369,8 +393,8 @@
       document.body.appendChild(scrim);
     }
     const s = x.specs || {};
-    const photos = [...new Set(x.listings.flatMap(l => (l.photos || []).slice().sort((a, b) => (a.position ?? 99) - (b.position ?? 99)).map(p => p.url)))].slice(0, 12);
-    const color = (n, fam, raw) => n || raw || (fam ? fam[0].toUpperCase() + fam.slice(1) : null);
+    const photos = x.photos.slice(0, 40);
+    const color = colorTxt;
     const mark = f => (f && x.manualFields.has(f) ? ` <span class="pc-man" title="Capturado a mano, no sale del anuncio">a mano</span>` : "");
     const row = (k, v, f) => `<tr><th scope="row">${h(k)}</th><td>${v == null || v === "" ? `<span class="pc-unk">Sin dato</span>` : h(v)}${mark(f)}</td></tr>`;
     const path = [x.make, x.model, x.gen, x.version].filter(Boolean).map(h).join(" › ");
@@ -414,6 +438,7 @@
             }).join("")}
           </div>
         </div>
+        ${canEdit() && S.revBy.has(x.id) ? dupNotice(x) : ""}
         ${historyChart(x)}
         ${compareChart(x)}
         <p class="pc-foot">Precio pedido en anuncios públicos, no precio de venta.${x.confidence < 0.7 ? " Algunos datos de este auto están por confirmar." : ""}</p>
@@ -428,7 +453,9 @@
   const pct = (a, b) => Math.round(((b - a) / a) * 1000) / 10;
   function timeTiles(x) {
     const src = x.publishedBy ? (S.sources[x.publishedBy] ? S.sources[x.publishedBy].name : sourceName(x.publishedBy)) : "";
-    const pub = x.daysKnown
+    const pub = x.stale
+      ? `<div><dt>Publicado</dt><dd>${h(fmtDate(x.publishedOn))}</dd><p>${h(yearsAgo(x.publishedOn))}, según ${h(src)}. Con más de un año publicado, probablemente ya se vendió: no lo contamos como tiempo en venta ni entra a las medianas.</p></div>`
+      : x.daysKnown
       ? `<div><dt>Tiempo publicado</dt><dd>${h(dayTxt(x.days))}</dd><p>Desde el ${h(fmtDate(x.publishedOn))}, según ${h(src)}</p></div>`
       : `<div><dt>Lo vemos desde hace</dt><dd>${h(dayTxt(x.days))}</dd><p>La fuente no dice cuándo lo publicó; contamos desde el ${h(fmtDate(x.firstSeen))}</p></div>`;
     let pr;
@@ -499,6 +526,79 @@
     if (typeof toast === "function") toast("Auto restaurado");
   };
 
+  // ── posibles repetidos: tú decides con los dos anuncios lado a lado ────
+  // El motor une solo lo seguro (VIN, la misma foto con año y km iguales, los mismos km exactos no redondos).
+  // Lo demás llega aquí: "Es el mismo auto" los une (se puede deshacer); "Son distintos" no se vuelve a proponer.
+  const REASON = {
+    fotos_iguales: "Fotos iguales", misma_foto: "La misma foto de portada", fotos_parecidas: "Fotos parecidas", alguna_foto_parecida: "Alguna foto parecida",
+    fingerprint: "Misma versión, año y km", mismos_km_exactos: "Los mismos km exactos", mismo_precio: "El mismo precio", tambien_coincide_con: "También coincide con otro",
+    varios_candidatos: "Coincide con varios", no_se_pudo_unir: "No se pudo unir solo",
+    version: "misma versión", anio: "mismo año", km: "km parecidos", color_ext: "mismo color", color_int: "mismo interior", transmision: "misma caja",
+    km_no_cuadra: "km que no cuadran", anio_mas_menos_1: "año ±1", color_ext_distinto: "otro color", color_int_distinto: "otro interior",
+    transmision_distinta: "otra caja", version_distinta: "otra versión", generacion_distinta: "otra generación", modelo_distinto: "otro modelo", anio_distinto: "otro año",
+  };
+  const reasonTxt = r => { const a = Array.isArray(r.reasons) ? r.reasons : (() => { try { return JSON.parse(r.reasons); } catch (e) { return []; } })();
+    return a.filter(k => REASON[k] && !/^[0-9a-f-]{36}$/.test(k)).map(k => REASON[k]).join(" · "); };
+  const vById = id => S.vehicles.find(v => v.id === id);
+  const otherOf = (r, id) => vById(r.vehicle_a === id ? r.vehicle_b : r.vehicle_a);
+  const srcOf = x => [...new Set(x.listings.map(l => (S.sources[l.source_id] ? S.sources[l.source_id].name : sourceName(l.source_id))))].join(", ");
+  function dupNotice(x) {
+    return `<section class="pc-sub pc-dupbox"><h4 class="pc-h4">¿Es el mismo auto que…?</h4>
+      ${S.revBy.get(x.id).map(r => { const o = otherOf(r, x.id); return o ? `<div class="pc-dupline"><span>${h(o.name)}${o.year ? ` · ${o.year}` : ""} · ${h(km(o.km))} · ${h(money(o.price))} · ${h(srcOf(o))}<br><small>${h(reasonTxt(r))}</small></span>
+        <button class="btn sm" onclick="PrecioCalle.openPair(${r.id})">Comparar lado a lado</button></div>` : ""; }).join("")}</section>`;
+  }
+  function dupPanel() {
+    const rs = S.reviews;
+    if (!rs.length) return `<div class="pc-sub"><h4 class="pc-h4">Posibles repetidos (0)</h4><p class="pc-foot">No hay pares por revisar. Los repetidos seguros se unen solos en la actualización diaria.</p></div>`;
+    const mini = x => `<span class="pc-dupcar">${x.photo ? `<img src="${h(thumb(x.photo))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="pc-capimg"></span>`}
+      <span><b>${h(x.name)}${x.year ? ` · ${x.year}` : ""}</b><br><small>${h(km(x.km))} · ${h(money(x.price))}<br>${h(srcOf(x))}${x.city ? ` · ${h(x.city)}` : ""}</small></span></span>`;
+    return `<div class="pc-sub"><h4 class="pc-h4">Posibles repetidos (${rs.length})</h4>
+      <p class="pc-foot" style="margin-top:0">Parecen el mismo auto, pero falta algo que lo confirme (otra foto, km redondos, otro precio). Compáralos y decide: tu decisión se guarda y no se vuelve a preguntar.</p>
+      <div class="pc-duplist">${rs.slice(0, S.dupLimit || 12).map(r => { const a = vById(r.vehicle_a), b = vById(r.vehicle_b);
+        return `<button class="pc-duprow" onclick="PrecioCalle.openPair(${r.id})">${mini(a)}<span class="pc-dupvs">=?</span>${mini(b)}<small class="pc-dupwhy">${h(reasonTxt(r))}</small></button>`; }).join("")}</div>
+      ${rs.length > (S.dupLimit || 12) ? `<div class="mk-more"><button class="btn sm" onclick="PrecioCalle.moreDups()">Ver más</button></div>` : ""}</div>`;
+  }
+  PC.moreDups = () => { S.dupLimit = (S.dupLimit || 12) + 24; draw(root()); };
+  PC.openPair = function (rid) {
+    const r = S.reviews.find(x => x.id === rid);
+    if (!r) return;
+    const a = vById(r.vehicle_a), b = vById(r.vehicle_b);
+    if (!a || !b) return;
+    capModal("");   // mismo modal de la sección
+    const side = x => `<div class="pc-pairside">
+      <div class="pc-pairphotos">${x.photos.slice(0, 12).map((u, i) => `<img src="${h(thumb(u))}" alt="" ${i < 2 ? "" : 'loading="lazy"'} referrerpolicy="no-referrer" onerror="this.remove()">`).join("") || `<div class="noimg"></div>`}</div>
+      ${x.photos.length <= 1 ? `<p class="pc-foot">Solo tenemos la foto de portada. Abre el anuncio para ver las demás (placas, interior, rines).</p>` : ""}
+      ${x.listings.map(l => l.url ? `<a class="link" href="${h(l.url)}" target="_blank" rel="noopener noreferrer nofollow">Ver anuncio en ${h(S.sources[l.source_id] ? S.sources[l.source_id].name : sourceName(l.source_id))} ↗</a>` : "").join("<br>")}</div>`;
+    // [etiqueta, valor, ¿se marca en rojo si no coincide?] (que la fuente o las fechas difieran es normal)
+    const rowsDef = [["Fuente", x => srcOf(x), false], ["Ciudad", x => x.city, true], ["Año", x => x.year, true], ["Kilometraje", x => (x.km == null ? null : km(x.km)), true], ["Precio", x => money(x.price), true],
+      ["Versión", x => x.variant, true], ["Color", x => x.colorExt, true], ["Interior", x => x.colorInt, true], ["Transmisión", x => (x.tx ? TX[x.tx] || x.tx : null), true],
+      ["Publicado", x => (x.publishedOn ? fmtDate(x.publishedOn) : null), false], ["Lo vemos desde", x => fmtDate(x.firstSeen), false]];
+    const cell = v => (v == null || v === "" ? `<span class="pc-unk">Sin dato</span>` : h(v));
+    const tbl = `<table class="pc-table pc-pairtbl"><tbody>${rowsDef.map(([k, f, cmp]) => { const va = f(a), vb = f(b), diff = cmp && va != null && vb != null && String(va) !== String(vb);
+      return `<tr class="${diff ? "pc-diff" : ""}"><th scope="row">${h(k)}</th><td>${cell(va)}</td><td>${cell(vb)}</td></tr>`; }).join("")}</tbody></table>`;
+    const i = S.reviews.indexOf(r);
+    document.getElementById("pcModal").innerHTML = `<div class="mh"><h3 id="pcTitle">¿Es el mismo auto?</h3>
+      <button class="iconbtn" onclick="document.getElementById('pcScrim').classList.remove('show')" aria-label="Cerrar">×</button></div>
+      <div class="mb"><p class="pc-foot" style="margin-top:0">Por qué se parecen: <b>${h(reasonTxt(r) || "datos parecidos")}</b>. Fíjate en placas, rines, interior y detalles de la carrocería. En rojo, lo que no coincide.</p>
+        <div class="pc-pair">${side(a)}${side(b)}</div>${tbl}
+        <p class="pc-formmsg" id="pcPairMsg" role="status"></p>
+        <div class="pc-formbtns"><button class="btn primary sm" onclick="PrecioCalle.resolvePair(${r.id},'mismo')">Es el mismo auto: unirlos</button>
+          <button class="btn sm" onclick="PrecioCalle.resolvePair(${r.id},'distinto')">Son autos distintos</button>
+          ${S.reviews[i + 1] ? `<button class="btn ghost sm" onclick="PrecioCalle.openPair(${S.reviews[i + 1].id})">Decidir después →</button>` : ""}</div>
+        <p class="pc-foot">"Unirlos" junta los anuncios en un solo auto (se puede deshacer desde la base). "Distintos" queda guardado y este par no se vuelve a proponer.</p></div>`;
+  };
+  PC.resolvePair = async function (rid, decision) {
+    const msg = document.getElementById("pcPairMsg");
+    if (msg) msg.textContent = "Guardando…";
+    const i = S.reviews.findIndex(x => x.id === rid);
+    const { error } = await client().rpc("mx_resolve_duplicate", { p_review: rid, p_decision: decision });
+    if (error) { if (msg) msg.textContent = `No se guardó: ${error.message}`; return; }
+    S.loaded = false; S.loading = load(); await S.loading; draw(root());
+    if (typeof toast === "function") toast(decision === "mismo" ? "Unidos en un solo auto" : "Marcados como autos distintos");
+    const next = S.reviews[Math.min(i, S.reviews.length - 1)];
+    if (next) PC.openPair(next.id); else document.getElementById("pcScrim")?.classList.remove("show");
+  };
+
   PC.saveSpecs = async function (id, form) {
     const x = S.vehicles.find(v => v.id === id), msg = form.querySelector(".pc-formmsg"), btn = form.querySelector('[type="submit"]');
     const NUM = new Set(["year", "km", "owners"]), data = {};
@@ -566,56 +666,128 @@
   // Arranca con la versión de este auto si hay al menos otro igual; si no, con todas.
   function compareChart(x) {
     const label = modelLabel(x.make, x.model);
-    return `<section class="pc-sub" id="pcCompare"><h4 class="pc-h4">Contra otros ${h(label)} a la venta</h4>${compareInner(x)}</section>`;
+    return `<section class="pc-sub" id="pcCompare"><h4 class="pc-h4">Contra otros ${h(label)}</h4>${compareInner(x)}</section>`;
   }
-  PC.cmpToggle = function (key) {
+  const redrawCmp = () => {
     const x = S.vehicles.find(v => v.id === S.cmp.id); if (!x) return;
+    const box = document.getElementById("pcCompare");
+    if (box) box.innerHTML = `<h4 class="pc-h4">Contra otros ${h(modelLabel(x.make, x.model))}</h4>${compareInner(x)}`;
+  };
+  PC.cmpToggle = function (key) {
     if (key === "*") S.cmp.sel = null;
     else { const sel = new Set(S.cmp.sel || []); sel.has(key) ? sel.delete(key) : sel.add(key); S.cmp.sel = sel.size ? sel : null; }
-    const box = document.getElementById("pcCompare");
-    if (box) box.innerHTML = `<h4 class="pc-h4">Contra otros ${h(modelLabel(x.make, x.model))} a la venta</h4>${compareInner(x)}`;
+    redrawCmp();
   };
+  PC.cmpAxis = function (ax) { S.cmp.x = ax; redrawCmp(); };
+
+  // Precio esperado: recta robusta (Theil–Sen) sobre el logaritmo del precio, así un auto carísimo o
+  // regalado no la jala. Banda = ±1 desviación típica de los residuos (MAD). Solo con autos en venta.
+  function trendFit(pts) {
+    const xs = [...new Set(pts.map(p => p[0]))];
+    if (pts.length < 2 || xs.length < 2) return null;
+    const sl = [];
+    for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) if (pts[j][0] !== pts[i][0]) sl.push((pts[j][1] - pts[i][1]) / (pts[j][0] - pts[i][0]));
+    const b = median(sl), a = median(pts.map(p => p[1] - b * p[0]));
+    const mad = median(pts.map(p => Math.abs(p[1] - (a + b * p[0])))) * 1.4826;
+    return { a, b, s: Math.max(mad, 0.03), at: xv => Math.exp(a + b * xv) };
+  }
+  const decYear = d => { const t = Date.parse(d); return Number.isNaN(t) ? null : 1970 + t / (365.2425 * 864e5); };
+  const AXES = { year: "Año del auto", km: "Kilometraje", pub: "Fecha de publicación" };
+
   function compareInner(x) {
     const minN = Number(S.settings.min_n_for_stats ?? 5);
-    const all = S.vehicles.filter(v => v.active && v.make === x.make && v.model === x.model && v.year && toMxn(v.price) != null);
     const label = modelLabel(x.make, x.model);
+    const base = S.vehicles.filter(v => v.active && v.make === x.make && v.model === x.model && toMxn(v.price) != null);
     if (!S.cmp || S.cmp.id !== x.id) {
-      const same = all.filter(v => v.variant === x.variant).length;
-      S.cmp = { id: x.id, sel: x.version && same >= 2 ? new Set([x.variant]) : null };
+      const same = base.filter(v => v.variant === x.variant && !v.stale).length;
+      S.cmp = { id: x.id, sel: x.version && same >= 2 ? new Set([x.variant]) : null, x: "year" };
     }
+    const axis = S.cmp.x || "year";
+    const xv = v => (axis === "year" ? v.year : axis === "km" ? v.km : decYear(v.publishedOn || v.firstSeen));
+    const all = base.filter(v => xv(v) != null);
     const counts = new Map(); for (const v of all) counts.set(v.variant, (counts.get(v.variant) || 0) + 1);
     const keys = [...counts.keys()].sort((a, b) => (/por confirmar/.test(a) - /por confirmar/.test(b)) || counts.get(b) - counts.get(a) || a.localeCompare(b, "es"));
     const sel = S.cmp.sel;
+    const axisBtns = `<div class="pc-axis" role="group" aria-label="Eje horizontal">Comparar por:
+      ${Object.entries(AXES).map(([k, l]) => `<button class="pc-chip ${axis === k ? "on" : ""}" aria-pressed="${axis === k}" onclick="PrecioCalle.cmpAxis('${k}')">${l}</button>`).join("")}</div>`;
     const chips = keys.length > 1 ? `<div class="pc-chips" role="group" aria-label="Versiones a comparar">
       <button class="pc-chip ${sel ? "" : "on"}" aria-pressed="${!sel}" onclick="PrecioCalle.cmpToggle('*')">Todas <span class="pc-chipn">${all.length}</span></button>
       ${keys.map(k => `<button class="pc-chip ${sel && sel.has(k) ? "on" : ""}" aria-pressed="${!!(sel && sel.has(k))}" onclick="PrecioCalle.cmpToggle(${h(JSON.stringify(k))})"${k === x.variant ? ' title="La versión de este auto"' : ""}>${h(k)}${k === x.variant ? " (este)" : ""} <span class="pc-chipn">${counts.get(k)}</span></button>`).join("")}</div>` : "";
     const peers = all.filter(v => !sel || sel.has(v.variant) || v.id === x.id);
     const what = sel ? [...sel].join(", ") : "todas las versiones";
-    const n = peers.length, falta = Math.max(0, minN - n);
     const others = peers.filter(v => v.id !== x.id);
-    if (!others.length) return `${chips}<p class="pc-foot">${all.length > 1 ? `No hay otros ${h(label)} de ${h(what)} con año y precio. Prende más versiones arriba.` : `Es el único ${h(label)} con año y precio que tenemos. Con ${minN} o más se calcula la mediana.`}</p>`;
-    const prices = peers.map(v => toMxn(v.price)), med = n >= minN ? median(prices) : null;
-    const W = 640, H = 240, L = 64, R = 16, T = 14, B = 28;
-    const years = peers.map(v => v.year); let ya = Math.min(...years), yb = Math.max(...years); if (ya === yb) { ya -= 2; yb += 2; } else { ya -= 1; yb += 1; }
-    const lo = Math.min(...prices), hi = Math.max(...prices), pad = (hi - lo) * 0.15 || hi * 0.1, yt = ticks(lo - pad, hi + pad), p0 = yt[0], p1 = yt[yt.length - 1];
-    const X = yr => L + ((yr - ya) / (yb - ya)) * (W - L - R), Y = v => T + (1 - (v - p0) / (p1 - p0 || 1)) * (H - T - B);
-    const xt = ticks(ya, yb, Math.min(6, yb - ya)).filter(t => t >= ya && t <= yb && Number.isInteger(t));
-    const dot = v => { const me = v.id === x.id, cx = X(v.year).toFixed(1), cy = Y(toMxn(v.price)).toFixed(1);
-      return `<circle class="pc-dot ${me ? "" : "peer"}" cx="${cx}" cy="${cy}" r="${me ? 6 : 5}"/><circle class="pc-hit" cx="${cx}" cy="${cy}" r="12" ${me ? "" : `onclick="PrecioCalle.open('${v.id}')"`} data-tip="${tip(`${me ? "Este auto" : v.name}\n${v.variant !== v.version ? `${v.variant}\n` : ""}${v.year} · ${km(v.km)}${v.city ? ` · ${v.city}` : ""}\n${money(v.price)}`)}"${v.photo ? ` data-tip-img="${h(thumb(v.photo))}"` : ""}/>`; };
-    const mine = toMxn(x.price), vsMed = med && mine != null ? pct(med, mine) : null;
-    return `${chips}
-      <svg class="pc-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Año contra precio pedido de ${n} ${h(label)} (${h(what)})">
+    const missingX = axis === "km" ? " con kilometraje" : axis === "year" ? " con año" : "";
+    if (!others.length) return `${axisBtns}${chips}<p class="pc-foot">${all.length > 1 ? `No hay otros ${h(label)} de ${h(what)}${missingX} y precio. Prende más versiones arriba.` : `No hay otros ${h(label)}${missingX} y precio para comparar.`}</p>`;
+
+    // estadística solo con los que siguen en venta (los publicados hace más de un año son referencia)
+    const live = peers.filter(v => !v.stale), n = live.length;
+    const prices = peers.map(v => toMxn(v.price)), livePrices = live.map(v => toMxn(v.price));
+    const med = n >= minN ? median(livePrices) : null;
+    // por fecha de publicación, la tendencia solo tiene sentido con medio año o más de historia
+    const lxs = live.map(xv), spanOk = axis !== "pub" || Math.max(...lxs) - Math.min(...lxs) >= 0.5;
+    const fit = n >= minN && spanOk ? trendFit(live.map(v => [xv(v), Math.log(toMxn(v.price))])) : null;
+    // escala vertical sin que un precio extremo aplaste a los demás (cercas de Tukey sobre el log)
+    let lo = Math.min(...prices), hi = Math.max(...prices);
+    if (peers.length >= 5) {
+      const lg = prices.map(Math.log).sort((a, b) => a - b), q = p => lg[Math.floor(p * (lg.length - 1))], iqr = q(0.75) - q(0.25);
+      lo = Math.max(lo, Math.exp(q(0.25) - 1.5 * iqr)); hi = Math.min(hi, Math.exp(q(0.75) + 1.5 * iqr));
+    }
+    const pad = (hi - lo) * 0.12 || hi * 0.1, yt = ticks(Math.max(0, lo - pad), hi + pad), p0 = yt[0], p1 = yt[yt.length - 1];
+    const W = 640, H = 260, L = 64, R = 16, T = 16, B = 30;
+    const xsv = peers.map(xv); let xa = Math.min(...xsv), xb = Math.max(...xsv);
+    if (axis === "year") { if (xa === xb) { xa -= 2; xb += 2; } else { xa -= 1; xb += 1; } }
+    else if (axis === "km") { xa = 0; xb = Math.max(xb * 1.06, 1000); }
+    else { const sp = Math.max(xb - xa, 0.25); xa -= sp * 0.06; xb += sp * 0.06; }
+    const X = v => L + ((v - xa) / (xb - xa || 1)) * (W - L - R), Y = v => T + (1 - (v - p0) / (p1 - p0 || 1)) * (H - T - B);
+    const MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+    let xt, xl;
+    if (axis === "year") { xt = ticks(xa, xb, Math.min(6, xb - xa)).filter(t => t >= xa && t <= xb && Number.isInteger(t)); xl = t => String(t); }
+    else if (axis === "km") { xt = ticks(0, xb, 5).filter(t => t <= xb); xl = t => (t >= 1000 ? `${nf.format(Math.round(t / 1000))} mil` : String(t)); }
+    else if (xb - xa > 3) { xt = ticks(xa, xb, 6).filter(t => t >= xa && t <= xb && Number.isInteger(t)); xl = t => String(t); }
+    else { xt = ticks(xa, xb, 5).filter(t => t >= xa && t <= xb); xl = t => { const y = Math.floor(t), m = Math.min(11, Math.floor((t - y) * 12)); return `${MES[m]} ${String(y).slice(2)}`; }; }
+    const tipOf = (v, me) => `${me ? "Este auto" : v.name}\n${v.variant !== v.version ? `${v.variant}\n` : ""}${v.year ?? "—"} · ${km(v.km)}${v.colorExt ? ` · ${v.colorExt}` : ""}${v.city ? `\n${v.city}` : ""}\n${money(v.price)}${v.stale ? `\nPublicado ${fmtDate(v.publishedOn)} · prob. vendido` : ""}`;
+    const dot = v => {
+      const me = v.id === x.id, p = toMxn(v.price), cx = X(xv(v)).toFixed(1), up = p > p1, down = p < p0, cy = (up ? T + 2 : down ? H - B - 2 : Y(p)).toFixed(1);
+      const mark = up || down
+        ? `<path class="pc-out" d="M${cx},${cy}l-5,${up ? 8 : -8}h10z"/>`
+        : `<circle class="pc-dot ${me ? "" : v.stale ? "stale" : "peer"}" cx="${cx}" cy="${cy}" r="${me ? 6 : 5}"/>`;
+      return `${mark}<circle class="pc-hit" cx="${cx}" cy="${cy}" r="12" ${me ? "" : `onclick="PrecioCalle.open('${v.id}')"`} data-tip="${tip(tipOf(v, me) + (up || down ? "\n(fuera de la escala)" : ""))}"${v.photo ? ` data-tip-img="${h(thumb(v.photo))}"` : ""}/>`;
+    };
+    // curva de precio esperado y su banda: solo donde hay autos (sin extrapolar) y recortada al área de la gráfica
+    let trend = "";
+    const clipId = `pcClip${Math.random().toString(36).slice(2, 8)}`;
+    if (fit) {
+      const lx = live.map(xv), x0 = Math.min(...lx), x1 = Math.max(...lx);
+      const N = 40, xs = Array.from({ length: N + 1 }, (_, i) => x0 + ((x1 - x0) * i) / N);
+      const line = xs.map((v, i) => `${i ? "L" : "M"}${X(v).toFixed(1)},${Y(fit.at(v)).toFixed(1)}`).join("");
+      const upper = xs.map(v => `${X(v).toFixed(1)},${Y(fit.at(v) * Math.exp(fit.s)).toFixed(1)}`), lower = xs.slice().reverse().map(v => `${X(v).toFixed(1)},${Y(fit.at(v) / Math.exp(fit.s)).toFixed(1)}`);
+      trend = `<defs><clipPath id="${clipId}"><rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}"/></clipPath></defs>
+        <g clip-path="url(#${clipId})"><path class="pc-band" d="M${upper.join("L")}L${lower.join("L")}Z"/><path class="pc-trend" d="${line}"/></g>`;
+    } else if (med) {
+      trend = `<line class="pc-med" x1="${L}" x2="${W - R}" y1="${Y(med).toFixed(1)}" y2="${Y(med).toFixed(1)}"/><text class="pc-ax" x="${W - R}" y="${(Y(med) - 6).toFixed(1)}" text-anchor="end">mediana ${short(med)}</text>`;
+    }
+    const mine = toMxn(x.price), myX = xv(x);
+    const expected = fit && myX != null ? fit.at(myX) : med;
+    const vsExp = expected && mine != null ? pct(expected, mine) : null;
+    const outN = peers.filter(v => toMxn(v.price) > p1 || toMxn(v.price) < p0).length, staleN = peers.filter(v => v.stale).length;
+    const byWhat = { year: "año", km: "kilometraje", pub: "fecha de publicación" }[axis];
+    return `${axisBtns}${chips}
+      <svg class="pc-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${h(AXES[axis])} contra precio pedido de ${peers.length} ${h(label)} (${h(what)})">
         ${yt.map(v => `<line class="pc-grid" x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text class="pc-ax" x="${L - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${short(v)}</text>`).join("")}
-        ${xt.map(t => `<text class="pc-ax" x="${X(t).toFixed(1)}" y="${H - 8}" text-anchor="middle">${t}</text>`).join("")}
-        ${med ? `<line class="pc-med" x1="${L}" x2="${W - R}" y1="${Y(med).toFixed(1)}" y2="${Y(med).toFixed(1)}"/><text class="pc-ax" x="${W - R}" y="${(Y(med) - 6).toFixed(1)}" text-anchor="end">mediana ${short(med)}</text>` : ""}
-        ${others.map(dot).join("")}${peers.some(v => v.id === x.id) ? dot(x) : ""}
+        ${xt.map(t => `<text class="pc-ax" x="${X(t).toFixed(1)}" y="${H - 10}" text-anchor="middle">${xl(t)}</text>`).join("")}
+        ${trend}
+        ${others.filter(v => v.stale).map(dot).join("")}${others.filter(v => !v.stale).map(dot).join("")}${peers.some(v => v.id === x.id) ? dot(x) : ""}
       </svg>
-      <p class="pc-legend"><span class="pc-key"></span> Este auto <span class="pc-key peer"></span> Otros ${h(label)} · ${h(what)} (pasa el cursor para ver la foto; toca uno para abrirlo)</p>
-      <p class="pc-foot">${n} ${h(label)} de ${h(what)} con año y precio.${mine == null ? " Este auto no publica precio, así que no aparece en la gráfica." : ""}${
-        vsMed != null ? ` Este auto pide ${vsMed === 0 ? "lo mismo que la mediana" : `${Math.abs(vsMed)}% ${vsMed > 0 ? "más" : "menos"} que la mediana`}.`
-        : med ? "" : ` Faltan ${falta} para calcular la mediana; mientras, compáralo punto por punto.`}</p>
-      <details class="pc-details"><summary>Ver como tabla</summary><table class="pc-table"><thead><tr><th>Auto</th><th>Versión</th><th class="num">Año</th><th class="num">Km</th><th class="num">Precio</th></tr></thead><tbody>
-        ${peers.slice().sort((a, b) => a.year - b.year).map(v => `<tr><th scope="row">${v.id === x.id ? "<b>Este auto</b>" : h(v.name)}</th><td>${h(v.variant)}</td><td class="num">${v.year}</td><td class="num">${h(km(v.km))}</td><td class="num">${h(money(v.price))}</td></tr>`).join("")}
+      <p class="pc-legend"><span class="pc-key"></span> Este auto <span class="pc-key peer"></span> En venta${staleN ? ` <span class="pc-key stale"></span> Publicado hace más de un año (prob. vendido)` : ""}${fit ? ` <span class="pc-key trend"></span> Precio esperado según ${byWhat}, con su rango típico` : ""}</p>
+      <p class="pc-foot">${n} ${h(label)} de ${h(what)} en venta con ${byWhat} y precio.${
+        mine == null ? " Este auto no publica precio, así que no aparece en la gráfica." : ""}${
+        expected && vsExp != null ? ` Para este auto se esperaría ${h(money({ price: expected, currency: "MXN" }))}${fit ? ` (rango típico ${short(expected / Math.exp(fit.s))}–${short(expected * Math.exp(fit.s))})` : " (mediana)"}: pide ${vsExp === 0 ? "lo mismo" : `${Math.abs(vsExp)}% ${vsExp > 0 ? "más" : "menos"}`}.`
+        : n < minN ? ` Con ${minN} o más en venta se calcula el precio esperado; faltan ${minN - n}.` : ""}${
+        outN ? ` ${outN === 1 ? "Un auto queda" : `${outN} autos quedan`} fuera de la escala (▲▼): pasa el cursor para ver su precio.` : ""}${
+        axis === "pub" && peers.some(v => !v.publishedOn) ? " Los que no dicen cuándo se publicaron van en la fecha en que los vimos por primera vez." : ""}
+        Pasa el cursor para ver la foto; toca uno para abrirlo.</p>
+      <details class="pc-details"><summary>Ver como tabla</summary><table class="pc-table"><thead><tr><th>Auto</th><th>Versión</th><th class="num">Año</th><th class="num">Km</th><th>Color</th><th class="num">Precio</th></tr></thead><tbody>
+        ${peers.slice().sort((a, b) => xv(a) - xv(b)).map(v => `<tr><th scope="row">${v.id === x.id ? "<b>Este auto</b>" : h(v.name)}${v.stale ? ` <span class="pc-insuf">(prob. vendido)</span>` : ""}</th><td>${h(v.variant)}</td><td class="num">${v.year ?? "—"}</td><td class="num">${h(km(v.km))}</td><td>${h(v.colorExt || "—")}</td><td class="num">${h(money(v.price))}</td></tr>`).join("")}
       </tbody></table></details>`;
   }
 
@@ -647,7 +819,7 @@
   // se revisan aquí y se guardan como pendientes en mx_capturas. La corrida diaria los pasa
   // por el normalizador y el anti-duplicados; nada entra directo a los anuncios.
   const CAP_SOURCE = { facebook: "facebook-marketplace", mercadolibre: "mercadolibre-autos" };
-  const CAP_FIELDS = ["external_id", "url", "title", "make", "model", "version", "year", "km", "km_unit", "transmission", "color_ext", "vin",
+  const CAP_FIELDS = ["external_id", "url", "title", "make", "model", "version", "year", "km", "km_unit", "transmission", "color_ext", "color_int", "vin",
     "price", "list_price", "body", "currency", "city", "description", "photos", "published_on", "extra"];
   function capSource(d) {
     if (CAP_SOURCE[d.site]) return CAP_SOURCE[d.site];
@@ -658,7 +830,7 @@
   function capClean(it) {
     const o = {};
     for (const k of CAP_FIELDS) if (it[k] != null && it[k] !== "") o[k] = it[k];
-    for (const k of ["title", "make", "model", "version", "city", "transmission", "color_ext"]) if (o[k]) o[k] = String(o[k]).slice(0, 300);
+    for (const k of ["title", "make", "model", "version", "city", "transmission", "color_ext", "color_int"]) if (o[k]) o[k] = String(o[k]).slice(0, 300);
     if (o.description) o.description = String(o.description).slice(0, 4000);
     if (Array.isArray(o.photos)) o.photos = o.photos.filter(u => /^https:\/\//.test(u)).slice(0, 30); else delete o.photos;
     if (o.price != null && !(Number(o.price) > 0)) { delete o.price; delete o.currency; }
@@ -703,6 +875,7 @@
     };
     capModal(`<p class="pc-foot" style="margin-top:0">De <b>${h(name)}</b> · ${items.length === 1 ? "1 auto" : `${items.length} autos`} en la página que estabas viendo. Quita la palomita a los que no quieras.</p>
       ${ambiguous ? `<p class="pc-foot">Los precios que solo dicen "$" se guardan como pesos mexicanos.</p>` : ""}
+      ${items.length > 1 && items.every(x => (x.photos || []).length <= 1) ? `<p class="pc-foot">Desde la lista solo viene la foto de portada. Para un auto que te interese (o uno marcado "¿Repetido?"), abre su anuncio y dale clic al botón ahí: trae todas las fotos, el color y la descripción, y se suman al que ya tenemos.</p>` : ""}
       <div class="pc-caplist">${items.map(row).join("")}</div>
       <p class="pc-formmsg" id="pcCapMsg" role="status"></p>
       <div class="pc-formbtns"><button class="btn primary sm" id="pcCapSave" onclick="PrecioCalle.saveCaptura()">Guardar</button>
@@ -730,7 +903,7 @@
   let marcadorHref = null;
   async function ensureMarcador() {
     if (marcadorHref) return marcadorHref;
-    try { const r = await fetch("captura-marcador.js?v=2", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
+    try { const r = await fetch("captura-marcador.js?v=3", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
     return marcadorHref;
   }
   function adminPanel() {
@@ -742,6 +915,7 @@
         <p class="pc-foot">En una página de resultados guarda todos los autos que se ven; dentro de un anuncio, ese auto con fotos y descripción.</p>
         <p class="pc-foot"><b>¿Ya lo tenías en tu barra?</b> Bórralo de la barra y vuelve a arrastrar este: cada versión nueva del botón se instala así.</p>
       </div><div><h4 class="pc-h4">Últimas capturas</h4><div id="pcCapturas"><p class="pc-foot">Cargando…</p></div></div></div>
+      ${dupPanel()}
       <div class="pc-sub"><h4 class="pc-h4">Buscar más autos por ciudad</h4>
         <p class="pc-foot" style="margin-top:0">Elige un modelo: se abre la búsqueda en cada ciudad. Ahí da clic en el botón de tu barra para guardar lo que veas. Arriba van los modelos con menos autos para comparar.</p>
         <div class="toolbar"><select class="ctrl grow" id="pcBuscaModelo" aria-label="Modelo a buscar" onchange="PrecioCalle.renderBusqueda()"><option>Cargando modelos…</option></select></div>
@@ -839,8 +1013,9 @@
     .pc-card{cursor:pointer}
     .pc-card:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
     .pc-card .ph img{width:100%;height:100%;object-fit:cover}
-    .pc-badge{position:absolute;left:10px;top:10px;background:rgba(var(--shade),.78);color:var(--ink);font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px}
-    .pc-badge+.pc-badge{top:38px}
+    .pc-badges{position:absolute;left:10px;top:10px;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+    .pc-badge{background:rgba(var(--shade),.78);color:var(--ink);font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px}
+    .pc-dup{background:var(--accent);color:var(--on-accent)}
     .pc-demo{background:var(--accent);color:var(--on-accent)}
     .pc-price{font-family:var(--display);font-size:22px;color:var(--ink);margin-top:6px}
     .pc-price small{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
@@ -934,7 +1109,36 @@
     .pc-captxt span{font-size:12px;color:var(--ink-faint)}
     .pc-capprice{text-align:right;font-size:14px;color:var(--ink);white-space:nowrap}
     .pc-capprice small{display:block;font-size:11px;color:var(--ink-faint)}
+    .pc-duplist{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+    .pc-duprow{display:grid;grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr);gap:8px 12px;align-items:center;padding:10px 0;border:0;border-bottom:1px solid var(--line);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
+    .pc-duprow:hover b{color:var(--accent)}
+    .pc-duprow:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    .pc-dupcar{display:flex;gap:10px;align-items:center;min-width:0;font-size:13px}
+    .pc-dupcar img,.pc-dupcar .pc-capimg{width:72px;height:54px;object-fit:cover;flex:0 0 auto;background:var(--card2)}
+    .pc-dupcar b{font-weight:500;color:var(--ink)}
+    .pc-dupcar small,.pc-dupwhy{color:var(--ink-faint);font-size:12px}
+    .pc-dupvs{font-family:var(--mono);color:var(--ink-faint);text-align:center}
+    .pc-dupwhy{grid-column:1/-1}
+    .pc-dupbox{border-top:1px solid var(--accent);padding-top:12px}
+    .pc-dupline{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:6px 0;font-size:13px}
+    .pc-dupline small{color:var(--ink-faint)}
+    .pc-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0}
+    .pc-pairside{min-width:0}
+    .pc-pairphotos{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x mandatory;margin-bottom:8px}
+    .pc-pairphotos img{height:min(30vh,240px);width:auto;max-width:92%;object-fit:cover;scroll-snap-align:start;flex:0 0 auto;background:var(--card2)}
+    .pc-pairtbl td{width:38%}
+    .pc-diff td{color:var(--bad,#c0392b)}
+    .pc-dot.stale{fill:var(--bg2,var(--bg));stroke:var(--ink-faint);stroke-width:1.5}
+    .pc-trend{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:6 4}
+    .pc-band{fill:var(--accent);opacity:.09}
+    .pc-out{fill:var(--ink-dim)}
+    .pc-key.stale{background:transparent;border:1.5px solid var(--ink-faint);margin-left:10px}
+    .pc-key.trend{width:18px;height:0;border-radius:0;border-top:2px dashed var(--accent);background:transparent;margin-left:10px}
+    .pc-axis{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0 0 10px;font-size:12px;color:var(--ink-faint)}
     @media (max-width:720px){
+      .pc-pair{grid-template-columns:1fr}
+      .pc-duprow{grid-template-columns:1fr}
+      .pc-dupvs{text-align:left}
       .pc-split,.pc-formgrid,.pc-tiles{grid-template-columns:1fr}
       .pc-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
       .pc-filters select.ctrl{max-width:none;flex:1 1 45%}

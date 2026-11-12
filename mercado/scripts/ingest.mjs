@@ -19,7 +19,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { parse as parseYaml } from 'yaml';
 import { PoliteFetcher } from '../core/http.mjs';
 import { Store, fromPglite, fromPostgres } from '../core/store.mjs';
-import { runAll } from '../core/pipeline.mjs';
+import { runAll, rescan } from '../core/pipeline.mjs';
 import { adapters } from '../adapters/index.mjs';
 
 const args = process.argv.slice(2);
@@ -47,8 +47,12 @@ if (!dry && only && sources.some(s => !s.enabled)) {
   console.error('Solo se corren contra Supabase fuentes con enabled: true. Usa --seco para probar una desactivada.');
   process.exit(2);
 }
-const doCaptures = !only && !flag('sin-capturas');   // capturas del botón: solo en la corrida completa
-if (!sources.length && !doCaptures) { console.log('No hay fuentes para correr.'); process.exit(0); }
+// --solo-barrido: no visita fuentes ni capturas; solo busca repetidos entre lo que ya está guardado.
+const onlyScan = flag('solo-barrido');
+if (onlyScan) sources = [];
+const doCaptures = !only && !onlyScan && !flag('sin-capturas');   // capturas del botón: solo en la corrida completa
+const doScan = onlyScan || (!only && !flag('sin-barrido'));       // barrido de repetidos: al final de la corrida completa
+if (!sources.length && !doCaptures && !doScan) { console.log('No hay fuentes para correr.'); process.exit(0); }
 
 let db;
 if (dry) {
@@ -98,6 +102,13 @@ if (doCaptures) {
   const { processCapturas } = await import('../core/capturas.mjs');
   reports.push(...await processCapturas({ db, store, sources: all, adapters, makeFetcher, today, hashPhotos: !flag('sin-fotos') }));
 }
+// Barrido de repetidos sobre todo lo guardado (une los seguros, propone el resto, limpia revisiones viejas).
+let barrido = null;
+if (doScan) {
+  console.log('▶ barrido de repetidos');
+  barrido = await rescan({ store, fetcher: flag('sin-fotos') ? null : makeFetcher({ ...cfg.defaults }), hashBudget: Number(opt('fotos-barrido') ?? 400) });
+  console.log(`  fotos con hash nuevo ${barrido.fotos_hasheadas} · unidos ${barrido.fusionados} · a revisión ${barrido.a_revision} · revisiones descartadas ${barrido.revisiones_descartadas}${barrido.fatal ? ' · ✗ ' + barrido.fatal : ''}`);
+}
 
 console.log(`\n══ Reporte ${today} ${dry ? '(seco)' : ''} ══`);
 for (const r of reports) {
@@ -107,7 +118,7 @@ for (const r of reports) {
   console.log(`  activos no vistos hoy ${r.completa ? r.no_vistos : '(corrida parcial: no se cuenta)'} · errores ${r.errores.length} · peticiones ${r.resumen.peticiones}`);
   if (r.muestras.length) console.table(r.muestras);
 }
-if (opt('reporte')) writeFileSync(opt('reporte'), JSON.stringify({ fecha: today, seco: dry, fuentes: reports }, null, 2));
+if (opt('reporte')) writeFileSync(opt('reporte'), JSON.stringify({ fecha: today, seco: dry, fuentes: reports, barrido }, null, 2));
 if (dry) {
   const q = async s => (await db.query(s)).rows;
   console.log('\nEn la base temporal:', (await q(`select (select count(*) from mx_vehicles)::int vehiculos, (select count(*) from mx_listings)::int listings,

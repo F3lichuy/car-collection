@@ -79,6 +79,9 @@ export function compare(inc, v, s = DEFAULTS, distinct = false) {
 
 // Las barreras definitivas: ni siquiera se proponen a revisión.
 const BLOCKING = new Set(['vin_distinto', 'marcado_distinto', 'demo_vs_real']);
+// Fotos casi iguales entre autos de otro modelo, generación o año: es el mismo estudio de la agencia
+// (mismo fondo y ángulo), no el mismo auto. Tampoco se proponen a revisión.
+const PHOTO_BLOCKING = new Set([...BLOCKING, 'modelo_distinto', 'generacion_distinta', 'anio_distinto']);
 
 // ── Índice en memoria ────────────────────────────────────────────────────
 
@@ -115,12 +118,12 @@ export class IdentityIndex {
   isDistinct(a, b) { return this.distinct.has(pairKey(a, b)); }
 
   // Construye el índice desde filas de la base (ver mercado/LEEME.md).
-  static fromRows({ vehicles = [], specs = [], photos = [], listings = [], distinctPairs = [] }, settings) {
+  static fromRows({ vehicles = [], specs = [], photos = [], listings = [], distinctPairs = [], prices = [] }, settings) {
     const idx = new IdentityIndex(settings);
     const canon = new Map(specs.filter(s => s.is_canonical).map(s => [s.vehicle_id, s]));
-    const ph = group(photos, 'vehicle_id'), ls = group(listings, 'vehicle_id');
+    const ph = group(photos, 'vehicle_id'), ls = group(listings, 'vehicle_id'), pr = group(prices, 'vehicle_id');
     for (const v of vehicles) idx.addVehicle({
-      ...v, specs: canon.get(v.id) ?? {},
+      ...v, specs: canon.get(v.id) ?? {}, prices: (pr.get(v.id) ?? []).map(p => Number(p.price)),
       photos: (ph.get(v.id) ?? []).map(p => ({ hash: p.phash, center: p.phash_center, lowInfo: p.low_info, ref: p.id })),
       listings: ls.get(v.id) ?? [],
     });
@@ -129,7 +132,7 @@ export class IdentityIndex {
   }
 
   // Coincidencias de fotos del entrante contra cada vehículo.
-  photoMatches(incomingPhotos, { exclude } = {}) {
+  photoMatches(incomingPhotos, { exclude, skipDeleted = false } = {}) {
     const { phash_strong_distance: S, phash_weak_distance: W, phash_generic_vehicles: G } = this.s;
     // 1) quitar fotos repetidas dentro del mismo anuncio
     const inc = [];
@@ -137,7 +140,7 @@ export class IdentityIndex {
     // 2) pares candidatos (foto entrante, foto del vehículo, distancia)
     const perVehicle = new Map(), strongVehiclesPerPhoto = inc.map(() => new Set());
     for (const [id, v] of this.vehicles) {
-      if (id === exclude) continue;
+      if (id === exclude || (skipDeleted && v.deleted)) continue;
       for (let i = 0; i < inc.length; i++) for (let j = 0; j < v.photos.length; j++) {
         const d = dist(inc[i], v.photos[j]);
         if (d > W) continue;
@@ -164,7 +167,9 @@ export class IdentityIndex {
   }
 
   // incoming: { vin, model_id, generation_id, version_id, is_demo, specs, photos, listing }
-  resolve(incoming, { exclude } = {}) {
+  // skipDeleted (barrido): los autos borrados por la dueña no cuentan como candidatos.
+  resolve(incoming, { exclude, skipDeleted = false } = {}) {
+    const off = id => id === exclude || (skipDeleted && !!this.vehicles.get(id)?.deleted);
     const s = this.s;
     const inc = { ...incoming, is_demo: !!incoming.is_demo, vin: incoming.vin ? normalizeVin(incoming.vin)?.vin : null };
     const reviews = [], seen = new Set([exclude]);
@@ -195,12 +200,22 @@ export class IdentityIndex {
     }
 
     // 2. Fotos
-    const pm = this.photoMatches(inc.photos ?? [], { exclude });
-    const clean = [];
+    // Con 2+ fotos fuertes basta (y sin contradicciones, se une). Con UNA sola foto por lado (las tarjetas
+    // de Mercado Libre traen solo la portada) hace falta que sea la MISMA imagen (≤ phash_identical_distance)
+    // y que año y km coincidan: dos autos distintos fotografiados en el mismo estudio salen "parecidos".
+    const pm = this.photoMatches(inc.photos ?? [], { exclude, skipDeleted });
+    const clean = [], I = s.phash_identical_distance ?? 2;
     for (const [id, m] of pm.matches) {
-      if (m.strong < s.phash_min_matches) continue;
       const v = this.vehicles.get(id), c = compare(inc, v, s, this.isDistinct(id, exclude ?? ''));
-      if (c.hard.some(h => BLOCKING.has(h))) continue;          // fotos reusadas en otro auto
+      const few = Math.min(pm.usablePhotos, v.photos.length) <= 2;
+      const identical = m.distances.length > 0 && Math.min(...m.distances) <= I;
+      const single = few && identical && c.agree.includes('anio') && c.agree.includes('km');
+      if (c.hard.some(h => PHOTO_BLOCKING.has(h))) continue;     // fotos reusadas o de estudio en otro auto
+      if (m.strong < s.phash_min_matches && !single) {
+        // la misma imagen pero algún dato no cuadra (¿km mal capturados?): que lo veas tú
+        if (few && identical) review(id, 0.75, ['misma_foto', ...c.hard, ...c.soft], { photos: m });
+        continue;
+      }
       if (c.hard.length || c.soft.length) review(id, 0.85, ['fotos_iguales', ...c.hard, ...c.soft], { photos: m });
       else clean.push({ id, m, c });
     }
@@ -212,9 +227,37 @@ export class IdentityIndex {
       return done({ action: 'match', vehicleId: best.id, reason: 'fotos', evidence: { photos: best.m, agree: best.c.agree, genericPhotos: pm.genericPhotos } });
     }
 
+    // 2b. Datos idénticos: mismo modelo y año y los MISMOS km "no redondos" (12,972 · 5,863), desde
+    // fingerprint_exact_km_min (autos nuevos de 10 km se confundirían) → el mismo auto publicado por dos
+    // vendedores (agencia y Mercado Libre). Con km redondos (1,200 · 5,000) y el mismo precio solo se
+    // PROPONE: dos Huracán Sterrato 2023 de 1,200 km a $9.3 M resultaron ser autos distintos (placas).
+    const exact = [];
+    const a0 = inc.specs ?? {}, kmMin = s.fingerprint_exact_km_min ?? 1000;
+    if (inc.model_id && a0.year != null && a0.km != null && a0.km >= kmMin) {
+      for (const [id, v] of this.vehicles) {
+        if (off(id) || seen.has(id) || v.model_id !== inc.model_id) continue;
+        const b = v.specs ?? {};
+        if (b.year !== a0.year || b.km !== a0.km) continue;
+        const incP = [].concat(inc.prices ?? [], inc.price != null ? [inc.price] : []);
+        const samePrice = incP.some(a => [].concat(v.prices ?? []).some(p => Math.abs(Number(a) - Number(p)) < 1));
+        const round = a0.km % 100 === 0;
+        if (round && !samePrice) continue;
+        const c = compare(inc, v, s, this.isDistinct(id, exclude ?? ''));
+        if (c.hard.some(h => BLOCKING.has(h))) continue;
+        const why = ['mismos_km_exactos', ...(samePrice ? ['mismo_precio'] : [])];
+        if (round || c.hard.length || c.soft.length) { review(id, round && !c.hard.length && !c.soft.length ? 0.9 : 0.8, [...why, ...c.hard, ...c.soft]); continue; }
+        exact.push({ id, c, samePrice });
+      }
+    }
+    if (exact.length === 1) {
+      const [e] = exact;
+      return done({ action: 'match', vehicleId: e.id, reason: 'datos', evidence: { km: a0.km, year: a0.year, samePrice: e.samePrice, agree: e.c.agree } });
+    }
+    for (const e of exact) review(e.id, 0.9, ['mismos_km_exactos', ...(e.samePrice ? ['mismo_precio'] : []), 'varios_candidatos']);
+
     // 3. Fingerprint → solo revisión
     for (const [id, v] of this.vehicles) {
-      if (id === exclude || seen.has(id)) continue;
+      if (off(id) || seen.has(id)) continue;
       if (inc.model_id !== v.model_id) continue;
       const sameVersion = inc.version_id && v.version_id && inc.version_id === v.version_id;
       const sameGen = inc.generation_id && v.generation_id && inc.generation_id === v.generation_id;
@@ -233,10 +276,21 @@ export class IdentityIndex {
     for (const [id, m] of pm.matches) {
       if (seen.has(id) || m.strong + m.weak < 2) continue;
       const c = compare(inc, this.vehicles.get(id), s, this.isDistinct(id, exclude ?? ''));
-      if (c.hard.some(h => BLOCKING.has(h))) continue;
+      if (c.hard.some(h => PHOTO_BLOCKING.has(h))) continue;
       review(id, 0.5 + 0.1 * m.strong, ['fotos_parecidas', ...c.hard, ...c.soft], { photos: m });
     }
     return done({ action: 'new', evidence: { usablePhotos: pm.usablePhotos, genericPhotos: pm.genericPhotos } });
+  }
+
+  // ¿Sigue valiendo la pena revisar este par? No, si uno ya no existe (se fusionó), si la dueña borró
+  // uno, o si son de otro modelo/generación/año (fotos del mismo estudio, no el mismo auto).
+  reviewStillValid(a, b) {
+    const va = this.vehicles.get(a), vb = this.vehicles.get(b);
+    if (!va || !vb) return { ok: false, why: 'ya_no_existe' };
+    if (va.deleted || vb.deleted) return { ok: false, why: 'borrado' };
+    const c = compare(va, vb, this.s, this.isDistinct(a, b));
+    const hit = c.hard.find(h => PHOTO_BLOCKING.has(h));
+    return hit ? { ok: false, why: hit } : { ok: true };
   }
 
   // Barrido completo: busca duplicados entre vehículos ya guardados (p. ej.
@@ -245,17 +299,20 @@ export class IdentityIndex {
     const merges = [], reviews = new Map(), merged = new Set();
     const ids = [...this.vehicles.keys()].sort((a, b) =>
       String(this.vehicles.get(a).created_at ?? '').localeCompare(String(this.vehicles.get(b).created_at ?? '')) || a.localeCompare(b));
+    // Los borrados por la dueña no se tocan: ni se fusionan (reaparecerían) ni se proponen.
+    const gone = id => merged.has(id) || !!this.vehicles.get(id)?.deleted;
     for (const id of ids) {
-      if (merged.has(id)) continue;
+      if (gone(id)) continue;
       const v = this.vehicles.get(id);
-      const r = this.resolve({ ...v, photos: v.photos.map(p => ({ hash: joinHash(p.h), center: p.c && joinHash(p.c) })), listing: null }, { exclude: id });
-      if (r.action === 'match' && (r.reason === 'fotos' || r.reason === 'vin') && !merged.has(r.vehicleId)) {
+      const r = this.resolve({ ...v, photos: v.photos.map(p => ({ hash: joinHash(p.h), center: p.c && joinHash(p.c) })), listing: null }, { exclude: id, skipDeleted: true });
+      for (const rv of r.reviews) if (gone(rv.vehicleId)) rv.skip = true;
+      if (r.action === 'match' && ['fotos', 'vin', 'datos'].includes(r.reason) && !gone(r.vehicleId)) {
         const [keep, drop] = [r.vehicleId, id].sort((a, b) => older(this.vehicles.get(a), this.vehicles.get(b)));
         merges.push({ keep, drop, reason: r.reason, evidence: r.evidence });
         merged.add(drop);
       }
       for (const rv of r.reviews) {
-        if (merged.has(rv.vehicleId) || this.isDistinct(id, rv.vehicleId)) continue;
+        if (rv.skip || merged.has(rv.vehicleId) || this.isDistinct(id, rv.vehicleId)) continue;
         const k = pairKey(id, rv.vehicleId);
         if (!reviews.has(k) || reviews.get(k).score < rv.score) reviews.set(k, { a: k.split('|')[0], b: k.split('|')[1], score: rv.score, reasons: rv.reasons });
       }

@@ -103,14 +103,18 @@
       var p = money((sym || "$") + fr);
       var prev = q(c, ".andes-money-amount--previous"), lp = prev ? money((txt(q(prev, ".andes-money-amount__currency-symbol")) || "$") + txt(q(prev, ".andes-money-amount__fraction"))) : null;
       var attrs = qa(c, ".poly-attributes_list__item, .poly-attributes-list__item, .ui-search-card-attributes__attribute").map(txt).join(" · ");
-      var img = q(c, "img"), k = kmOf(attrs);
+      // todas las fotos que ya trae la tarjeta (algunas traen carrusel), una por imagen
+      var seenImg = {}, imgs = qa(c, "img").map(function (i) { return i.getAttribute("data-src") || i.src; })
+        .filter(function (u) { return /^https:\/\/http2\.mlstatic\.com\//.test(u || ""); })
+        .filter(function (u) { var m = u.match(/(\d{5,}-MLM\d+_\d+)/), key = m ? m[1] : u; if (seenImg[key]) return false; seenImg[key] = 1; return true; });
+      var k = kmOf(attrs);
       out.push({
         external_id: id, url: url, title: txt(q(c, ".poly-component__title, .ui-search-item__title, h2, h3")) || txt(a),
         year: yearOf(attrs), km: k && k.km, km_unit: k && k.km_unit,
         price: p && p.price, currency: p && p.currency, currency_ambiguous: p ? p.ambiguous && !sym : false,
         list_price: lp && p && lp.currency === p.currency && lp.price > p.price ? lp.price : null,   // precio tachado
         city: txt(q(c, ".poly-component__location, .ui-search-item__location")) || null,
-        photos: img ? [img.getAttribute("data-src") || img.src].filter(function (u) { return /^https:/.test(u || ""); }) : [],
+        photos: imgs.slice(0, 12),
       });
     });
     return out;
@@ -140,7 +144,8 @@
       make: rows.marca || null, model: [rows.modelo, rows["versión"] || rows.version].filter(Boolean).join(" ") || null,
       version: rows["versión"] || rows.version || null, year: yearOf(rows["año"] || rows.ano || sub || title),
       km: k && k.km, km_unit: k && k.km_unit, transmission: rows["transmisión"] || rows.transmision || null,
-      color_ext: rows.color || null, price: p && p.price, currency: p && p.currency, currency_ambiguous: false,
+      color_ext: rows.color || rows["color exterior"] || null, color_int: rows["color interior"] || rows["color de interiores"] || rows.interior || null,
+      price: p && p.price, currency: p && p.currency, currency_ambiguous: false,
       list_price: lp && p && lp.currency === p.currency && lp.price > p.price ? lp.price : null,
       body: rows["tipo de carrocería"] || rows["tipo de carroceria"] || null,
       city: txt(q(document, ".ui-vip-location__subtitle, .ui-seller-info__status-info__subtitle")) || null,

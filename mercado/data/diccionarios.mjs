@@ -15,19 +15,19 @@ export const TRANSMISSION = [
 // ── Colores ─────────────────────────────────────────────────────────────
 // Familias genéricas (es / en / it / de)
 export const COLOR_FAMILY = [
-  ['negro', ['negro', 'black', 'nero', 'schwarz', 'onyx', 'obsidian', 'ebony']],
-  ['blanco', ['blanco', 'white', 'bianco', 'weiss', 'perla', 'pearl']],
-  ['plata', ['plata', 'plateado', 'silver', 'argento', 'silber']],
+  ['negro', ['negro', 'negra', 'black', 'nero', 'schwarz', 'onyx', 'obsidian', 'ebony']],
+  ['blanco', ['blanco', 'blanca', 'white', 'bianco', 'weiss', 'perla', 'pearl']],
+  ['plata', ['plata', 'plateado', 'plateada', 'silver', 'argento', 'silber']],
   ['gris', ['gris', 'grey', 'gray', 'grigio', 'grau', 'grafito', 'graphite', 'titanio', 'titanium', 'gunmetal', 'chalk', 'crayon']],
-  ['rojo', ['rojo', 'red', 'rosso', 'rot', 'vino', 'guinda', 'burgundy', 'carmine', 'carmin']],
+  ['rojo', ['rojo', 'roja', 'red', 'rosso', 'rot', 'vino', 'guinda', 'burgundy', 'carmine', 'carmin']],
   ['azul', ['azul', 'blue', 'blu', 'blau', 'marino', 'navy']],
   ['verde', ['verde', 'green', 'grun', 'olivo', 'olive']],
-  ['amarillo', ['amarillo', 'yellow', 'giallo', 'gelb']],
+  ['amarillo', ['amarillo', 'amarilla', 'yellow', 'giallo', 'gelb']],
   ['naranja', ['naranja', 'orange', 'arancio', 'papaya']],
-  ['morado', ['morado', 'purple', 'viola', 'violeta', 'lila']],
+  ['morado', ['morado', 'morada', 'purple', 'viola', 'violeta', 'lila']],
   ['cafe', ['cafe', 'marron', 'brown', 'chocolate', 'tabaco', 'cognac', 'coñac', 'havana', 'espresso', 'bronce', 'bronze']],
   ['beige', ['beige', 'arena', 'crema', 'cream', 'sand', 'hueso', 'champagne', 'champan', 'tan', 'camel']],
-  ['dorado', ['dorado', 'gold', 'oro']],
+  ['dorado', ['dorado', 'dorada', 'gold', 'oro']],
   ['rosa', ['rosa', 'pink']],
 ];
 

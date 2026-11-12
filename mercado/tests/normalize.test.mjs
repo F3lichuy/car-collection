@@ -159,3 +159,20 @@ describe('anuncio completo', () => {
     assert.ok(r.confidence < 0.5);
   });
 });
+
+describe('color desde el texto', () => {
+  test('título y descripción con contexto; nombres de versión no son color', async () => {
+    const { colorsInText } = await import('../core/normalize.mjs');
+    assert.deepEqual(colorsInText('Porsche 911 GT3 2018 991.2 PDK Azul Zafiro Preparado para pista', ''), { ext: 'Azul Zafiro', int: null });
+    assert.deepEqual(colorsInText('Lamborghini Urus 2021', 'Color exterior: Rojo\nInteriores en piel negra con costuras rojas'), { ext: 'Rojo', int: 'negra' });
+    assert.deepEqual(colorsInText('Ferrari 488 GTB', 'Pintura Rosso Corsa, asientos en piel beige. Servicio cada 10,000 km'), { ext: 'Rosso Corsa', int: 'beige' });
+    assert.deepEqual(colorsInText('Mercedes-AMG SLS Black Series 2014', ''), { ext: null, int: null });
+    assert.deepEqual(colorsInText('BMW M3', 'interior y exterior impecables, tan bonito como nuevo'), { ext: null, int: null });
+  });
+  test('el campo de la fuente manda; si falta, se usa el texto', () => {
+    const n = normalizeListing({ source_id: 'x', observed_on: '2026-11-12', title: 'Porsche 911 GT3 2018 991.2 PDK Azul Zafiro', price: 4189000, currency: 'MXN', description: 'interiores en piel negra' });
+    assert.equal(n.specs.exterior_color_family, 'azul'); assert.equal(n.specs.interior_color_family, 'negro');
+    const m = normalizeListing({ source_id: 'x', observed_on: '2026-11-12', title: 'Porsche 911 GT3 2018 Azul', color_ext: 'Plata', price: 4189000, currency: 'MXN' });
+    assert.equal(m.specs.exterior_color_family, 'plata');
+  });
+});

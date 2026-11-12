@@ -437,6 +437,8 @@ export const settings = [
   ['phash_strong_distance', 8, 'Bits de diferencia máximos para "misma foto" (coincidencia fuerte). Calibrado en Fase 2 con imágenes sintéticas: 0 de 780 pares distintos quedaron ≤8. Recalibrar con fotos reales.'],
   ['phash_weak_distance', 12, 'Hasta estos bits la foto "se parece" (coincidencia débil): solo manda a revisión, nunca fusiona.'],
   ['phash_min_matches', 2, 'Fotos con coincidencia fuerte necesarias para fusionar automáticamente.'],
+  ['phash_identical_distance', 2, 'Bits máximos para "la misma imagen". Con una sola foto por anuncio (tarjetas de Mercado Libre) se une solo si es la misma imagen y además coinciden año y km: autos distintos del mismo estudio salen a 4–8 bits (calibrado con Urus reales, 2026-11-12).'],
+  ['fingerprint_exact_km_min', 1000, 'Km mínimos para unir por "mismos km exactos" (y precio igual o km no redondos); abajo de esto, autos nuevos de 10 km se confundirían.'],
   ['phash_generic_vehicles', 3, 'Si una misma foto aparece en este número de vehículos o más, es genérica (banner, foto de prensa) y se ignora.'],
   ['fingerprint_km_floor', 300, 'Tolerancia mínima absoluta de km (para autos casi nuevos, donde 3% es muy poco).'],
   ['fingerprint_km_per_day', 40, 'Km que se aceptan de más por cada día entre dos observaciones (el auto se sigue usando).'],

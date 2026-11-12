@@ -55,7 +55,12 @@ export class Store {
   async loadIndexRows() {
     const q = async s => (await this.db.query(s)).rows;
     return {
-      vehicles: await q(`select id, vin, model_id, generation_id, version_id, is_demo, created_at::text from mx_vehicles where merged_into is null`),
+      // los borrados siguen en el índice: si su anuncio vuelve a salir, se reconoce y sigue oculto
+      vehicles: await q(`select id, vin, model_id, generation_id, version_id, is_demo, created_at::text, deleted_at is not null as deleted
+                         from mx_vehicles where merged_into is null`),
+      // precios en pesos de sus anuncios (para "mismos km y mismo precio")
+      prices: await q(`select distinct l.vehicle_id, p.price::float8 as price from mx_listings l join mx_price_snapshots p on p.listing_id = l.id
+                       where p.currency = 'MXN' and p.price is not null`),
       specs: await q(`select vehicle_id, is_canonical, year, km, observed_on::text, exterior_color, exterior_color_family,
                              interior_color, interior_color_family, transmission from mx_specs where is_canonical`),
       photos: await q(`select id, vehicle_id, phash::text, phash_center::text, low_info from mx_photos where phash is not null`),
@@ -134,13 +139,37 @@ export class Store {
     return r;
   }
 
-  async insertPhotos(db, listingId, photos) {
-    for (const [i, p] of photos.entries()) {
+  async insertPhotos(db, listingId, photos, firstPosition = 0) {
+    for (const [j, p] of photos.entries()) {
+      const i = firstPosition + j;
       await db.query(`insert into mx_photos (listing_id, url, position, phash, phash_center, low_info, width, height, hashed_at)
           values ($1, $2, $3, $4::bigint, $5::bigint, $6, $7, $8, case when $4::bigint is null then null else now() end)
         on conflict (listing_id, url) do nothing`,
         [listingId, p.url, i, p.signed ?? null, p.centerSigned ?? null, !!p.lowInfo, p.width ?? null, p.height ?? null]);
     }
+  }
+
+  // ── barrido de duplicados (al final de cada corrida) ──────────────────
+  // 'datos' (mismos km exactos) se registra en mx_merges como 'fingerprint'.
+  async mergeVehicles(keep, drop, reason, evidence) {
+    const r = { fotos: 'fotos', vin: 'vin', datos: 'fingerprint' }[reason] ?? 'fingerprint';
+    return (await one(this.db, `select mx_merge_vehicles($1, $2, $3, $4::jsonb) id`, [keep, drop, r, JSON.stringify({ motivo: reason, ...evidence })])).id;
+  }
+  async pendingDuplicateReviews() {
+    return (await this.db.query(`select id, vehicle_a, vehicle_b, reasons from mx_review_queue where kind = 'duplicado' and status = 'pendiente'`)).rows;
+  }
+  async discardReview(id, why) {
+    await this.db.query(`update mx_review_queue set status = 'descartado', resolved_at = now(),
+        payload = payload || jsonb_build_object('descartado_por', $2::text) where id = $1 and status = 'pendiente'`, [id, why]);
+  }
+  // Fotos guardadas sin hash (caídas, o anuncios que llegaron con más fotos después)
+  async unhashedPhotos(limit) {
+    return (await this.db.query(`select ph.id, ph.url, ph.vehicle_id from mx_photos ph join mx_vehicles v on v.id = ph.vehicle_id
+        where ph.phash is null and v.merged_into is null order by ph.position nulls last, ph.id limit $1`, [limit])).rows;
+  }
+  async setPhotoHash(id, p) {
+    await this.db.query(`update mx_photos set phash = $2::bigint, phash_center = $3::bigint, low_info = $4, hashed_at = now() where id = $1`,
+      [id, p.signed, p.centerSigned, !!p.lowInfo]);
   }
 
   async enqueueDuplicate(db, a, b, score, reasons, payload) {

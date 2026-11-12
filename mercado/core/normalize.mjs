@@ -290,7 +290,10 @@ export function normalizeListing(raw) {
   }
   const tx = parseTransmission(raw.transmission, raw.title, tax.version ?? { transmissions: tax.genTransmissions ?? [] }, year, tax.make_id);
   if (tx.impossible) issues.push('transmision_imposible_para_la_version');
-  const ext = parseColor(raw.color_ext), int = parseColor(raw.color_int);
+  // Color: el campo de la fuente; si no viene, la descripción con contexto ("color exterior: rojo",
+  // "interiores en piel negra") y, para el exterior, el título ("… PDK Azul Zafiro").
+  const txtColor = colorsInText(raw.title, desc);
+  const ext = parseColor(raw.color_ext ?? txtColor.ext), int = parseColor(raw.color_int ?? txtColor.int);
 
   let vin = null;
   try { vin = raw.vin ? normalizeVin(raw.vin)?.vin : null; } catch { issues.push('vin_invalido'); }
@@ -334,6 +337,40 @@ export function normalizeListing(raw) {
     photos: (raw.photos ?? []).filter(Boolean),
     inferred: tx.inferred,
   };
+}
+
+// ── Color en texto libre ────────────────────────────────────────────────
+// Palabras de color "seguras" para buscar en texto corrido (sin "tan", "oro", "vino", "perla"…, que en
+// español significan otra cosa) y sin nombres de versión ("Black Series", "Black Badge", "Green Hell").
+const TEXT_COLOR = ['negro', 'negra', 'black', 'nero', 'blanco', 'blanca', 'white', 'bianco', 'plata', 'plateado', 'silver', 'argento',
+  'gris', 'grey', 'gray', 'grigio', 'grafito', 'rojo', 'roja', 'red', 'rosso', 'azul', 'blue', 'blu', 'verde', 'green', 'amarillo', 'amarilla',
+  'yellow', 'giallo', 'naranja', 'orange', 'arancio', 'morado', 'morada', 'purple', 'cafe', 'café', 'marron', 'marrón', 'brown', 'beige',
+  'dorado', 'gold', 'rosa', 'pink'];
+const NOT_COLOR_AFTER = '(?!\\s+(?:series|edition|badge|line|label|pack|package|hell|bird|wing|car|bull))';
+const COLOR_WORD = `(?:${TEXT_COLOR.join('|')})`;
+const familyOfWord = w => parseColor(w).family;
+
+// → { ext, int } (texto tal como venía, o null). Solo si todo lo encontrado apunta a una sola familia.
+export function colorsInText(title, desc) {
+  const d = String(desc ?? ''), t = String(title ?? '');
+  const one = list => { const fams = new Set(list.map(familyOfWord).filter(Boolean)); return fams.size === 1 ? list.find(w => familyOfWord(w)) : null; };
+  // la segunda palabra solo si no es de relleno ("negra con…", "rojo y…")
+  const STOP = /^(con|sin|y|e|en|de|del|la|el|los|las|muy|piel|cuero|at|mt|std|pdk|tm|por|para|que|interior|interiores|exterior)$/i;
+  // (la frase se corta en el salto de renglón: "Rojo\nInteriores…" es solo "Rojo")
+  const cap = (re, s) => [...s.matchAll(re)].map(m => { const [a, b] = m[1].split('\n')[0].trim().split(/\s+/); return b && !STOP.test(b) ? `${a} ${b}` : a; });
+  // exterior con contexto: "color exterior: Rojo", "color: gris", "exterior en color azul", "pintura negra"
+  const extDesc = cap(new RegExp(`(?:color(?!\\s+(?:interior|de\\s+(?:interiores|vestiduras|asientos)))(?:\\s+(?:exterior|de\\s+(?:la\\s+)?carrocer[ií]a))?|exterior(?:es)?|pintura)\\s*(?:en\\s+)?(?:color\\s+)?[:\\-]?\\s*(${COLOR_WORD}${NOT_COLOR_AFTER}(?:\\s+[a-záéíóúñ]+)?)`, 'gi'), d);
+  // interior: "interiores en piel negra", "color interior: beige", "vestiduras de cuero café", "asientos rojos"
+  const intDesc = cap(new RegExp(`(?:color\\s+(?:interior|de\\s+(?:interiores|vestiduras|asientos))|interior(?:es)?|vestiduras|tapicer[ií]a|asientos)\\s*(?:en\\s+|de\\s+)?(?:(?:piel|cuero|alcantara|alcántara|tela|vinil)\\s+)?(?:(?:en\\s+)?color\\s+)?[:\\-]?\\s*(${COLOR_WORD}(?:\\s+[a-záéíóúñ]+)?)`, 'gi'), d);
+  // título: factoría primero ("Racing Yellow"), luego una palabra de color suelta
+  let extTitle = null;
+  const nt = norm(t);
+  for (const [k, name] of D.FACTORY_COLORS) if (new RegExp(`(^|[^a-z])${k}([^a-z]|$)`).test(nt)) { extTitle = name; break; }
+  if (!extTitle) {
+    const words = cap(new RegExp(`(?:^|[^a-záéíóúñ])(${COLOR_WORD}${NOT_COLOR_AFTER}(?:\\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?)(?=$|[^a-záéíóúñ])`, 'gi'), t);
+    extTitle = one(words);
+  }
+  return { ext: one(extDesc) ?? extTitle, int: one(intDesc) };
 }
 
 function bodyInTitle(t) {

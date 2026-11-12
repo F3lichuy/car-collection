@@ -191,3 +191,68 @@ describe('barrido completo (scanAll)', () => {
     assert.equal(r.reviews.length, 0);
   });
 });
+
+// Casos reales (2026-11-12): tarjetas de Mercado Libre con UNA sola foto y el mismo auto en agencia y ML.
+describe('una sola foto y datos idénticos', () => {
+  const URUS = { model_id: 'lamborghini-urus', generation_id: null, version_id: null };
+  const urus = (id, specs, extra = {}) => ({ id, created_at: `2026-11-${String(10 + id.length).padStart(2, '0')}`, ...URUS, specs, photos: [], ...extra });
+
+  test('misma foto de portada, mismo año y mismos km (Urus de Benito Juárez publicado dos veces) → mismo auto', () => {
+    const s = { year: 2021, km: 30000, observed_on: '2026-11-12' };
+    const idx = new IdentityIndex().addVehicle(urus('v1', s, { photos: [photos.agencia[0]] }));
+    const r = idx.resolve({ ...URUS, specs: s, photos: [photos.agencia[0]] });
+    assert.equal(r.action, 'match'); assert.equal(r.reason, 'fotos'); assert.equal(r.vehicleId, 'v1');
+  });
+
+  test('una foto parecida (mismo estudio) pero otro año → ni fusión ni revisión', () => {
+    const idx = new IdentityIndex().addVehicle(urus('v1', { year: 2022, km: 8687 }, { photos: [photos.agencia[0]] }));
+    const r = idx.resolve({ ...URUS, specs: { year: 2025, km: 4500 }, photos: [photos.marketplace[0]] });
+    assert.equal(r.action, 'new'); assert.equal(r.reviews.length, 0);
+  });
+
+  test('una sola foto igual pero km que no cuadran → revisión, no fusión', () => {
+    const idx = new IdentityIndex().addVehicle(urus('v1', { year: 2025, km: 7381, observed_on: '2026-11-12' }, { photos: [photos.agencia[0]] }));
+    const r = idx.resolve({ ...URUS, specs: { year: 2025, km: 4500, observed_on: '2026-11-12' }, photos: [photos.agencia[0]] });
+    assert.equal(r.action, 'new'); assert.equal(r.reviews[0].vehicleId, 'v1');
+  });
+
+  test('mismos km exactos "no redondos" y mismo año en agencia y Mercado Libre → mismo auto, aunque no haya foto en común', () => {
+    const idx = new IdentityIndex().addVehicle(urus('v1', { year: 2023, km: 12972, observed_on: '2026-11-12' }, { prices: [6500000] }));
+    const r = idx.resolve({ ...URUS, specs: { year: 2023, km: 12972, observed_on: '2026-11-12' }, price: 6800000, photos: [] });
+    assert.equal(r.action, 'match'); assert.equal(r.reason, 'datos');
+  });
+
+  test('km redondos y el mismo precio (Huracán Sterrato 1,200 km a $9.3 M, que eran dos autos) → solo revisión', () => {
+    const base = { year: 2023, km: 1200, observed_on: '2026-11-12' };
+    const idx = new IdentityIndex().addVehicle(urus('v1', base, { prices: [9300000] }));
+    const r = idx.resolve({ ...URUS, specs: base, price: 9300000, photos: [] });
+    assert.equal(r.action, 'new'); assert.deepEqual(r.reviews[0].reasons, ['mismos_km_exactos', 'mismo_precio']); assert.equal(r.reviews[0].score, 0.9);
+    const r2 = idx.resolve({ ...URUS, specs: base, price: 9600000, photos: [] });
+    assert.equal(r2.action, 'new'); assert.equal(r2.reviews.length, 0);
+  });
+
+  test('autos casi nuevos (10 km, mismo precio de lista) nunca se unen por datos', () => {
+    const base = { year: 2026, km: 10, observed_on: '2026-11-12' };
+    const idx = new IdentityIndex().addVehicle(urus('v1', base, { prices: [5900000] }));
+    assert.equal(idx.resolve({ ...URUS, specs: base, price: 5900000, photos: [] }).action, 'new');
+  });
+
+  test('mismos km y precio pero otro color → solo revisión', () => {
+    const a = { year: 2024, km: 5000, exterior_color_family: 'amarillo', observed_on: '2026-11-12' };
+    const idx = new IdentityIndex().addVehicle(urus('v1', a, { prices: [7999000] }));
+    const r = idx.resolve({ ...URUS, specs: { ...a, exterior_color_family: 'verde' }, price: 7999000, photos: [] });
+    assert.equal(r.action, 'new'); assert.ok(r.reviews.some(x => x.vehicleId === 'v1' && x.reasons.includes('mismos_km_exactos')));
+  });
+
+  test('el barrido no toca autos que la dueña borró y descarta revisiones entre modelos distintos', () => {
+    const s = { year: 2021, km: 30000, observed_on: '2026-11-12' };
+    const idx = new IdentityIndex()
+      .addVehicle(urus('v1', s, { photos: [photos.agencia[0]] }))
+      .addVehicle(urus('v2', s, { photos: [photos.agencia[0]], deleted: true }))
+      .addVehicle({ id: 'v3', ...GT3RS, specs: specsRS, photos: [photos.agencia[0]] });
+    const { merges, reviews } = idx.scanAll();
+    assert.equal(merges.length, 0); assert.equal(reviews.length, 0);
+    assert.deepEqual(idx.reviewStillValid('v1', 'v3'), { ok: false, why: 'modelo_distinto' });
+    assert.equal(idx.reviewStillValid('v1', 'v2').ok, false);
+  });
+});

@@ -1,0 +1,12 @@
+# Netlify: SOLO el disparador programado de las cargas (carpeta netlify-cron/).
+# carcollection.app sigue publicándose en GitHub Pages; esto no lo toca.
+# El token de GitHub va en Netlify → Site configuration → Environment variables → GITHUB_ACTIONS_TOKEN.
+[build]
+  base = "netlify-cron"
+  publish = "public"
+  command = "echo 'Solo funciones programadas'"
+  # no reconstruir si no cambió netlify-cron/ (el resto del repositorio no le importa)
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- ."
+
+[functions]
+  directory = "functions"

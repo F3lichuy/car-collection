@@ -645,7 +645,9 @@
   function ticks(lo, hi, n = 4) {
     const span = hi - lo || Math.abs(hi) || 1, step0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(step0)));
     const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= step0) || 10 * mag;
-    const out = []; for (let v = Math.floor(lo / step) * step; v <= hi + step * 0.001; v += step) out.push(v);
+    // de la marca redonda abajo de lo a la marca redonda ARRIBA de hi: la escala siempre cubre todos los valores
+    const top = Math.ceil(hi / step - 1e-9) * step;
+    const out = []; for (let v = Math.floor(lo / step) * step; v <= top + step * 0.001; v += step) out.push(v);
     return out;
   }
   const tip = s => h(s).replace(/\n/g, "&#10;");
@@ -697,7 +699,11 @@
     redrawCmp();
   };
   PC.cmpAxis = function (ax) { S.cmp.x = ax; redrawCmp(); };
-  PC.cmpGen = function (g) { S.cmp.gen = g || null; S.cmp.sel = null; redrawCmp(); };
+  PC.cmpGen = function (g) { S.cmp.gen = g || null; S.cmp.sel = null; S.cmp.showGens = false; redrawCmp(); };
+  // escala: "sin extremos" (no aplastan a los demás) o "todos los precios" (para ver al carísimo o al regalado)
+  PC.cmpFull = function (on) { S.cmp.full = !!on; redrawCmp(); };
+  // generaciones y versiones: plegadas (solo la elegida) o todas a la vista
+  PC.cmpShow = function (what) { S.cmp[what] = !S.cmp[what]; redrawCmp(); };
 
   // Precio esperado: recta robusta (Theil–Sen) sobre el logaritmo del precio, así un auto carísimo o
   // regalado no la jala. Banda = ±1 desviación típica de los residuos (MAD). Solo con autos en venta.
@@ -730,20 +736,26 @@
     const counts = new Map(); for (const v of all) counts.set(v.variant, (counts.get(v.variant) || 0) + 1);
     const keys = [...counts.keys()].sort((a, b) => (/por confirmar/.test(a) - /por confirmar/.test(b)) || counts.get(b) - counts.get(a) || a.localeCompare(b, "es"));
     const sel = S.cmp.sel;
-    const axisBtns = `<div class="pc-axis" role="group" aria-label="Eje horizontal">Comparar por:
-      ${Object.entries(AXES).map(([k, l]) => `<button class="pc-chip ${axis === k ? "on" : ""}" aria-pressed="${axis === k}" onclick="PrecioCalle.cmpAxis('${k}')">${l}</button>`).join("")}</div>`;
     const gensSorted = gensAll.slice().sort((a, b) => Math.min(...base.filter(v => v.gen === a).map(v => v.year || 9999)) - Math.min(...base.filter(v => v.gen === b).map(v => v.year || 9999)));
-    const genChips = gensSorted.length > 1 ? `<div class="pc-chips" role="group" aria-label="Generación">
-      <button class="pc-chip ${gen ? "" : "on"}" aria-pressed="${!gen}" onclick="PrecioCalle.cmpGen('')">Todas las generaciones</button>
-      ${gensSorted.map(g => `<button class="pc-chip ${gen === g ? "on" : ""}" aria-pressed="${gen === g}" onclick="PrecioCalle.cmpGen(${h(JSON.stringify(g))})">${h(g)}${g === x.gen ? " (este)" : ""} <span class="pc-chipn">${base.filter(v => v.gen === g).length}</span></button>`).join("")}</div>` : "";
-    const chips = keys.length > 1 ? `<div class="pc-chips" role="group" aria-label="Versiones a comparar">
-      <button class="pc-chip ${sel ? "" : "on"}" aria-pressed="${!sel}" onclick="PrecioCalle.cmpToggle('*')">Todas <span class="pc-chipn">${all.length}</span></button>
-      ${keys.map(k => `<button class="pc-chip ${sel && sel.has(k) ? "on" : ""}" aria-pressed="${!!(sel && sel.has(k))}" onclick="PrecioCalle.cmpToggle(${h(JSON.stringify(k))})"${k === x.variant ? ' title="La versión de este auto"' : ""}>${h(k)}${k === x.variant ? " (este)" : ""} <span class="pc-chipn">${counts.get(k)}</span></button>`).join("")}</div>` : "";
+    // Generaciones y versiones plegadas: se ve solo lo elegido; "Ver generaciones / versiones" despliega las demás.
+    const more = (what, n, open, noun) => `<button class="pc-chip pc-more" aria-expanded="${!!open}" onclick="PrecioCalle.cmpShow('${what}')">${open ? `Ocultar ${noun}` : `Ver ${noun} (${n})`}</button>`;
+    const genBtn = g => `<button class="pc-chip ${gen === g ? "on" : ""}" aria-pressed="${gen === g}" onclick="PrecioCalle.cmpGen(${h(JSON.stringify(g))})">${h(g)}${g === x.gen ? " (este)" : ""} <span class="pc-chipn">${base.filter(v => v.gen === g).length}</span></button>`;
+    const genAllBtn = `<button class="pc-chip ${gen ? "" : "on"}" aria-pressed="${!gen}" onclick="PrecioCalle.cmpGen('')">Todas las generaciones <span class="pc-chipn">${base.length}</span></button>`;
+    const genChips = gensSorted.length > 1 ? `<div class="pc-chips" role="group" aria-label="Generación"><span class="pc-chiplab">Generación</span>
+      ${S.cmp.showGens ? `${genAllBtn}${gensSorted.map(genBtn).join("")}` : gen ? genBtn(gen) : genAllBtn}${more("showGens", gensSorted.length, S.cmp.showGens, "generaciones")}</div>` : "";
+    const verBtn = k => `<button class="pc-chip ${sel && sel.has(k) ? "on" : ""}" aria-pressed="${!!(sel && sel.has(k))}" onclick="PrecioCalle.cmpToggle(${h(JSON.stringify(k))})"${k === x.variant ? ' title="La versión de este auto"' : ""}>${h(k)}${k === x.variant ? " (este)" : ""} <span class="pc-chipn">${counts.get(k)}</span></button>`;
+    const verAllBtn = `<button class="pc-chip ${sel ? "" : "on"}" aria-pressed="${!sel}" onclick="PrecioCalle.cmpToggle('*')">Todas las versiones <span class="pc-chipn">${all.length}</span></button>`;
+    const shownVers = S.cmp.showVers ? keys : keys.filter(k => sel && sel.has(k));
+    const chips = keys.length > 1 ? `<div class="pc-chips" role="group" aria-label="Versiones a comparar"><span class="pc-chiplab">Versión</span>
+      ${S.cmp.showVers || !sel ? verAllBtn : ""}${shownVers.map(verBtn).join("")}${more("showVers", keys.length, S.cmp.showVers, "versiones")}</div>` : "";
+    // barra pegada a la gráfica: qué va en el eje horizontal y (abajo) la escala
+    const axisPart = `<span class="pc-chiplab">Comparar por</span>${Object.entries(AXES).map(([k, l]) => `<button class="pc-chip ${axis === k ? "on" : ""}" aria-pressed="${axis === k}" onclick="PrecioCalle.cmpAxis('${k}')">${l}</button>`).join("")}`;
+    const axisBtns = `<div class="pc-axis" role="group" aria-label="Eje horizontal">${axisPart}</div>`;
     const peers = all.filter(v => !sel || sel.has(v.variant) || v.id === x.id);
     const what = sel ? [...sel].join(", ") : "todas las versiones";
     const others = peers.filter(v => v.id !== x.id);
     const missingX = axis === "km" ? " con kilometraje" : axis === "year" ? " con año" : "";
-    if (!others.length) return `${axisBtns}${genChips}${chips}<p class="pc-foot">${all.length > 1 ? `No hay otros ${h(label)} de ${h(what)}${missingX} y precio. Prende más versiones arriba.` : `No hay otros ${h(label)}${missingX} y precio para comparar.`}</p>`;
+    if (!others.length) return `${genChips}${chips}${axisBtns}<p class="pc-foot">${all.length > 1 ? `No hay otros ${h(label)} de ${h(what)}${missingX} y precio. Prende más versiones arriba.` : `No hay otros ${h(label)}${missingX} y precio para comparar.`}</p>`;
 
     // estadística solo con los que siguen en venta (los publicados hace más de un año son referencia)
     const live = peers.filter(v => !v.stale), n = live.length;
@@ -752,12 +764,18 @@
     // por fecha de publicación, la tendencia solo tiene sentido con medio año o más de historia
     const lxs = live.map(xv), spanOk = axis !== "pub" || Math.max(...lxs) - Math.min(...lxs) >= 0.5;
     const fit = n >= 3 && spanOk ? trendFit(live.map(v => [xv(v), Math.log(toMxn(v.price))])) : null;
-    // escala vertical sin que un precio extremo aplaste a los demás (cercas de Tukey sobre el log)
-    let lo = Math.min(...prices), hi = Math.max(...prices);
+    // escala vertical: "sin extremos" (cercas de Tukey sobre el log: un carísimo no aplasta a los demás)
+    // o "todos los precios". Si ESTE auto quedaría fuera, arranca mostrando todos.
+    const minP = Math.min(...prices), maxP = Math.max(...prices);
+    let clo = minP, chi = maxP;
     if (peers.length >= 5) {
       const lg = prices.map(Math.log).sort((a, b) => a - b), q = p => lg[Math.floor(p * (lg.length - 1))], iqr = q(0.75) - q(0.25);
-      lo = Math.max(lo, Math.exp(q(0.25) - 1.5 * iqr)); hi = Math.min(hi, Math.exp(q(0.75) + 1.5 * iqr));
+      clo = Math.max(minP, Math.exp(q(0.25) - 1.5 * iqr)); chi = Math.min(maxP, Math.exp(q(0.75) + 1.5 * iqr));
     }
+    const clipped = clo > minP || chi < maxP, mineP = toMxn(x.price);
+    if (S.cmp.full == null) S.cmp.full = clipped && mineP != null && (mineP > chi || mineP < clo);
+    const full = !clipped || S.cmp.full;
+    const lo = full ? minP : clo, hi = full ? maxP : chi;
     const pad = (hi - lo) * 0.12 || hi * 0.1, yt = ticks(Math.max(0, lo - pad), hi + pad), p0 = yt[0], p1 = yt[yt.length - 1];
     const W = 640, H = 260, L = 64, R = 16, T = 16, B = 30;
     const xsv = peers.map(xv); let xa = Math.min(...xsv), xb = Math.max(...xsv);
@@ -775,9 +793,11 @@
     const dot = v => {
       const me = v.id === x.id, p = toMxn(v.price), cx = X(xv(v)).toFixed(1), up = p > p1, down = p < p0, cy = (up ? T + 2 : down ? H - B - 2 : Y(p)).toFixed(1);
       const mark = up || down
-        ? `<path class="pc-out" d="M${cx},${cy}l-5,${up ? 8 : -8}h10z"/>`
+        ? `<path class="pc-out" d="M${cx},${cy}l-6,${up ? 10 : -10}h12z"/>`
         : `<circle class="pc-dot ${me ? "" : v.stale ? "stale" : "peer"}" cx="${cx}" cy="${cy}" r="${me ? 6 : 5}"/>`;
-      return `${mark}<circle class="pc-hit" cx="${cx}" cy="${cy}" r="12" ${me ? "" : `onclick="PrecioCalle.open('${v.id}')"`} data-tip="${tip(tipOf(v, me) + (up || down ? "\n(fuera de la escala)" : ""))}"${v.photo ? ` data-tip-img="${h(thumb(v.photo))}"` : ""}/>`;
+      // un ▲▼ (fuera de escala) se toca para ver la gráfica con todos los precios
+      const click = up || down ? `onclick="PrecioCalle.cmpFull(true)"` : me ? "" : `onclick="PrecioCalle.open('${v.id}')"`;
+      return `${mark}<circle class="pc-hit" cx="${cx}" cy="${cy}" r="12" ${click} data-tip="${tip(tipOf(v, me) + (up || down ? "\n(fuera de la escala: tócalo para ver todos los precios)" : ""))}"${v.photo ? ` data-tip-img="${h(thumb(v.photo))}"` : ""}/>`;
     };
     // curva de precio esperado y su banda: solo donde hay autos (sin extrapolar) y recortada al área de la gráfica
     let trend = "";
@@ -798,7 +818,11 @@
     const vsExp = expected && mine != null ? pct(expected, mine) : null;
     const outN = peers.filter(v => toMxn(v.price) > p1 || toMxn(v.price) < p0).length, staleN = peers.filter(v => v.stale).length;
     const byWhat = { year: "año", km: "kilometraje", pub: "fecha de publicación" }[axis];
-    return `${axisBtns}${genChips}${chips}
+    const scale = clipped ? `<span class="pc-chiplab pc-sep">Escala</span>
+      <button class="pc-chip ${full ? "" : "on"}" aria-pressed="${!full}" onclick="PrecioCalle.cmpFull(false)" title="Los precios extremos se marcan con ▲▼ en el borde">Sin extremos</button>
+      <button class="pc-chip ${full ? "on" : ""}" aria-pressed="${full}" onclick="PrecioCalle.cmpFull(true)">Todos los precios</button>` : "";
+    return `${genChips}${chips}
+      <div class="pc-axis pc-charttools" role="group" aria-label="Opciones de la gráfica">${axisPart}${scale}</div>
       <svg class="pc-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${h(AXES[axis])} contra precio pedido de ${peers.length} ${h(label)} (${h(what)})">
         ${yt.map(v => `<line class="pc-grid" x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text class="pc-ax" x="${L - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${short(v)}</text>`).join("")}
         ${xt.map(t => `<text class="pc-ax" x="${X(t).toFixed(1)}" y="${H - 10}" text-anchor="middle">${xl(t)}</text>`).join("")}
@@ -810,7 +834,7 @@
         mine == null ? " Este auto no publica precio, así que no aparece en la gráfica." : ""}${
         expected && vsExp != null ? `${few ? " Orientativo, con solo " + n + " autos: para" : " Para"} este auto se esperaría ${h(money({ price: expected, currency: "MXN" }))}${fit ? ` (rango típico ${short(expected / Math.exp(fit.s))}–${short(expected * Math.exp(fit.s))})` : " (mediana)"}: pide ${vsExp === 0 ? "lo mismo" : `${Math.abs(vsExp)}% ${vsExp > 0 ? "más" : "menos"}`}.`
         : n < 3 ? ` Con 3 o más en venta se traza la línea de precio esperado (orientativa hasta ${minN}).` : ""}${
-        outN ? ` ${outN === 1 ? "Un auto queda" : `${outN} autos quedan`} fuera de la escala (▲▼): pasa el cursor para ver su precio.` : ""}${
+        outN ? ` ${outN === 1 ? "Un auto queda" : `${outN} autos quedan`} fuera de la escala (▲▼): tócalo o elige "Todos los precios" para verlo.` : ""}${
         axis === "pub" && peers.some(v => !v.publishedOn) ? " Los que no dicen cuándo se publicaron van en la fecha en que los vimos por primera vez." : ""}
         Pasa el cursor para ver la foto; toca uno para abrirlo.</p>
       <details class="pc-details"><summary>Ver como tabla</summary><table class="pc-table"><thead><tr><th>Auto</th><th>Versión</th><th class="num">Año</th><th class="num">Km</th><th>Color</th><th class="num">Precio</th></tr></thead><tbody>
@@ -1177,6 +1201,12 @@
     .pc-key.stale{background:transparent;border:1.5px solid var(--ink-faint);margin-left:10px}
     .pc-key.trend{width:18px;height:0;border-radius:0;border-top:2px dashed var(--accent);background:transparent;margin-left:10px}
     .pc-axis{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0 0 10px;font-size:12px;color:var(--ink-faint)}
+    .pc-charttools{margin:14px 0 2px;padding-top:10px;border-top:1px solid var(--line)}
+    .pc-chiplab{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-right:2px}
+    .pc-sep{margin-left:12px}
+    .pc-chip.pc-more{border-style:dashed;color:var(--ink-faint)}
+    .pc-chips{align-items:center}
+    .pc-out{cursor:pointer}
     @media (max-width:720px){
       .pc-pair,.pc-addrow{grid-template-columns:1fr}
       .pc-duprow{grid-template-columns:1fr}

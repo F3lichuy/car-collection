@@ -203,6 +203,228 @@
     }];
   }
 
+  // ── Grupos de Facebook (modo grupo) ──────────────────────────────────
+  // En un grupo, el botón no lee una sola vez: baja solo por el grupo, en ESTA pestaña y a
+  // ritmo pausado, mientras tú estás en la computadora. De cada publicación de venta lee la
+  // fecha, el texto, el precio, el año, el kilometraje y las fotos; no lee quién la publicó,
+  // y quita teléfonos y correos del texto. Manda los autos por tandas a carcollection.app
+  // (la ventana que abre al empezar), que los guarda como capturas pendientes.
+  var MESES = { enero: 1, ene: 1, january: 1, jan: 1, febrero: 2, feb: 2, february: 2, marzo: 3, mar: 3, march: 3, abril: 4, abr: 4, april: 4, apr: 4,
+    mayo: 5, may: 5, junio: 6, jun: 6, june: 6, julio: 7, jul: 7, july: 7, agosto: 8, ago: 8, august: 8, aug: 8, septiembre: 9, setiembre: 9, sep: 9, sept: 9,
+    september: 9, octubre: 10, oct: 10, october: 10, noviembre: 11, nov: 11, november: 11, diciembre: 12, dic: 12, december: 12, dec: 12 };
+  function iso(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  // "martes, 12 de octubre de 2023 a las 10:15" · "12 de octubre a las 10:15" · "Ayer a las 9:00" · "3 h" · "2 d" · "1 sem" · "October 12, 2023"
+  function fbDate(s, now) {
+    now = now || new Date();
+    var t = String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim(), m, d;
+    if (!t || t.length > 120) return null;
+    var back = function (days) { var x = new Date(now.getTime() - days * 864e5); return { date: iso(x), text: s, exact: days < 7 }; };
+    if ((m = t.match(/\b(\d{1,2})\s+de\s+([a-z]+)(?:\s+de\s+(\d{4}))?/)) || (m = t.match(/\b(\d{1,2})\s+([a-z]{3,10})\.?(?:\s+(\d{4}))?\b/))) {
+      if (MESES[m[2]]) {
+        d = new Date(m[3] ? Number(m[3]) : now.getFullYear(), MESES[m[2]] - 1, Number(m[1]), 12);
+        if (!m[3] && d > now) d.setFullYear(d.getFullYear() - 1);
+        return { date: iso(d), text: s, exact: true };
+      }
+    }
+    if ((m = t.match(/\b([a-z]+)\s+(\d{1,2})(?:,?\s+(\d{4}))?\b/)) && MESES[m[1]]) {
+      d = new Date(m[3] ? Number(m[3]) : now.getFullYear(), MESES[m[1]] - 1, Number(m[2]), 12);
+      if (!m[3] && d > now) d.setFullYear(d.getFullYear() - 1);
+      return { date: iso(d), text: s, exact: true };
+    }
+    if ((m = t.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/))) return { date: m[3] + "-" + m[2].padStart(2, "0") + "-" + m[1].padStart(2, "0"), text: s, exact: true };
+    if (/^(ayer|yesterday)\b/.test(t)) return back(1);
+    if (/^(justo ahora|ahora|just now)$/.test(t)) return back(0);
+    if ((m = t.match(/^(?:hace\s+)?(\d+|un|una|a|an)\s*(min|minutos?|minutes?|m|h|hr|hrs|horas?|hours?|d|dias?|days?|sem|semanas?|w|wk|weeks?|a|anos?|y|yr|years?)\b(?:\s+ago)?$/))) {
+      var n = /^(un|una|a|an)$/.test(m[1]) ? 1 : Number(m[1]), u = m[2];
+      if (/^(min|m$|h|hr|hora|hour)/.test(u)) return back(0);
+      if (/^(d|dia|day)/.test(u)) return back(n);
+      if (/^(sem|w)/.test(u)) return back(7 * n);
+      return back(365 * n);
+    }
+    return null;
+  }
+  // Precio escrito a mano: "$4,200,000" · "4.2 mdp" · "2'500,000 pesos" · "850 mil" · "$850k" · "precio 3.5 millones".
+  // No cuenta enganches, mensualidades ni apartados. Con "antes … ahora", el de ahora es el precio y el de antes, el tachado.
+  function priceFree(s) {
+    var text = String(s || ""), out = [], re = /(US\$|USD|U\$S|MX\$|\$)?\s*(\d{1,3}(?:[.,'’]\d{3})+(?:\.\d{2})?|\d+(?:[.,]\d+)?)\s*(mdp|millones?(?:\s+de\s+pesos)?|mill?o?n?\b|mil\b|k\b|mxn|pesos|usd|d[oó]lares|dlls?)?/gi, m;
+    while ((m = re.exec(text))) {
+      var sym = m[1] || "", raw = m[2], mult = (m[3] || "").toLowerCase();
+      if (!sym && !mult) continue;   // un número suelto (año, km, teléfono) no es precio
+      var before = text.slice(Math.max(0, m.index - 30), m.index).toLowerCase();
+      if (/(enganche|mensualidad|mensuales|pagos? de|apart|tenencia|seguro|servicio|refrendo|verificaci|km|kil[oó]metros|millas)\s*:?\s*(de\s*)?$/.test(before)) continue;
+      if (/^\s*(km|kms|kil|millas|mi\b|hp|cv|cc|l\b)/i.test(text.slice(re.lastIndex, re.lastIndex + 6))) continue;
+      var n;
+      if (/^(mdp|mill|mil?l?o?n)/.test(mult) && !/^mil$/.test(mult)) n = Number(raw.replace(/[,'’](?=\d{3}\b)/g, "").replace(",", ".")) * (Number(raw.replace(",", ".")) < 1000 ? 1e6 : 1);
+      else if (/^(mil|k)$/.test(mult)) n = Number(raw.replace(",", ".")) * 1000;
+      else n = Number(raw.replace(/[.,'’](?=\d{3}(\D|$))/g, "").replace(/\.\d{2}$/, ""));
+      if (!(n >= 50000 && n <= 300000000)) continue;
+      out.push({ price: Math.round(n), currency: /US|U\$S|usd|d[oó]lares|dll/i.test(sym + mult) ? "USD" : "MXN", at: m.index });
+    }
+    if (!out.length) return null;
+    if (out.length > 1 && /\b(antes|rebaj|remat|baj[eéoó]|ahora|nuevo precio|ultimo precio|último precio)/i.test(text)) {
+      var last = out[out.length - 1], prev = out.slice(0, -1).filter(function (x) { return x.currency === last.currency && x.price > last.price; })[0];
+      return { price: last.price, currency: last.currency, list_price: prev ? prev.price : null };
+    }
+    return { price: out[0].price, currency: out[0].currency, list_price: null };
+  }
+  var BRAND_RE = /\b(porsche|ferrari|lamborghini|lambo|mclaren|aston\s*martin|bentley|rolls[\s-]*royce|maserati|mercedes|benz|amg|bmw|audi|gt-?r|corvette|mustang|shelby|camaro|viper|jaguar|alfa\s*romeo|lotus|land\s*rover|defender|karmann|karman|mini\s*cooper|volvo|peugeot|bugatti|pagani|koenigsegg|lexus|nsx|g\s*63|g\s*wagon|e30|e-?type|911|cayman|boxster|carrera|huracan|hurac[aá]n|aventador|urus|gallardo|murcielago)\b/i;
+  var WANTED_RE = /^\s*(busco|compro|se busca|ando buscando|quien venda|alguien (que )?venda|cambio mi|wtb\b)/i;
+  var NOISE_RE = /^(me gusta|like|comentar|comment|compartir|share|responder|reply|enviar|send|ver m[aá]s|see more|ver traducci[oó]n|see translation|todas las reacciones|all reactions|escribe un comentario|write a comment|\d+\s*(comentarios?|comments?|veces compartido|shares?)|[\d.,]+\s*(mil|k)?$|·|seguir|follow|unirte|join|miembro|admin|moderador)/i;
+  function stripContact(s) {
+    return String(s || "").replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "[correo]").replace(/(?:wa\.me|api\.whatsapp\.com)\/\S+/gi, "[whatsapp]")
+      .replace(/(\+?52[\s.-]?)?(\(?\d{2,3}\)?[\s.-]?)\d{3,4}[\s.-]?\d{4}\b/g, function (x) { return /\d{2,3}[\s.-]?\d{3,4}[\s.-]?\d{4}/.test(x) && !/^\d{1,3}([.,]\d{3})+$/.test(x.trim()) ? "[tel]" : x; });
+  }
+  function hash(s) { var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+  function topPosts() {
+    var feed = q(document, '[role="feed"]');
+    if (feed) return Array.prototype.slice.call(feed.children);
+    return qa(document, '[role="article"]').filter(function (el) {
+      return !(el.parentElement && el.parentElement.closest('[role="article"]')) && !/coment|comment/i.test(el.getAttribute("aria-label") || "");
+    });
+  }
+  function sleep(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
+  var POST_HREF = /\/groups\/([^/?#]+)\/(?:posts|permalink)\/(\d+)|[?&](?:story_fbid|multi_permalinks)=(\d+)|\/(?:commerce\/listing|marketplace\/item)\/(\d+)/;
+  // Facebook llena la liga y la fecha completa de una publicación solo cuando pasas el mouse sobre la hora:
+  // se simula ese paso del mouse y se lee el globo ("martes, 12 de octubre de 2023 a las 10:15").
+  async function postMeta(post) {
+    var as = qa(post, "a[href]").slice(0, 30), timeA = null, link = null, date = null;
+    for (var i = 0; i < as.length && !timeA; i++) {
+      var a = as[i];
+      if (POST_HREF.test(a.getAttribute("href") || "") || (fbDate(txt(a)) && txt(a).length < 40)) timeA = a;
+    }
+    if (timeA) {
+      ["pointerover", "mouseover", "pointerenter", "mouseenter", "focus"].forEach(function (ev) { try { timeA.dispatchEvent(new MouseEvent(ev, { bubbles: true })); } catch (e) {} });
+      await sleep(700);
+      var tip = qa(document, '[role="tooltip"]').map(txt).filter(Boolean).pop();
+      date = fbDate(tip) || fbDate(timeA.getAttribute("aria-label")) || fbDate(txt(timeA));
+      ["pointerout", "mouseout", "pointerleave", "mouseleave", "blur"].forEach(function (ev) { try { timeA.dispatchEvent(new MouseEvent(ev, { bubbles: true })); } catch (e) {} });
+    }
+    as = qa(post, "a[href]");
+    for (var j = 0; j < as.length && !link; j++) { var m = (as[j].href || "").match(POST_HREF); if (m) link = m; }
+    return { date: date, link: link };
+  }
+  function groupId() {
+    var m = location.pathname.match(/\/groups\/([^/?#]+)/);
+    return window.__pcGroup || (m ? m[1] : "grupo");
+  }
+  async function readPost(post) {
+    // "Ver más": el texto completo
+    qa(post, '[role="button"]').filter(function (b) { return /^(ver m[aá]s|see more)$/i.test(txt(b)); }).slice(0, 2).forEach(function (b) { try { b.click(); } catch (e) {} });
+    var meta = await postMeta(post);
+    var msgEl = q(post, '[data-ad-preview="message"], [data-ad-comet-preview="message"]');
+    var head = txt(post).split("\n").map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 8), headDate = null;
+    for (var h = 0; h < head.length && !headDate; h++) headDate = fbDate(head[h]);
+    var lines = txt(msgEl || post).split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+    if (!msgEl) {
+      // sin el bloque del mensaje: se brinca el encabezado (quién publicó y cuándo) y se corta en la barra de reacciones
+      var hi = -1;
+      for (var i = 0; i < Math.min(lines.length, 8); i++) if (fbDate(lines[i])) { hi = i; break; }
+      lines = lines.slice(hi >= 0 ? hi + 1 : 1);   // sin fecha visible: el primer renglón es el nombre de quien publicó
+      var end = lines.findIndex(function (l) { return /^(me gusta|like|comentar|comment|todas las reacciones|all reactions)$/i.test(l); });
+      if (end >= 0) lines = lines.slice(0, end);
+    }
+    lines = lines.filter(function (l) { return !NOISE_RE.test(l) && l.length > 1; });
+    var text = lines.join("\n");
+    if (!text || WANTED_RE.test(text) || !BRAND_RE.test(text)) return null;
+    if (/^\s*(vendido|sold)\b/i.test(text)) return null;
+    var p = priceFree(text), k = kmOf(text);
+    var titleLine = lines.filter(function (l) { return BRAND_RE.test(l) && l.length <= 140; })[0] || lines[0];
+    var nowY = new Date().getFullYear() + 1, years = (titleLine.match(/\b(19[5-9]\d|20[0-3]\d)\b/g) || []).concat((lines.slice(0, 4).join(" ").match(/\b(19[5-9]\d|20[0-3]\d)\b/g) || []))
+      .map(Number).filter(function (y) { return y <= nowY; });
+    if (!p && !years.length) return null;   // ni precio ni año: plática, no anuncio
+    var gid = meta.link && meta.link[1] || groupId(), pid = meta.link ? (meta.link[2] || meta.link[3] || meta.link[4]) : null;
+    var key = pid ? "g" + gid + "_" + pid : "g" + gid + "_t" + hash(text.slice(0, 400));
+    var url = pid ? (meta.link[4] ? "https://www.facebook.com/marketplace/item/" + pid + "/" : "https://www.facebook.com/groups/" + gid + "/posts/" + pid + "/")
+      : "https://www.facebook.com/groups/" + gid + "/?pc_post=" + key;
+    var city = lines.filter(function (l) { return l.length < 45 && /^[A-ZÁÉÍÓÚÑ][\wáéíóúñ .]+,\s*[A-Z][\w. ]{1,25}$/.test(l) && !BRAND_RE.test(l); })[0] || null;
+    var imgs = qa(post, "img").filter(function (i) { return /scontent|fbcdn/.test(i.src) && (i.naturalWidth || i.width || 0) >= 150 && !i.closest('[role="article"] [role="article"]'); })
+      .map(function (i) { return i.src; });
+    var date = meta.date || headDate;
+    return {
+      external_id: key, url: url, title: titleLine.slice(0, 140) + (years.length && !/\b(19|20)\d{2}\b/.test(titleLine) ? " " + years[0] : ""),
+      year: years.length ? years[0] : null, km: k && k.km, km_unit: k && k.km_unit,
+      price: p && p.price, currency: p && p.currency, currency_ambiguous: false, list_price: p && p.list_price,
+      city: city, description: stripContact(text).slice(0, 4000), photos: Array.from(new Set(imgs)).slice(0, 12),
+      published_on: date && date.date, observed_on: date && date.date,
+      extra: { grupo: gid, publicado_texto: date ? String(date.text).slice(0, 80) : null, fecha_exacta: date ? !!date.exact : false },
+    };
+  }
+
+  function grupoMode() {
+    if (window.__pcGrupo) { window.__pcGrupo.panel.style.display = ""; return; }
+    var w = window.open(APP, "precio-calle-captura");
+    if (!w) { alert("Precio de Calle: tu navegador bloqueó la ventana. Permite ventanas emergentes para este sitio y vuelve a intentarlo."); return; }
+    var S = window.__pcGrupo = { w: w, running: true, done: {}, queue: [], pending: {}, posts: 0, cars: 0, sent: 0, idle: 0, start: Date.now(),
+      minutes: 30, oldest: null, msg: "", batchN: 0, stopped: false };
+    var panel = S.panel = document.createElement("div");
+    panel.setAttribute("style", "position:fixed;right:16px;bottom:16px;z-index:2147483647;background:#111;color:#fff;font:13px/1.4 system-ui,sans-serif;" +
+      "padding:12px 14px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.35);width:270px");
+    panel.innerHTML = '<b>Precio de Calle · modo grupo</b><div data-s style="margin:6px 0 8px;opacity:.9"></div>' +
+      '<label style="display:block;margin-bottom:8px;opacity:.8">Detener a los <input data-min type="number" min="5" max="120" value="30" style="width:48px"> min</label>' +
+      '<button data-p style="margin-right:6px">Pausar</button><button data-x>Terminar y enviar</button>';
+    document.body.appendChild(panel);
+    var st = q(panel, "[data-s]"), bp = q(panel, "[data-p]");
+    q(panel, "[data-min]").addEventListener("change", function (e) { S.minutes = Math.max(5, Number(e.target.value) || 30); });
+    bp.addEventListener("click", function () { S.running = !S.running; bp.textContent = S.running ? "Pausar" : "Seguir"; if (S.running) loop(); });
+    q(panel, "[data-x]").addEventListener("click", function () { finish("Terminado."); });
+    function show() {
+      var left = Object.keys(S.pending).length;
+      st.innerHTML = S.posts + " publicaciones leídas · <b>" + S.cars + " autos</b><br>" + S.sent + " enviados" + (left ? " · " + left + " tanda(s) esperando a carcollection.app" : "") +
+        (S.oldest ? "<br>Llegó hasta el " + S.oldest : "") + (S.msg ? "<br><span style='color:#ffcf6b'>" + S.msg + "</span>" : "");
+    }
+    // tandas de hasta 25 autos; se reenvían hasta que carcollection.app confirma que las guardó
+    function flush(force) {
+      while (S.queue.length >= 25 || (force && S.queue.length)) {
+        var id = Date.now().toString(36) + "-" + (++S.batchN);
+        S.pending[id] = { type: "pc-captura", v: 1, mode: "grupo", batch: id, site: "facebook-grupos", page_url: location.href.split("#")[0].split("?")[0], title: document.title, items: S.queue.splice(0, 25) };
+      }
+      Object.keys(S.pending).forEach(function (id) { try { S.w.postMessage(S.pending[id], "https://carcollection.app"); } catch (e) {} });
+      show();
+    }
+    window.addEventListener("message", function (e) {
+      if (e.origin !== "https://carcollection.app" || !e.data || e.data.type !== "pc-captura-guardada") return;
+      var b = S.pending[e.data.batch];
+      if (e.data.ok && b) { S.sent += b.items.length; delete S.pending[e.data.batch]; S.msg = ""; }
+      else if (!e.data.ok) S.msg = e.data.error || "carcollection.app no pudo guardar: ¿iniciaste sesión ahí?";
+      show();
+    });
+    var resend = setInterval(function () {
+      if (S.w.closed && Object.keys(S.pending).length) S.msg = "Cerraste la ventana de carcollection.app: dale clic otra vez al botón para reabrirla.";
+      flush(false);
+      if (S.stopped && !Object.keys(S.pending).length) clearInterval(resend);
+    }, 4000);
+    function finish(why) {
+      S.running = false; S.stopped = true; bp.disabled = true; S.msg = why; flush(true);
+    }
+    async function loop() {
+      while (S.running) {
+        if (Date.now() - S.start > S.minutes * 60000) return finish("Se cumplió el tiempo de la sesión.");
+        var fresh = 0, posts = topPosts();
+        for (var i = 0; i < posts.length && S.running; i++) {
+          var el = posts[i];
+          if (el.__pcLeido) continue;
+          el.__pcLeido = true; fresh++; S.posts++;
+          var it = null;
+          try { it = await readPost(el); } catch (e) { /* publicación rara: se brinca */ }
+          if (it && !S.done[it.external_id]) {
+            S.done[it.external_id] = 1; S.cars++;
+            if (it.currency !== "USD") S.queue.push(it);
+          }
+          if (it && it.published_on && (!S.oldest || it.published_on < S.oldest)) S.oldest = it.published_on;
+          show();
+        }
+        flush(false);
+        S.idle = fresh ? 0 : S.idle + 1;
+        if (S.idle >= 8) return finish("Llegó al final del grupo (o Facebook dejó de cargar más).");
+        window.scrollBy(0, Math.round(window.innerHeight * 0.8));
+        await sleep(4000);   // que Facebook alcance a cargar las siguientes
+      }
+    }
+    show();
+    loop();
+  }
+  if (site === "facebook" && (window.__pcGroup || /^\/groups\/[^/]+\/?$|^\/groups\/[^/]+\/(buy_sell_discussion|for_sale|discussion)/.test(location.pathname))) { grupoMode(); return; }
+
   // ── juntar ───────────────────────────────────────────────────────────
   var items = [];
   if (site === "mercadolibre") items = mlId(location.pathname) && q(document, "h1") ? mlItem() : mlCards();

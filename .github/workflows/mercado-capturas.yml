@@ -1,0 +1,49 @@
+# Mercado MX · capturas del botón "Guardar en Precio de Calle", procesadas en minutos.
+# Cada ~10 minutos revisa si hay capturas pendientes; si no hay, termina sin tocar nada.
+# Si hay: pruebas → capturas (normalizador + anti-duplicados) → barrido de repetidos.
+# Gratis en un repo público. Las agencias se siguen visitando solo en la corrida diaria.
+name: Mercado MX · capturas
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: mercado-capturas
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  capturas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mercado
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mercado/package-lock.json
+      - run: npm ci
+      - name: ¿Hay capturas pendientes?
+        id: pend
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/capturas-pendientes.mjs >> "$GITHUB_OUTPUT"
+      - name: Pruebas (si fallan, no se toca la base)
+        if: steps.pend.outputs.n != '0'
+        run: npm test
+      - name: Procesar capturas
+        if: steps.pend.outputs.n != '0'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: node scripts/ingest.mjs --solo-capturas --reporte reporte.json
+      - name: Resumen
+        if: always() && steps.pend.outputs.n != '0'
+        run: node scripts/report-md.mjs reporte.json >> "$GITHUB_STEP_SUMMARY" || true

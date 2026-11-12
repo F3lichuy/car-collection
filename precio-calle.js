@@ -12,7 +12,7 @@
   const PC = (window.PrecioCalle = {});
   const S = {
     loaded: false, loading: null, error: null, vehicles: [], listings: 0, sources: {}, settings: {}, fx: null,
-    f: { q: "", make: "", model: "", variant: "", tx: "", seg: "", st: "venta", sort: "recientes" }, usd: false, limit: 48,
+    f: { q: "", make: "", model: "", gen: "", variant: "", tx: "", seg: "", st: "venta", sort: "recientes" }, usd: false, limit: 48,
     reviews: [], revBy: new Map(),
   };
   const h = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -31,13 +31,13 @@
 
   // ── datos ──────────────────────────────────────────────────────────────
   const SPEC_COLS = "year,km,transmission,body,exterior_color,exterior_color_family,exterior_color_raw,interior_color,interior_color_family,interior_color_raw,invoice_type,origin,owners,service_history,antique_plates";
-  // v: 7 = con migración 007 (borrado y precio anterior), 5 = con published_on, 0 = lo más viejo
+  // v: 8 = con color por foto (008), 7 = con migración 007 (borrado y precio anterior), 5 = con published_on, 0 = lo más viejo
   const listingSelect = v => `id,title,url,city,state,source_id,status,first_seen,last_seen,is_demo${v >= 5 ? ",published_on" : ""},
         vehicle:mx_vehicles(id,vin,version_id,is_demo${v >= 7 ? ",deleted_at,delete_reason" : ""},
           version:mx_versions(name), generation:mx_generations(name), model:mx_models(name,segment,make:mx_makes(name))),
         specs:mx_specs(${SPEC_COLS},parse_confidence),
         prices:mx_price_snapshots(price,currency,negotiable,observed_from,observed_to${v >= 7 ? ",list_price" : ""}),
-        photos:mx_photos(url,position)`;
+        photos:mx_photos(url,position${v >= 8 ? ",color_family" : ""})`;
 
   async function load() {
     const c = client();
@@ -55,7 +55,7 @@
       return { data: out, error: null };
     };
     const [ls0, manual, src, st, fx, own, rev] = await Promise.all([
-      listingsAll(7),
+      listingsAll(8),
       // fichas capturadas a mano (sin anuncio): mandan sobre lo que dijo el anuncio
       c.from("mx_specs").select(`vehicle_id,${SPEC_COLS},notes,updated_at`).is("listing_id", null).order("updated_at", { ascending: false }),
       c.from("mx_sources_public").select("id,name,kind,base_url"),
@@ -69,6 +69,7 @@
     ]);
     let ls = ls0;
     // columnas que llegan con las migraciones 007 y 005: sin ellas, todo lo demás funciona igual
+    if (ls.error && /color_family/.test(ls.error.message || "")) ls = await listingsAll(7);
     if (ls.error && /deleted_at|list_price|delete_reason/.test(ls.error.message || "")) ls = await listingsAll(5);
     if (ls.error && /published_on/.test(ls.error.message || "")) ls = await listingsAll(0);
     if (ls.error) throw ls.error;
@@ -154,6 +155,16 @@
       x.stale = !!(x.publishedOn && x.days > 365);
       x.colorExt = colorTxt(merged.exterior_color, merged.exterior_color_family, merged.exterior_color_raw);
       x.colorInt = colorTxt(merged.interior_color, merged.interior_color_family, merged.interior_color_raw);
+      // sin color en el anuncio: el que se ve en la portada (solo colores vivos), siempre marcado como estimado
+      x.photoColor = null;
+      for (const l of x.listings) {
+        const ph = (l.photos || []).slice().sort((a, b) => (a.position ?? 99) - (b.position ?? 99)).slice(0, 3);
+        const cover = ph[0] && ph[0].color_family, other = {};
+        for (const p of ph.slice(1)) if (p.color_family && p.color_family !== cover) other[p.color_family] = (other[p.color_family] || 0) + 1;
+        if (cover && !Object.values(other).some(n => n >= 2)) { x.photoColor = cover; break; }
+      }
+      x.colorEst = !x.colorExt && !!x.photoColor;
+      if (x.colorEst) x.colorExt = `${x.photoColor[0].toUpperCase()}${x.photoColor.slice(1)} (por la foto)`;
       x.city = main.city || main.state || "";
       x.demo = !!(x.v.is_demo || main.is_demo);
       x.photos = [...new Set(x.listings.flatMap(l => (l.photos || []).slice().sort((a, b) => (a.position ?? 99) - (b.position ?? 99)).map(p => p.url)))];
@@ -168,9 +179,12 @@
       // Cabriolet no pide lo mismo que el coupé) y sin versión, al menos la carrocería ("Targa").
       x.body = merged.body || null;
       const bodyTxt = x.body && x.body !== "coupe" ? BODY[x.body] || x.body : "";
-      x.variant = x.version
+      const baseVariant = x.version
         ? (x.make === "Porsche" && bodyTxt && !new RegExp(bodyTxt.split(" ")[0], "i").test(x.version) ? `${x.version} ${bodyTxt}` : x.version)
         : bodyTxt ? `${bodyTxt} (versión por confirmar)` : "Versión por confirmar";
+      // La generación también separa mercados: un Stingray C3 (1976) no es un Stingray C8 (2024), ni un GT3 991.2 un 992.1.
+      const genInName = x.gen && (baseVariant.toLowerCase().includes(x.gen.toLowerCase()) || x.gen.toLowerCase() === x.model.toLowerCase());
+      x.variant = x.gen && !genInName ? `${x.gen} · ${baseVariant}` : baseVariant;
       x.search = `${x.name} ${x.gen} ${main.title || ""} ${x.city}`.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
       return x;
     });
@@ -216,7 +230,7 @@
     // Estado: en venta (por omisión) · probablemente vendidos (publicados hace más de un año) · todos
     const stOk = x => f.st === "todos" || (f.st === "vendidos" ? x.stale : !x.stale);
     let a = S.vehicles.filter(x => x.active && stOk(x)
-      && (!f.make || x.make === f.make) && (!f.model || x.model === f.model) && (!f.variant || x.variant === f.variant)
+      && (!f.make || x.make === f.make) && (!f.model || x.model === f.model) && (!f.gen || x.gen === f.gen) && (!f.variant || x.variant === f.variant)
       && (!f.tx || x.tx === f.tx) && (!f.seg || x.seg === f.seg) && (!q || q.split(/\s+/).every(w => x.search.includes(w))));
     const pv = x => (x.price && x.price.price != null ? Number(x.price.price) * (x.price.currency === "USD" && S.fx ? Number(S.fx.usd_mxn) : 1) : null);
     const by = {
@@ -241,7 +255,9 @@
     const actAll = S.vehicles.filter(x => x.active), act = actAll.filter(x => !x.stale), staleN = actAll.length - act.length;
     const makes = [...new Set(actAll.map(x => x.make))].sort();
     const models = [...new Set(actAll.filter(x => !S.f.make || x.make === S.f.make).map(x => x.model))].sort();
-    const variants = S.f.model ? [...new Set(actAll.filter(x => x.model === S.f.model && (!S.f.make || x.make === S.f.make)).map(x => x.variant))].sort((a, b) => (/por confirmar/.test(a) - /por confirmar/.test(b)) || a.localeCompare(b, "es")) : [];
+    const ofModel = S.f.model ? actAll.filter(x => x.model === S.f.model && (!S.f.make || x.make === S.f.make)) : [];
+    const gens = [...new Set(ofModel.map(x => x.gen).filter(Boolean))].sort((a, b) => (Math.min(...ofModel.filter(x => x.gen === a).map(x => x.year || 9999)) - Math.min(...ofModel.filter(x => x.gen === b).map(x => x.year || 9999))));
+    const variants = S.f.model ? [...new Set(ofModel.filter(x => !S.f.gen || x.gen === S.f.gen).map(x => x.variant))].sort((a, b) => (/por confirmar/.test(a) - /por confirmar/.test(b)) || a.localeCompare(b, "es")) : [];
     const txs = [...new Set(actAll.map(x => x.tx).filter(Boolean))];
     const segs = [...new Set(actAll.map(x => x.seg).filter(Boolean))];
     const srcN = new Set(act.flatMap(x => x.sourceIds)).size;
@@ -270,6 +286,7 @@
         <input class="ctrl grow" placeholder="Buscar: 993, GT3, Testarossa…" value="${h(S.f.q)}" oninput="PrecioCalle.set('q', this.value)">
         <select class="ctrl" aria-label="Marca" onchange="PrecioCalle.set('make', this.value)">${opt("", S.f.make, "Todas las marcas")}${makes.map(m => opt(m, S.f.make, m)).join("")}</select>
         <select class="ctrl" aria-label="Modelo" onchange="PrecioCalle.set('model', this.value)">${opt("", S.f.model, "Todos los modelos")}${models.map(m => opt(m, S.f.model, m)).join("")}</select>
+        ${gens.length > 1 ? `<select class="ctrl" aria-label="Generación" onchange="PrecioCalle.set('gen', this.value)">${opt("", S.f.gen, "Todas las generaciones")}${gens.map(g => opt(g, S.f.gen, g)).join("")}</select>` : ""}
         ${variants.length > 1 ? `<select class="ctrl" aria-label="Versión" onchange="PrecioCalle.set('variant', this.value)">${opt("", S.f.variant, "Todas las versiones")}${variants.map(v => opt(v, S.f.variant, v)).join("")}</select>` : ""}
         <select class="ctrl" aria-label="Transmisión" onchange="PrecioCalle.set('tx', this.value)">${opt("", S.f.tx, "Cualquier caja")}${txs.map(t => opt(t, S.f.tx, TX[t] || t)).join("")}</select>
         <select class="ctrl" aria-label="Segmento" onchange="PrecioCalle.set('seg', this.value)">${opt("", S.f.seg, "Todos los segmentos")}${segs.map(t => opt(t, S.f.seg, SEG[t] || t)).join("")}</select>
@@ -414,7 +431,7 @@
             <table class="pc-table pc-specs"><tbody>
               ${row("Año", x.year, "year")}${row("Kilometraje", x.km == null ? null : km(x.km), "km")}${row("Transmisión", x.tx ? TX[x.tx] || x.tx : null, "transmission")}
               ${row("Carrocería", s.body ? BODY[s.body] || s.body : null, "body")}
-              ${row("Color exterior", color(s.exterior_color, s.exterior_color_family, s.exterior_color_raw), x.manualFields.has("exterior_color") ? "exterior_color" : "exterior_color_family")}
+              ${row("Color exterior", color(s.exterior_color, s.exterior_color_family, s.exterior_color_raw) || (x.colorEst ? `${x.photoColor[0].toUpperCase()}${x.photoColor.slice(1)} · estimado por la foto (el anuncio no lo dice)` : null), x.manualFields.has("exterior_color") ? "exterior_color" : "exterior_color_family")}
               ${row("Interior", color(s.interior_color, s.interior_color_family, s.interior_color_raw), x.manualFields.has("interior_color") ? "interior_color" : "interior_color_family")}
               ${row("Factura", s.invoice_type ? INVOICE[s.invoice_type] : null, "invoice_type")}${row("Origen", s.origin ? ORIGIN[s.origin] : null, "origin")}
               ${row("Dueños", s.owners, "owners")}${row("Servicios", s.service_history ? SERVICE[s.service_history] : null, "service_history")}
@@ -549,16 +566,17 @@
   }
   function dupPanel() {
     const rs = S.reviews;
-    if (!rs.length) return `<div class="pc-sub"><h4 class="pc-h4">Posibles repetidos (0)</h4><p class="pc-foot">No hay pares por revisar. Los repetidos seguros se unen solos en la actualización diaria.</p></div>`;
+    if (!rs.length) return "";
     const mini = x => `<span class="pc-dupcar">${x.photo ? `<img src="${h(thumb(x.photo))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="pc-capimg"></span>`}
       <span><b>${h(x.name)}${x.year ? ` · ${x.year}` : ""}</b><br><small>${h(km(x.km))} · ${h(money(x.price))}<br>${h(srcOf(x))}${x.city ? ` · ${h(x.city)}` : ""}</small></span></span>`;
-    return `<div class="pc-sub"><h4 class="pc-h4">Posibles repetidos (${rs.length})</h4>
-      <p class="pc-foot" style="margin-top:0">Parecen el mismo auto, pero falta algo que lo confirme (otra foto, km redondos, otro precio). Compáralos y decide: tu decisión se guarda y no se vuelve a preguntar.</p>
+    return `<details class="pc-dupalert"${S.dupOpen ? " open" : ""} ontoggle="PrecioCalle.dupToggle(this.open)"><summary><b>${rs.length === 1 ? "Hay 1 posible repetido" : `Hay ${rs.length} posibles repetidos`} por revisar</b> <span>· toca para verlos</span></summary>
+      <p class="pc-foot" style="margin-top:8px">Mismo modelo, versión, año y color, pero falta algo que lo confirme. Compáralos y decide: tu decisión se guarda y no se vuelve a preguntar.</p>
       <div class="pc-duplist">${rs.slice(0, S.dupLimit || 12).map(r => { const a = vById(r.vehicle_a), b = vById(r.vehicle_b);
         return `<button class="pc-duprow" onclick="PrecioCalle.openPair(${r.id})">${mini(a)}<span class="pc-dupvs">=?</span>${mini(b)}<small class="pc-dupwhy">${h(reasonTxt(r))}</small></button>`; }).join("")}</div>
-      ${rs.length > (S.dupLimit || 12) ? `<div class="mk-more"><button class="btn sm" onclick="PrecioCalle.moreDups()">Ver más</button></div>` : ""}</div>`;
+      ${rs.length > (S.dupLimit || 12) ? `<div class="mk-more"><button class="btn sm" onclick="PrecioCalle.moreDups()">Ver más</button></div>` : ""}</details>`;
   }
-  PC.moreDups = () => { S.dupLimit = (S.dupLimit || 12) + 24; draw(root()); };
+  PC.moreDups = () => { S.dupLimit = (S.dupLimit || 12) + 24; S.dupOpen = true; draw(root()); };
+  PC.dupToggle = open => { S.dupOpen = !!open; };
   PC.openPair = function (rid) {
     const r = S.reviews.find(x => x.id === rid);
     if (!r) return;
@@ -679,6 +697,7 @@
     redrawCmp();
   };
   PC.cmpAxis = function (ax) { S.cmp.x = ax; redrawCmp(); };
+  PC.cmpGen = function (g) { S.cmp.gen = g || null; S.cmp.sel = null; redrawCmp(); };
 
   // Precio esperado: recta robusta (Theil–Sen) sobre el logaritmo del precio, así un auto carísimo o
   // regalado no la jala. Banda = ±1 desviación típica de los residuos (MAD). Solo con autos en venta.
@@ -698,18 +717,25 @@
     const minN = Number(S.settings.min_n_for_stats ?? 5);
     const label = modelLabel(x.make, x.model);
     const base = S.vehicles.filter(v => v.active && v.make === x.make && v.model === x.model && toMxn(v.price) != null);
+    const gensAll = [...new Set(base.map(v => v.gen).filter(Boolean))];
     if (!S.cmp || S.cmp.id !== x.id) {
       const same = base.filter(v => v.variant === x.variant && !v.stale).length;
-      S.cmp = { id: x.id, sel: x.version && same >= 2 ? new Set([x.variant]) : null, x: "year" };
+      // arranca con la generación de este auto (un C8 contra C8, no contra C3) y, si hay al menos otro igual, su versión
+      S.cmp = { id: x.id, sel: x.version && same >= 2 ? new Set([x.variant]) : null, x: "year", gen: gensAll.length > 1 && x.gen ? x.gen : null };
     }
+    const gen = S.cmp.gen;
     const axis = S.cmp.x || "year";
     const xv = v => (axis === "year" ? v.year : axis === "km" ? v.km : decYear(v.publishedOn || v.firstSeen));
-    const all = base.filter(v => xv(v) != null);
+    const all = base.filter(v => xv(v) != null && (!gen || v.gen === gen || v.id === x.id));
     const counts = new Map(); for (const v of all) counts.set(v.variant, (counts.get(v.variant) || 0) + 1);
     const keys = [...counts.keys()].sort((a, b) => (/por confirmar/.test(a) - /por confirmar/.test(b)) || counts.get(b) - counts.get(a) || a.localeCompare(b, "es"));
     const sel = S.cmp.sel;
     const axisBtns = `<div class="pc-axis" role="group" aria-label="Eje horizontal">Comparar por:
       ${Object.entries(AXES).map(([k, l]) => `<button class="pc-chip ${axis === k ? "on" : ""}" aria-pressed="${axis === k}" onclick="PrecioCalle.cmpAxis('${k}')">${l}</button>`).join("")}</div>`;
+    const gensSorted = gensAll.slice().sort((a, b) => Math.min(...base.filter(v => v.gen === a).map(v => v.year || 9999)) - Math.min(...base.filter(v => v.gen === b).map(v => v.year || 9999)));
+    const genChips = gensSorted.length > 1 ? `<div class="pc-chips" role="group" aria-label="Generación">
+      <button class="pc-chip ${gen ? "" : "on"}" aria-pressed="${!gen}" onclick="PrecioCalle.cmpGen('')">Todas las generaciones</button>
+      ${gensSorted.map(g => `<button class="pc-chip ${gen === g ? "on" : ""}" aria-pressed="${gen === g}" onclick="PrecioCalle.cmpGen(${h(JSON.stringify(g))})">${h(g)}${g === x.gen ? " (este)" : ""} <span class="pc-chipn">${base.filter(v => v.gen === g).length}</span></button>`).join("")}</div>` : "";
     const chips = keys.length > 1 ? `<div class="pc-chips" role="group" aria-label="Versiones a comparar">
       <button class="pc-chip ${sel ? "" : "on"}" aria-pressed="${!sel}" onclick="PrecioCalle.cmpToggle('*')">Todas <span class="pc-chipn">${all.length}</span></button>
       ${keys.map(k => `<button class="pc-chip ${sel && sel.has(k) ? "on" : ""}" aria-pressed="${!!(sel && sel.has(k))}" onclick="PrecioCalle.cmpToggle(${h(JSON.stringify(k))})"${k === x.variant ? ' title="La versión de este auto"' : ""}>${h(k)}${k === x.variant ? " (este)" : ""} <span class="pc-chipn">${counts.get(k)}</span></button>`).join("")}</div>` : "";
@@ -717,7 +743,7 @@
     const what = sel ? [...sel].join(", ") : "todas las versiones";
     const others = peers.filter(v => v.id !== x.id);
     const missingX = axis === "km" ? " con kilometraje" : axis === "year" ? " con año" : "";
-    if (!others.length) return `${axisBtns}${chips}<p class="pc-foot">${all.length > 1 ? `No hay otros ${h(label)} de ${h(what)}${missingX} y precio. Prende más versiones arriba.` : `No hay otros ${h(label)}${missingX} y precio para comparar.`}</p>`;
+    if (!others.length) return `${axisBtns}${genChips}${chips}<p class="pc-foot">${all.length > 1 ? `No hay otros ${h(label)} de ${h(what)}${missingX} y precio. Prende más versiones arriba.` : `No hay otros ${h(label)}${missingX} y precio para comparar.`}</p>`;
 
     // estadística solo con los que siguen en venta (los publicados hace más de un año son referencia)
     const live = peers.filter(v => !v.stale), n = live.length;
@@ -725,7 +751,7 @@
     const med = n >= minN ? median(livePrices) : null;
     // por fecha de publicación, la tendencia solo tiene sentido con medio año o más de historia
     const lxs = live.map(xv), spanOk = axis !== "pub" || Math.max(...lxs) - Math.min(...lxs) >= 0.5;
-    const fit = n >= minN && spanOk ? trendFit(live.map(v => [xv(v), Math.log(toMxn(v.price))])) : null;
+    const fit = n >= 3 && spanOk ? trendFit(live.map(v => [xv(v), Math.log(toMxn(v.price))])) : null;
     // escala vertical sin que un precio extremo aplaste a los demás (cercas de Tukey sobre el log)
     let lo = Math.min(...prices), hi = Math.max(...prices);
     if (peers.length >= 5) {
@@ -768,21 +794,22 @@
     }
     const mine = toMxn(x.price), myX = xv(x);
     const expected = fit && myX != null ? fit.at(myX) : med;
+    const few = n < minN;   // con menos de minN autos la línea es orientativa
     const vsExp = expected && mine != null ? pct(expected, mine) : null;
     const outN = peers.filter(v => toMxn(v.price) > p1 || toMxn(v.price) < p0).length, staleN = peers.filter(v => v.stale).length;
     const byWhat = { year: "año", km: "kilometraje", pub: "fecha de publicación" }[axis];
-    return `${axisBtns}${chips}
+    return `${axisBtns}${genChips}${chips}
       <svg class="pc-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${h(AXES[axis])} contra precio pedido de ${peers.length} ${h(label)} (${h(what)})">
         ${yt.map(v => `<line class="pc-grid" x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text class="pc-ax" x="${L - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${short(v)}</text>`).join("")}
         ${xt.map(t => `<text class="pc-ax" x="${X(t).toFixed(1)}" y="${H - 10}" text-anchor="middle">${xl(t)}</text>`).join("")}
         ${trend}
         ${others.filter(v => v.stale).map(dot).join("")}${others.filter(v => !v.stale).map(dot).join("")}${peers.some(v => v.id === x.id) ? dot(x) : ""}
       </svg>
-      <p class="pc-legend"><span class="pc-key"></span> Este auto <span class="pc-key peer"></span> En venta${staleN ? ` <span class="pc-key stale"></span> Publicado hace más de un año (prob. vendido)` : ""}${fit ? ` <span class="pc-key trend"></span> Precio esperado según ${byWhat}, con su rango típico` : ""}</p>
+      <p class="pc-legend"><span class="pc-key"></span> Este auto <span class="pc-key peer"></span> En venta${staleN ? ` <span class="pc-key stale"></span> Publicado hace más de un año (prob. vendido)` : ""}${fit ? ` <span class="pc-key trend"></span> Precio esperado según ${byWhat}${few ? ` (orientativo: solo ${n} autos)` : ", con su rango típico"}` : ""}</p>
       <p class="pc-foot">${n} ${h(label)} de ${h(what)} en venta con ${byWhat} y precio.${
         mine == null ? " Este auto no publica precio, así que no aparece en la gráfica." : ""}${
-        expected && vsExp != null ? ` Para este auto se esperaría ${h(money({ price: expected, currency: "MXN" }))}${fit ? ` (rango típico ${short(expected / Math.exp(fit.s))}–${short(expected * Math.exp(fit.s))})` : " (mediana)"}: pide ${vsExp === 0 ? "lo mismo" : `${Math.abs(vsExp)}% ${vsExp > 0 ? "más" : "menos"}`}.`
-        : n < minN ? ` Con ${minN} o más en venta se calcula el precio esperado; faltan ${minN - n}.` : ""}${
+        expected && vsExp != null ? `${few ? " Orientativo, con solo " + n + " autos: para" : " Para"} este auto se esperaría ${h(money({ price: expected, currency: "MXN" }))}${fit ? ` (rango típico ${short(expected / Math.exp(fit.s))}–${short(expected * Math.exp(fit.s))})` : " (mediana)"}: pide ${vsExp === 0 ? "lo mismo" : `${Math.abs(vsExp)}% ${vsExp > 0 ? "más" : "menos"}`}.`
+        : n < 3 ? ` Con 3 o más en venta se traza la línea de precio esperado (orientativa hasta ${minN}).` : ""}${
         outN ? ` ${outN === 1 ? "Un auto queda" : `${outN} autos quedan`} fuera de la escala (▲▼): pasa el cursor para ver su precio.` : ""}${
         axis === "pub" && peers.some(v => !v.publishedOn) ? " Los que no dicen cuándo se publicaron van en la fecha en que los vimos por primera vez." : ""}
         Pasa el cursor para ver la foto; toca uno para abrirlo.</p>
@@ -880,7 +907,7 @@
       <p class="pc-formmsg" id="pcCapMsg" role="status"></p>
       <div class="pc-formbtns"><button class="btn primary sm" id="pcCapSave" onclick="PrecioCalle.saveCaptura()">Guardar</button>
         <button class="btn ghost sm" onclick="document.getElementById('pcScrim').classList.remove('show')">Cancelar</button></div>
-      <p class="pc-foot">No entran al instante: la actualización diaria (6:17 am) revisa duplicados contra todo lo que ya tenemos, deja fuera los modelos que no seguimos y los suma a Precio de Calle.</p>`);
+      <p class="pc-foot">Entran en unos 10 a 20 minutos: se revisan contra todo lo que ya tenemos (los repetidos se juntan), se quedan fuera los modelos que no seguimos y se suman a Precio de Calle.</p>`);
   };
   PC.pasteCaptura = function (v) {
     try { const d = JSON.parse(v); if (d && d.type === "pc-captura" && Array.isArray(d.items)) { window.pcCaptura = d; PC.openCaptura(); } } catch (e) { /* aún no es el texto completo */ }
@@ -895,7 +922,7 @@
     if (error) { btn.disabled = false; msg.textContent = `No se guardó: ${error.message}`; return; }
     window.pcCaptura = null;
     capModal(`<p><b>Listo: ${pick.length === 1 ? "1 auto guardado" : `${pick.length} autos guardados`}.</b></p>
-      <p class="pc-foot" style="margin-top:0">Mañana a las 6:17 am se procesan y aparecen en Precio de Calle (los repetidos se juntan con el que ya teníamos). Puedes cerrar esta ventana y seguir navegando.</p>`);
+      <p class="pc-foot" style="margin-top:0">En unos 10 a 20 minutos aparecen en Precio de Calle (los repetidos se juntan con el que ya teníamos). Puedes cerrar esta ventana y seguir navegando.</p>`);
     PC.loadCapturas();
   };
 
@@ -909,13 +936,12 @@
   function adminPanel() {
     if (!canEdit()) return "";
     return `<section class="pc-section pc-admin"><div class="home-sechead"><h2>Agregar autos</h2></div>
-      <div class="pc-split"><div>
-        <p class="pc-foot" style="margin-top:0">Arrastra este botón a tu barra de favoritos (si no la ves: Ctrl + Shift + B). Luego, en una página de Facebook Marketplace o Mercado Libre con autos, dale clic.</p>
-        <p><a class="btn primary sm pc-marcador" id="pcMarcador" href="#" onclick="event.preventDefault();alert('Arrástralo a tu barra de favoritos; no se usa aquí.')">Guardar en Precio de Calle</a></p>
-        <p class="pc-foot">En una página de resultados guarda todos los autos que se ven; dentro de un anuncio, ese auto con fotos y descripción.</p>
-        <p class="pc-foot"><b>¿Ya lo tenías en tu barra?</b> Bórralo de la barra y vuelve a arrastrar este: cada versión nueva del botón se instala así.</p>
-      </div><div><h4 class="pc-h4">Últimas capturas</h4><div id="pcCapturas"><p class="pc-foot">Cargando…</p></div></div></div>
       ${dupPanel()}
+      <div class="pc-addrow">
+        <div class="pc-addbtn"><a class="btn primary sm pc-marcador" id="pcMarcador" href="#" onclick="event.preventDefault();alert('Arrástralo a tu barra de favoritos; no se usa aquí.')">Guardar en Precio de Calle</a>
+          <p class="pc-foot">Arrástralo a tu barra de favoritos (Ctrl + Shift + B si no la ves) y dale clic en Mercado Libre o Facebook Marketplace: en resultados guarda los autos que se ven; dentro de un anuncio, ese auto con todas sus fotos. <b>Si cambia el botón</b>, bórralo de la barra y vuelve a arrastrarlo.</p></div>
+        <div class="pc-addlast"><h4 class="pc-h4">Últimas capturas</h4><div id="pcCapturas"><p class="pc-foot">Cargando…</p></div></div>
+      </div>
       <div class="pc-sub"><h4 class="pc-h4">Buscar más autos por ciudad</h4>
         <p class="pc-foot" style="margin-top:0">Elige un modelo: se abre la búsqueda en cada ciudad. Ahí da clic en el botón de tu barra para guardar lo que veas. Arriba van los modelos con menos autos para comparar.</p>
         <div class="toolbar"><select class="ctrl grow" id="pcBuscaModelo" aria-label="Modelo a buscar" onchange="PrecioCalle.renderBusqueda()"><option>Cargando modelos…</option></select></div>
@@ -971,21 +997,24 @@
     if (a) ensureMarcador().then(href => { if (href) a.href = href; });
     PC.loadBusqueda();
     if (!box) return;
-    const { data, error } = await client().from("mx_capturas").select("id,captured_at,source_id,items,status,result").order("id", { ascending: false }).limit(8);
+    const { data, error } = await client().from("mx_capturas").select("id,captured_at,source_id,items,status,result").order("id", { ascending: false }).limit(3);
     if (error) { box.innerHTML = `<p class="pc-foot">No se pudieron leer las capturas (${h(error.message)}).</p>`; return; }
     if (!data.length) { box.innerHTML = `<p class="pc-foot">Todavía no guardas ninguna.</p>`; return; }
-    const ST = { pendiente: "Se procesa mañana 6:17", procesada: "Procesada", error: "Con error" };
-    box.innerHTML = `<table class="pc-table"><tbody>${data.map(c => { const r = c.result || {};
-      const res = c.status === "procesada" ? `${r.nuevos ?? 0} nuevos · ${(r.sin_cambio ?? 0) + (r.actualizados ?? 0)} ya estaban · ${r.fuera_de_taxonomia ?? 0} fuera de los modelos` : c.status === "error" ? h(r.error || "") : "";
-      return `<tr><th scope="row">${h(S.sources[c.source_id] ? S.sources[c.source_id].name : sourceName(c.source_id))}<br><span class="pc-foot">${h(fmtDate(String(c.captured_at).slice(0, 10)))} · ${c.items.length} autos</span></th>
-        <td><span class="pc-st">${h(ST[c.status] || c.status)}</span><br><span class="pc-foot">${res}</span></td></tr>`; }).join("")}</tbody></table>`;
+    // los 3 autos más recientes que guardaste y, abajo, en qué quedó la última captura
+    const ST = { pendiente: "en espera (unos minutos)", procesando: "procesándose ahora", procesada: "procesada", error: "con error" };
+    const cars = data.flatMap(c => (c.items || []).map(it => ({ ...it, st: c.status }))).slice(0, 3);
+    const c0 = data[0], r = c0.result || {};
+    const res = c0.status === "procesada" ? ` · ${r.nuevos ?? 0} nuevos, ${(r.sin_cambio ?? 0) + (r.actualizados ?? 0)} ya estaban` : c0.status === "error" ? ` · ${h(r.error || "")}` : "";
+    box.innerHTML = `<div class="pc-lastcars">${cars.map(it => `<div class="pc-lastcar">${it.photos && it.photos[0] ? `<img src="${h(it.photos[0])}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="pc-capimg"></span>`}
+      <span><b>${h(it.title || "Sin título")}</b><br><small>${it.price ? h(money({ price: it.price, currency: it.currency || "MXN" })) : "Sin precio"}${it.year ? ` · ${h(it.year)}` : ""}</small></span></div>`).join("")}</div>
+      <p class="pc-foot" style="margin-top:6px">Última: ${h(S.sources[c0.source_id] ? S.sources[c0.source_id].name : sourceName(c0.source_id))} · ${h(fmtDate(String(c0.captured_at).slice(0, 10)))} · ${c0.items.length} autos · ${h(ST[c0.status] || c0.status)}${res}</p>`;
   };
 
   // ── acciones ───────────────────────────────────────────────────────────
   const root = () => document.getElementById("tab-calle");
   let qTimer = null;
   PC.set = (k, v) => {
-    S.f[k] = v; if (k === "make") S.f.model = ""; if (k === "make" || k === "model") S.f.variant = ""; S.limit = 48;
+    S.f[k] = v; if (k === "make") S.f.model = ""; if (k === "make" || k === "model") { S.f.variant = ""; S.f.gen = ""; } if (k === "gen") S.f.variant = ""; S.limit = 48;
     if (k === "q") { clearTimeout(qTimer); qTimer = setTimeout(() => { draw(root()); const i = root().querySelector(".pc-filters input"); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 220); return; }
     draw(root());
   };
@@ -1109,6 +1138,19 @@
     .pc-captxt span{font-size:12px;color:var(--ink-faint)}
     .pc-capprice{text-align:right;font-size:14px;color:var(--ink);white-space:nowrap}
     .pc-capprice small{display:block;font-size:11px;color:var(--ink-faint)}
+    .pc-addrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
+    .pc-addbtn .pc-foot{margin-top:10px}
+    .pc-lastcars{display:flex;flex-direction:column;gap:8px}
+    .pc-lastcar{display:flex;gap:10px;align-items:center;font-size:13px;min-width:0}
+    .pc-lastcar img,.pc-lastcar .pc-capimg{width:56px;height:42px;object-fit:cover;flex:0 0 auto;background:var(--card2)}
+    .pc-lastcar b{font-weight:500;color:var(--ink);display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+    .pc-lastcar span{min-width:0}
+    .pc-lastcar small{color:var(--ink-faint)}
+    .pc-dupalert{border:1px solid var(--accent);padding:12px 14px;margin:0 0 20px}
+    .pc-dupalert summary{cursor:pointer;color:var(--ink);list-style-position:inside}
+    .pc-dupalert summary b{color:var(--accent);font-weight:700}
+    .pc-dupalert summary span{color:var(--ink-faint);font-size:12px}
+    .pc-dupalert .pc-duplist{margin-top:10px}
     .pc-duplist{display:flex;flex-direction:column;border-top:1px solid var(--line)}
     .pc-duprow{display:grid;grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr);gap:8px 12px;align-items:center;padding:10px 0;border:0;border-bottom:1px solid var(--line);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
     .pc-duprow:hover b{color:var(--accent)}
@@ -1136,7 +1178,7 @@
     .pc-key.trend{width:18px;height:0;border-radius:0;border-top:2px dashed var(--accent);background:transparent;margin-left:10px}
     .pc-axis{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0 0 10px;font-size:12px;color:var(--ink-faint)}
     @media (max-width:720px){
-      .pc-pair{grid-template-columns:1fr}
+      .pc-pair,.pc-addrow{grid-template-columns:1fr}
       .pc-duprow{grid-template-columns:1fr}
       .pc-dupvs{text-align:left}
       .pc-split,.pc-formgrid,.pc-tiles{grid-template-columns:1fr}

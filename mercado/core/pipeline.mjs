@@ -13,6 +13,7 @@
 import { normalizeListing } from './normalize.mjs';
 import { IdentityIndex } from './dedupe.mjs';
 import { phash } from './phash.mjs';
+import { photoColor, carColor } from './photocolor.mjs';
 import { loadSettings } from './settings.mjs';
 
 export const NORMALIZATION_REVIEW_BELOW = 0.7;
@@ -75,7 +76,7 @@ async function ingestOne({ n, store, index, today, hashPhotos, fetcher, r }) {
     const key = u => String(u).match(/(\d{5,}-MLM\d+_\d+)/)?.[1] ?? u;
     const have = new Set((await store.db.query(`select url from mx_photos where listing_id = $1`, [existing.id])).rows.map(x => key(x.url)));
     const added = [...new Map(n.photos.filter(u => !have.has(key(u))).map(u => [key(u), u])).values()].map(url => ({ url }));
-    if (added.length) await hashAll(added, { hashPhotos, fetcher });
+    if (added.length) await hashAll(added, { hashPhotos, fetcher, firstPosition: have.size });
     const res = await store.db.transaction(async tx => {
       await store.touchListing(tx, existing.id, n.listing, today);
       if (n.private.description || n.private.seller_name) await store.upsertPrivate(tx, existing.id, n.private);
@@ -96,7 +97,9 @@ async function ingestOne({ n, store, index, today, hashPhotos, fetcher, r }) {
   await hashAll(photos, { hashPhotos, fetcher });
 
   const mxn = n.price?.currency === 'MXN' && n.price.price != null ? Number(n.price.price) : null;
-  const decision = index.resolve({ ...n.vehicle, is_demo: false, specs: n.specs, price: mxn, photos: photos.filter(p => p.hash != null), listing: n.listing });
+  // color estimado por la foto (solo si el anuncio no lo dice; en la página va marcado como estimado)
+  const photo_color = photos[0]?.colorChecked ? carColor(photos.slice(0, 3).map(p => p.color ?? null)) : null;
+  const decision = index.resolve({ ...n.vehicle, is_demo: false, specs: { ...n.specs, photo_color }, price: mxn, photos: photos.filter(p => p.hash != null), listing: n.listing });
   const result = await store.db.transaction(async tx => {
     let vehicleId, isNewVehicle = false;
     if (decision.action === 'match') vehicleId = decision.vehicleId;
@@ -133,11 +136,15 @@ async function ingestOne({ n, store, index, today, hashPhotos, fetcher, r }) {
     identidad: decision.action === 'match' ? `mismo auto (${decision.reason})` : decision.reviews.length ? 'nuevo · a revisión' : 'nuevo' });
 }
 
-async function hashAll(photos, { hashPhotos, fetcher }) {
+// Hash de cada foto y, en las tres primeras del anuncio (portada y dos más), el color estimado.
+async function hashAll(photos, { hashPhotos, fetcher, firstPosition = 0 }) {
   if (!hashPhotos || !fetcher) return;
-  for (const p of photos.slice(0, MAX_PHOTOS_TO_HASH)) {
-    try { Object.assign(p, await phash((await fetcher.get(p.url, { as: 'buffer', accept: 'image/*', checkRobots: false, minDelayMs: 500 })).buffer)); }
-    catch { /* foto caída: se guarda sin hash y el barrido la reintenta */ }
+  for (const [i, p] of photos.slice(0, MAX_PHOTOS_TO_HASH).entries()) {
+    try {
+      const buf = (await fetcher.get(p.url, { as: 'buffer', accept: 'image/*', checkRobots: false, minDelayMs: 500 })).buffer;
+      Object.assign(p, await phash(buf));
+      if (firstPosition + i <= 2) { p.color = await photoColor(buf).catch(() => null); p.colorChecked = true; }
+    } catch { /* foto caída: se guarda sin hash y el barrido la reintenta */ }
   }
 }
 
@@ -148,13 +155,18 @@ async function hashAll(photos, { hashPhotos, fetcher }) {
 //   3. une los repetidos seguros (VIN, fotos, mismos km exactos) y propone el resto a revisión
 // Si una fusión choca con una regla de la base, se deja como revisión: nunca se fuerza.
 // ════════════════════════════════════════════════════════════════════════
-export async function rescan({ store, fetcher, hashBudget = 400, log = console.log }) {
-  const out = { fuente: 'barrido-de-repetidos', ok: false, fotos_hasheadas: 0, fusionados: 0, a_revision: 0, revisiones_descartadas: 0, uniones: [], errores: [] };
+export async function rescan({ store, fetcher, hashBudget = 400, colorBudget = 1500, log = console.log }) {
+  const out = { fuente: 'barrido-de-repetidos', ok: false, fotos_hasheadas: 0, fotos_color: 0, fusionados: 0, a_revision: 0, revisiones_descartadas: 0, uniones: [], errores: [] };
   try {
     if (fetcher && hashBudget > 0) {
       for (const p of await store.unhashedPhotos(hashBudget)) {
         try { await store.setPhotoHash(p.id, await phash((await fetcher.get(p.url, { as: 'buffer', accept: 'image/*', checkRobots: false, minDelayMs: 300 })).buffer)); out.fotos_hasheadas++; }
         catch { /* sigue caída */ }
+      }
+      // color estimado de las primeras fotos que aún no se revisan (una vez por foto)
+      for (const p of await store.photosWithoutColor(colorBudget)) {
+        try { await store.setPhotoColor(p.id, await photoColor((await fetcher.get(p.url, { as: 'buffer', accept: 'image/*', checkRobots: false, minDelayMs: 300 })).buffer)); out.fotos_color++; }
+        catch { /* caída: se reintenta en otra corrida */ }
       }
     }
     const settings = loadSettings((await store.db.query(`select key, value from mx_settings`)).rows);

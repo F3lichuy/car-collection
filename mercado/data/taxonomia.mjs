@@ -343,6 +343,11 @@ export const models = [
   { make: 'chevrolet', name: 'Corvette', segment: 'moderno', gens: [
     { code: 'c2', name: 'C2', from: 1963, to: 1967, tx: MA, v: [['Sting Ray', 1963, 1967], ['Sting Ray 427', 1966, 1967]] },
     { code: 'c3', name: 'C3', from: 1968, to: 1982, tx: MA, v: [['Corvette C3', 1968, 1982, MA, 'Se llamó "Stingray" de 1969 a 1976']] },
+    // C4–C7 agregadas el 2026-11-12: un "Stingray" C7 (2014–2019) no es un Stingray C8
+    { code: 'c4', name: 'C4', from: 1984, to: 1996, tx: MA, v: [['Corvette C4', 1984, 1996], ['ZR-1', 1990, 1995, M], ['Grand Sport', 1996, 1996, M]] },
+    { code: 'c5', name: 'C5', from: 1997, to: 2004, tx: MA, v: [['Corvette C5', 1997, 2004], ['Z06', 2001, 2004, M]] },
+    { code: 'c6', name: 'C6', from: 2005, to: 2013, tx: MA, v: [['Corvette C6', 2005, 2013], ['Z06', 2006, 2013, M], ['Grand Sport', 2010, 2013], ['ZR1', 2009, 2013, M]] },
+    { code: 'c7', name: 'C7', from: 2014, to: 2019, tx: MA, v: [['Stingray', 2014, 2019], ['Z06', 2015, 2019], ['Grand Sport', 2017, 2019], ['ZR1', 2019, 2019]] },
     { code: 'c8', name: 'C8', from: 2020, to: null, tx: D, v: [['Stingray', 2020, null], ['Z06', 2023, null], ['E-Ray', 2024, null], ['ZR1', 2025, null]] },
   ] },
   { make: 'jaguar', name: 'E-Type', segment: 'gran_turismo', aliases: ['e type', 'etype', 'xke', 'xk-e'], gens: [

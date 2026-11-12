@@ -11,7 +11,7 @@ for (const r of rep.fuentes) {
 const b = rep.barrido;
 if (b) {
   L.push('', '### Barrido de repetidos', '',
-    `${b.ok ? '✅' : '❌ ' + (b.fatal ?? '')} · unidos automáticamente: **${b.fusionados}** · nuevos a revisión: **${b.a_revision}** · revisiones descartadas: ${b.revisiones_descartadas} · fotos con hash nuevo: ${b.fotos_hasheadas}`);
+    `${b.ok ? '✅' : '❌ ' + (b.fatal ?? '')} · unidos automáticamente: **${b.fusionados}** · nuevos a revisión: **${b.a_revision}** · revisiones descartadas: ${b.revisiones_descartadas} · fotos con hash nuevo: ${b.fotos_hasheadas} · fotos con color revisado: ${b.fotos_color ?? 0}`);
   for (const u of (b.uniones ?? []).slice(0, 30)) L.push(`- ${u.motivo}: ${u.se_une} → ${u.queda}`);
   for (const e of (b.errores ?? []).slice(0, 5)) L.push(`- ⚠️ ${e.error}`);
 }

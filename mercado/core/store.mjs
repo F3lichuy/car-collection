@@ -62,8 +62,10 @@ export class Store {
       prices: await q(`select distinct l.vehicle_id, p.price::float8 as price from mx_listings l join mx_price_snapshots p on p.listing_id = l.id
                        where p.currency = 'MXN' and p.price is not null`),
       specs: await q(`select vehicle_id, is_canonical, year, km, observed_on::text, exterior_color, exterior_color_family,
-                             interior_color, interior_color_family, transmission from mx_specs where is_canonical`),
+                             interior_color, interior_color_family, transmission, body from mx_specs where is_canonical`),
       photos: await q(`select id, vehicle_id, phash::text, phash_center::text, low_info from mx_photos where phash is not null`),
+      // color estimado de las primeras fotos de cada anuncio (008)
+      photoColors: await q(`select vehicle_id, listing_id, position, color_family from mx_photos where color_checked and position <= 2`),
       listings: await q(`select vehicle_id, url_canonical, source_id, external_id from mx_listings`),
       distinctPairs: await q(`select vehicle_a, vehicle_b from mx_distinct_pairs`),
     };
@@ -142,10 +144,11 @@ export class Store {
   async insertPhotos(db, listingId, photos, firstPosition = 0) {
     for (const [j, p] of photos.entries()) {
       const i = firstPosition + j;
-      await db.query(`insert into mx_photos (listing_id, url, position, phash, phash_center, low_info, width, height, hashed_at)
-          values ($1, $2, $3, $4::bigint, $5::bigint, $6, $7, $8, case when $4::bigint is null then null else now() end)
+      await db.query(`insert into mx_photos (listing_id, url, position, phash, phash_center, low_info, width, height, hashed_at, color_family, color_share, color_checked)
+          values ($1, $2, $3, $4::bigint, $5::bigint, $6, $7, $8, case when $4::bigint is null then null else now() end, $9, $10, $11)
         on conflict (listing_id, url) do nothing`,
-        [listingId, p.url, i, p.signed ?? null, p.centerSigned ?? null, !!p.lowInfo, p.width ?? null, p.height ?? null]);
+        [listingId, p.url, i, p.signed ?? null, p.centerSigned ?? null, !!p.lowInfo, p.width ?? null, p.height ?? null,
+          p.color?.family ?? null, p.color?.share ?? null, !!p.colorChecked]);
     }
   }
 
@@ -166,6 +169,14 @@ export class Store {
   async unhashedPhotos(limit) {
     return (await this.db.query(`select ph.id, ph.url, ph.vehicle_id from mx_photos ph join mx_vehicles v on v.id = ph.vehicle_id
         where ph.phash is null and v.merged_into is null order by ph.position nulls last, ph.id limit $1`, [limit])).rows;
+  }
+  // primeras fotos (portada y dos más) a las que aún no se les estima el color
+  async photosWithoutColor(limit) {
+    return (await this.db.query(`select ph.id, ph.url from mx_photos ph join mx_vehicles v on v.id = ph.vehicle_id
+        where not ph.color_checked and ph.position <= 2 and v.merged_into is null order by ph.position, ph.id limit $1`, [limit])).rows;
+  }
+  async setPhotoColor(id, c) {
+    await this.db.query(`update mx_photos set color_family = $2, color_share = $3, color_checked = true where id = $1`, [id, c?.family ?? null, c?.share ?? null]);
   }
   async setPhotoHash(id, p) {
     await this.db.query(`update mx_photos set phash = $2::bigint, phash_center = $3::bigint, low_info = $4, hashed_at = now() where id = $1`,

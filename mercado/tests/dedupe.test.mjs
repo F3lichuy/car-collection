@@ -66,12 +66,11 @@ describe('fotos', () => {
     assert.ok(ok, JSON.stringify(r));
   });
 
-  test('mismas fotos pero año distinto por 1 (año modelo vs. año factura) → revisión, no fusión', () => {
+  test('mismas fotos pero otro año (aunque sea por 1) → autos distintos: ni fusión ni pregunta', () => {
     const idx = new IdentityIndex().addVehicle(vehicle('v1', { photos: photos.agencia }));
     const r = idx.resolve({ ...GT3RS, specs: { ...specsRS, year: 2024 }, photos: photos.broker_marca_agua });
     assert.equal(r.action, 'new');
-    assert.equal(r.reviews[0].vehicleId, 'v1');
-    assert.ok(r.reviews[0].reasons.includes('anio_mas_menos_1'));
+    assert.equal(r.reviews.length, 0);
   });
 
   test('fotos reusadas en un auto con VIN distinto → ni fusión ni revisión', () => {
@@ -237,11 +236,22 @@ describe('una sola foto y datos idénticos', () => {
     assert.equal(idx.resolve({ ...URUS, specs: base, price: 5900000, photos: [] }).action, 'new');
   });
 
-  test('mismos km y precio pero otro color → solo revisión', () => {
-    const a = { year: 2024, km: 5000, exterior_color_family: 'amarillo', observed_on: '2026-11-12' };
+  test('tu regla: otro color, otra carrocería o un precio de otro mundo → autos distintos, no se pregunta', () => {
+    const a = { year: 2024, km: 5000, exterior_color_family: 'amarillo', body: 'suv', observed_on: '2026-11-12' };
     const idx = new IdentityIndex().addVehicle(urus('v1', a, { prices: [7999000] }));
-    const r = idx.resolve({ ...URUS, specs: { ...a, exterior_color_family: 'verde' }, price: 7999000, photos: [] });
-    assert.equal(r.action, 'new'); assert.ok(r.reviews.some(x => x.vehicleId === 'v1' && x.reasons.includes('mismos_km_exactos')));
+    const none = inc => assert.equal(idx.resolve({ ...URUS, photos: [], ...inc }).reviews.length, 0);
+    none({ specs: { ...a, exterior_color_family: 'verde' }, price: 7999000 });                 // otro color
+    none({ specs: { ...a, body: 'cabriolet' }, price: 7999000 });                              // otra carrocería
+    none({ specs: a, price: 1200000 });                                                        // 1.2 M contra 8 M
+    // lo que sí puede cambiar: ciudad, fuente, km y precio razonable → se pregunta
+    assert.equal(idx.resolve({ ...URUS, photos: [], specs: a, price: 7999000 }).reviews.length, 1);
+  });
+
+  test('foto de color vivo: un Urus verde y uno amarillo con los mismos datos no se preguntan', () => {
+    const a = { year: 2024, km: 5000, photo_color: 'amarillo', observed_on: '2026-11-12' };
+    const idx = new IdentityIndex().addVehicle(urus('v1', a, { prices: [7999000] }));
+    assert.equal(idx.resolve({ ...URUS, specs: { ...a, photo_color: 'verde' }, price: 7999000, photos: [] }).reviews.length, 0);
+    assert.equal(idx.resolve({ ...URUS, specs: a, price: 7999000, photos: [] }).reviews.length, 1);
   });
 
   test('el barrido no toca autos que la dueña borró y descarta revisiones entre modelos distintos', () => {
@@ -254,5 +264,17 @@ describe('una sola foto y datos idénticos', () => {
     assert.equal(merges.length, 0); assert.equal(reviews.length, 0);
     assert.deepEqual(idx.reviewStillValid('v1', 'v3'), { ok: false, why: 'modelo_distinto' });
     assert.equal(idx.reviewStillValid('v1', 'v2').ok, false);
+  });
+});
+
+describe('repetidos evidentes sin km (clásicos)', () => {
+  test('la misma foto, mismo año y mismo precio exacto → mismo auto aunque el anuncio no traiga km', () => {
+    const SL = { model_id: 'mercedes-benz-sl-r107', generation_id: null, version_id: null };
+    const s = { year: 1977, observed_on: '2026-11-12' };
+    const idx = new IdentityIndex().addVehicle({ id: 'v1', created_at: '2026-11-11', ...SL, specs: s, photos: [photos.agencia[0]], prices: [300000] });
+    const r = idx.resolve({ ...SL, specs: s, price: 300000, photos: [photos.agencia[0]] });
+    assert.equal(r.action, 'match'); assert.equal(r.reason, 'fotos');
+    // con otro precio, solo se pregunta
+    assert.equal(idx.resolve({ ...SL, specs: s, price: 350000, photos: [photos.agencia[0]] }).action, 'new');
   });
 });

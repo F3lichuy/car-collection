@@ -49,8 +49,10 @@ if (!dry && only && sources.some(s => !s.enabled)) {
 }
 // --solo-barrido: no visita fuentes ni capturas; solo busca repetidos entre lo que ya está guardado.
 const onlyScan = flag('solo-barrido');
-if (onlyScan) sources = [];
-const doCaptures = !only && !onlyScan && !flag('sin-capturas');   // capturas del botón: solo en la corrida completa
+// --solo-capturas: la corrida de cada ~10 minutos (capturas del botón y su barrido, sin visitar agencias)
+const onlyCaps = flag('solo-capturas');
+if (onlyScan || onlyCaps) sources = [];
+const doCaptures = !only && !onlyScan && !flag('sin-capturas');   // capturas del botón: en la corrida completa y en --solo-capturas
 const doScan = onlyScan || (!only && !flag('sin-barrido'));       // barrido de repetidos: al final de la corrida completa
 if (!sources.length && !doCaptures && !doScan) { console.log('No hay fuentes para correr.'); process.exit(0); }
 
@@ -79,7 +81,8 @@ if (opt('semilla')) {
   seededListings = tablas.mx_listings ?? [];
   for (const [t, rows] of Object.entries(tablas)) {
     if (!rows.length) continue;
-    const cols = await colsOf(t);
+    // solo las columnas que trae la copia (producción puede ir una migración atrás: las nuevas toman su valor por omisión)
+    const cols = (await colsOf(t)).filter(c => c in rows[0]);
     await db.query(`insert into public.${t} (${cols.join(', ')}) overriding system value
       select ${cols.join(', ')} from json_populate_recordset(null::public.${t}, $1::json)`, [JSON.stringify(rows)]);
   }
@@ -106,7 +109,7 @@ if (doCaptures) {
 let barrido = null;
 if (doScan) {
   console.log('▶ barrido de repetidos');
-  barrido = await rescan({ store, fetcher: flag('sin-fotos') ? null : makeFetcher({ ...cfg.defaults }), hashBudget: Number(opt('fotos-barrido') ?? 400) });
+  barrido = await rescan({ store, fetcher: flag('sin-fotos') ? null : makeFetcher({ ...cfg.defaults }), hashBudget: Number(opt('fotos-barrido') ?? (onlyCaps ? 80 : 400)), colorBudget: onlyCaps ? 150 : 1500 });
   console.log(`  fotos con hash nuevo ${barrido.fotos_hasheadas} · unidos ${barrido.fusionados} · a revisión ${barrido.a_revision} · revisiones descartadas ${barrido.revisiones_descartadas}${barrido.fatal ? ' · ✗ ' + barrido.fatal : ''}`);
 }
 

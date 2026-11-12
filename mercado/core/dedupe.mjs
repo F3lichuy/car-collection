@@ -18,6 +18,7 @@ import { norm } from './text.mjs';
 import { normalizeVin } from './vin.mjs';
 import { toUnsigned } from './phash.mjs';
 import { DEFAULTS } from './settings.mjs';
+import { carColor } from './photocolor.mjs';
 
 // ── Hashes como dos enteros de 32 bits (popcount rápido sin BigInt) ──────
 const split = h => { if (h == null) return null; const u = toUnsigned(h); return [Number(u >> 32n), Number(u & 0xffffffffn)]; };
@@ -74,14 +75,36 @@ export function compare(inc, v, s = DEFAULTS, distinct = false) {
     if (c === 'agree') agree.push(k); else if (c === 'conflict') soft.push(`${k}_distinto`);
   }
   if (a.transmission && b.transmission) (a.transmission === b.transmission ? agree : soft).push(a.transmission === b.transmission ? 'transmision' : 'transmision_distinta');
+  // carrocería (Targa contra coupé, convertible contra coupé)
+  if (a.body && b.body) (a.body === b.body ? agree : hard).push(a.body === b.body ? 'carroceria' : 'carroceria_distinta');
+  // color estimado por la foto (solo colores vivos: rojo, verde, amarillo…). Se usa si el anuncio no lo dice.
+  const fa = a.exterior_color_family ?? a.photo_color, fb = b.exterior_color_family ?? b.photo_color;
+  if (!(a.exterior_color_family && b.exterior_color_family) && fa && fb && (a.photo_color || b.photo_color)) {
+    if (fa === fb) agree.push('color_foto');
+    else if (VIVID.has(fa) && VIVID.has(fb)) hard.push('color_foto_distinto');   // verde contra amarillo: otro auto
+  }
+  // precio: el mismo auto puede bajar o subir, pero no al triple (1,200,000 contra 160,000)
+  const pa = [].concat(inc.prices ?? [], inc.price != null ? [inc.price] : []).map(Number).filter(p => p > 0), pb = [].concat(v.prices ?? []).map(Number).filter(p => p > 0);
+  if (pa.length && pb.length) {
+    const r = Math.min(...pa.flatMap(x => pb.map(y => Math.max(x, y) / Math.min(x, y))));
+    if (r > (s.price_ratio_max ?? 1.5)) hard.push('precio_muy_distinto');
+  }
   return { hard, soft, agree };
 }
+const VIVID = new Set(['rojo', 'naranja', 'amarillo', 'verde', 'azul', 'morado', 'rosa']);
 
 // Las barreras definitivas: ni siquiera se proponen a revisión.
 const BLOCKING = new Set(['vin_distinto', 'marcado_distinto', 'demo_vs_real']);
 // Fotos casi iguales entre autos de otro modelo, generación o año: es el mismo estudio de la agencia
 // (mismo fondo y ángulo), no el mismo auto. Tampoco se proponen a revisión.
 const PHOTO_BLOCKING = new Set([...BLOCKING, 'modelo_distinto', 'generacion_distinta', 'anio_distinto']);
+// Tu regla (2026-11-12): pueden cambiar ciudad, fuente, km y precio. Si cambia marca/modelo, generación,
+// versión, año, color, carrocería o el precio es de otro mundo, son autos distintos: NO se pregunta.
+const REVIEW_BLOCKING = new Set([...PHOTO_BLOCKING, 'version_distinta', 'anio_mas_menos_1', 'color_ext_distinto', 'color_int_distinto',
+  'color_foto_distinto', 'carroceria_distinta', 'precio_muy_distinto']);
+// Y con dos o más detalles que no cuadran (km y caja), tampoco.
+const SOFT_MISMATCH = new Set(['km_no_cuadra', 'transmision_distinta']);
+export const worthReviewing = reasons => !reasons.some(r => REVIEW_BLOCKING.has(r)) && reasons.filter(r => SOFT_MISMATCH.has(r)).length < 2;
 
 // ── Índice en memoria ────────────────────────────────────────────────────
 
@@ -118,12 +141,18 @@ export class IdentityIndex {
   isDistinct(a, b) { return this.distinct.has(pairKey(a, b)); }
 
   // Construye el índice desde filas de la base (ver mercado/LEEME.md).
-  static fromRows({ vehicles = [], specs = [], photos = [], listings = [], distinctPairs = [], prices = [] }, settings) {
+  static fromRows({ vehicles = [], specs = [], photos = [], listings = [], distinctPairs = [], prices = [], photoColors = [] }, settings) {
     const idx = new IdentityIndex(settings);
     const canon = new Map(specs.filter(s => s.is_canonical).map(s => [s.vehicle_id, s]));
     const ph = group(photos, 'vehicle_id'), ls = group(listings, 'vehicle_id'), pr = group(prices, 'vehicle_id');
+    // color por foto: cada anuncio da el de su portada; si dos anuncios del auto dicen distinto, no se sabe
+    const pc = new Map();
+    for (const [vid, rows] of group(photoColors, 'vehicle_id')) {
+      const per = [...group(rows, 'listing_id').values()].map(r => carColor(r.sort((a, b) => a.position - b.position).map(x => (x.color_family ? { family: x.color_family } : null)))).filter(Boolean);
+      if (per.length && per.every(f => f === per[0])) pc.set(vid, per[0]);
+    }
     for (const v of vehicles) idx.addVehicle({
-      ...v, specs: canon.get(v.id) ?? {}, prices: (pr.get(v.id) ?? []).map(p => Number(p.price)),
+      ...v, specs: { ...(canon.get(v.id) ?? {}), photo_color: pc.get(v.id) ?? null }, prices: (pr.get(v.id) ?? []).map(p => Number(p.price)),
       photos: (ph.get(v.id) ?? []).map(p => ({ hash: p.phash, center: p.phash_center, lowInfo: p.low_info, ref: p.id })),
       listings: ls.get(v.id) ?? [],
     });
@@ -175,6 +204,7 @@ export class IdentityIndex {
     const reviews = [], seen = new Set([exclude]);
     const review = (vehicleId, score, reasons, extra = {}) => {
       if (seen.has(vehicleId)) return;
+      if (!worthReviewing(reasons)) return;   // datos que no cuadran: son autos distintos, no se pregunta
       seen.add(vehicleId);
       reviews.push({ vehicleId, score: Math.round(Math.min(score, 0.99) * 1000) / 1000, reasons, ...extra });
     };
@@ -209,7 +239,10 @@ export class IdentityIndex {
       const v = this.vehicles.get(id), c = compare(inc, v, s, this.isDistinct(id, exclude ?? ''));
       const few = Math.min(pm.usablePhotos, v.photos.length) <= 2;
       const identical = m.distances.length > 0 && Math.min(...m.distances) <= I;
-      const single = few && identical && c.agree.includes('anio') && c.agree.includes('km');
+      // …y mismos km, o (anuncios sin km, como los clásicos) el mismo precio exacto
+      const incP = [].concat(inc.prices ?? [], inc.price != null ? [inc.price] : []);
+      const samePrice = incP.some(a => [].concat(v.prices ?? []).some(p => Math.abs(Number(a) - Number(p)) < 1));
+      const single = few && identical && c.agree.includes('anio') && (c.agree.includes('km') || samePrice);
       if (c.hard.some(h => PHOTO_BLOCKING.has(h))) continue;     // fotos reusadas o de estudio en otro auto
       if (m.strong < s.phash_min_matches && !single) {
         // la misma imagen pero algún dato no cuadra (¿km mal capturados?): que lo veas tú
@@ -289,8 +322,9 @@ export class IdentityIndex {
     if (!va || !vb) return { ok: false, why: 'ya_no_existe' };
     if (va.deleted || vb.deleted) return { ok: false, why: 'borrado' };
     const c = compare(va, vb, this.s, this.isDistinct(a, b));
-    const hit = c.hard.find(h => PHOTO_BLOCKING.has(h));
-    return hit ? { ok: false, why: hit } : { ok: true };
+    const all = [...c.hard, ...c.soft];
+    if (worthReviewing(all)) return { ok: true };
+    return { ok: false, why: all.find(h => REVIEW_BLOCKING.has(h)) ?? 'varios_datos_no_cuadran' };
   }
 
   // Barrido completo: busca duplicados entre vehículos ya guardados (p. ej.

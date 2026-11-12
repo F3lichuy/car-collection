@@ -71,6 +71,31 @@ Reglas de datos de los adaptadores:
 - **Vendidos/agotados** (bandera del sitio o JSON-LD `SoldOut`) no se toman como en venta.
 - **Kilometraje de relleno**: si el mismo número exacto aparece en ≥20 % de los autos de una agencia, se trata como sin dato.
 - **Réplicas, tributos y kit cars** quedan fuera de la taxonomía; "look X" / "estilo X" no define la versión.
+- **Fecha de publicación** (`mx_listings.published_on`): solo la que declara la fuente (Shopify `published_at`,
+  WordPress `date`, JSON-LD `datePosted`/`datePublished`, meta `article:published_time`, Mercado Libre `start_time`).
+  Si la fuente no la da, queda vacía y la página cuenta "desde que lo vimos" (`first_seen`) y lo dice así.
+  La primera fecha que dio la fuente no se reescribe. Al exportar con `--semilla`, a los anuncios que ya estaban
+  en producción solo se les completa la fecha si les faltaba.
+
+## Mercado Libre (API oficial, con tu app)
+
+Su robots.txt no permite que un agente lea las páginas (tampoco manejando tu navegador), así que va por la API
+con tu app de desarrollador gratuita. Se corre en tu terminal; las llaves no se guardan:
+
+```bash
+node scripts/ml-vendedor.mjs 3163409841     # un vendedor (Motorstalgia)
+node scripts/ml-vendedor.mjs --modelos      # cada modelo de la taxonomía, para llegar a 5+ comparables
+node scripts/ingest.mjs --seco --semilla .capturas/semilla-prod.json --fuente motorstalgia-mty --archivo .capturas/mercadolibre-3163409841.json --exportar .capturas/carga-ml.sql
+```
+
+Solo guarda anuncios activos con precio en MXN y dentro de la taxonomía; trae atributos (año, km, transmisión,
+color, versión), descripción y fecha de publicación.
+
+## Datos capturados a mano
+
+En la ficha de un auto, un admin ve "Completar datos". Se guarda con `mx_save_manual_specs` (migración 005) en una
+fila de `mx_specs` sin anuncio (`listing_id` null) con quién y cuándo. En la página manda sobre lo que dice el
+anuncio, campo por campo, y se marca **a mano**. Las notas sirven para anotar de dónde salió el dato.
 
 ## Aplicar en Supabase (solo con tu OK)
 
@@ -78,6 +103,8 @@ Reglas de datos de los adaptadores:
 npx supabase db query --remote --file ../supabase/mercado/001_esquema.sql
 npx supabase db query --remote --file ../supabase/mercado/002_taxonomia.sql
 npx supabase db query --remote --file ../supabase/mercado/003_antiduplicados.sql
+npx supabase db query --remote --file ../supabase/mercado/004_fuentes_publicas.sql
+npx supabase db query --remote --file ../supabase/mercado/005_publicacion_y_captura.sql
 ```
 
 Todos son idempotentes: se pueden volver a correr.

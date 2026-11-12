@@ -14,7 +14,7 @@ export class ArchivoJsonAdapter {
     ctx.log(`  · ${list.length} anuncios en ${file}`);
     for (const a of list) {
       if (a.status && a.status !== 'active') continue;
-      yield { seller_type: 'broker', seller_name: this.source.name, ...a, capture_method: 'script_local', extra: { capturado: data.capturado ?? null, origen: 'archivo' } };
+      yield { seller_type: 'broker', seller_name: this.source.name, ...a, capture_method: 'script_local', extra: { ...(a.extra ?? {}), capturado: data.capturado ?? null, origen: 'archivo' } };
     }
   }
 }

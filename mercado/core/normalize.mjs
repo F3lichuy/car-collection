@@ -221,7 +221,16 @@ export function detectOptions(text, makeId) {
 // raw: { source_id, capture_method, external_id, url, title, make, model, version, year,
 //        km, km_unit, price, currency, price_text, negotiable, transmission, color_ext,
 //        color_int, body, city, state, seller_type, seller_name, seller_contact,
-//        description, photos, vin, observed_on, extra }
+//        description, photos, vin, observed_on, published_on, extra }
+// Fecha de publicación que declara la fuente ("2026-10-02T14:03:00-06:00" → "2026-10-02").
+// Fechas imposibles (antes de 1995 o en el futuro respecto a hoy) se descartan.
+export function publishedOn(v, today) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(v ?? ''));
+  if (!m) return null;
+  const d = `${m[1]}-${m[2]}-${m[3]}`, max = today ?? new Date().toISOString().slice(0, 10);
+  return d >= '1995-01-01' && d <= max && !Number.isNaN(Date.parse(d)) ? d : null;
+}
+
 const REPLICA = /(^|[^a-z])(replica|tribute|tributo|kit car|recreacion|recreation|evocation)([^a-z]|$)/;
 
 export function normalizeListing(raw) {
@@ -279,7 +288,7 @@ export function normalizeListing(raw) {
     listing: {
       source_id: raw.source_id, capture_method: raw.capture_method ?? 'scraper', external_id: raw.external_id != null ? String(raw.external_id) : null,
       url: raw.url ?? null, url_canonical: url, title: raw.title ?? null, city: raw.city ?? null, state: raw.state ?? null,
-      seller_type: raw.seller_type ?? 'desconocido',
+      seller_type: raw.seller_type ?? 'desconocido', published_on: publishedOn(raw.published_on, raw.observed_on),
     },
     private: { seller_name: raw.seller_name ?? null, seller_contact: raw.seller_contact ?? null, description: desc || null, raw: raw.extra ?? {} },
     specs: { ...specs, parse_confidence: confidence, unresolved, observed_on: raw.observed_on },

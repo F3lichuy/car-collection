@@ -126,6 +126,9 @@ export class FichaAdapter {
       price: price > 0 && currency ? price : null, currency: price > 0 ? currency : null,
       description: [stripHtml(ld?.description ?? ''), text.slice(0, 4000)].filter(Boolean).join('\n'),
       photos: photos.slice(0, 40),
+      // fecha de publicación que declara la página (JSON-LD del auto o de la página, o la meta de WordPress/Yoast)
+      published_on: ld?.datePosted ?? ld?.datePublished ?? findSchemaObjects(jsonLdBlocks(html), ['WebPage', 'ItemPage'])[0]?.datePublished
+        ?? html.match(/<meta[^>]+property=["']article:published_time["'][^>]+content=["']([^"']+)/i)?.[1] ?? null,
       city: this.source.cities?.[0] ?? null, seller_type: 'broker', seller_name: this.source.name,
       extra: {},
     };

@@ -1,20 +1,36 @@
 // ════════════════════════════════════════════════════════════════════════
-// Mercado MX · Traer los anuncios de un vendedor de Mercado Libre por la API
-// oficial (con TU app de desarrollador). Se corre en TU terminal: las llaves
-// se escriben aquí, no se guardan en ningún archivo y no se muestran.
+// Mercado MX · Mercado Libre por la API oficial (con TU app de desarrollador).
+// Se corre en TU terminal: las llaves se escriben aquí, no se guardan en
+// ningún archivo y no se muestran. (Su robots.txt no permite que un agente
+// lea las páginas: la API es el camino permitido.)
 //
 //   cd mercado
-//   node scripts/ml-vendedor.mjs 3163409841
+//   node scripts/ml-vendedor.mjs 3163409841     un vendedor (Motorstalgia)
+//   node scripts/ml-vendedor.mjs --modelos      todos los modelos de la taxonomía,
+//                                               para llegar a 5+ comparables por modelo
+//   (--por-modelo 100: máximo de anuncios por modelo; --sin-descripcion)
 //
 // Pide: App ID, clave secreta y el código (TG-…) que aparece en la barra de
-// direcciones después de autorizar. Escribe .capturas/mercadolibre-<id>.json
-// (carpeta ignorada por git) con los anuncios, sin tokens.
+// direcciones después de autorizar. Escribe .capturas/mercadolibre-<…>.json
+// (carpeta ignorada por git) con los anuncios, sin tokens. Solo autos con
+// precio en MXN (regla: nada de precios de otros mercados).
 // ════════════════════════════════════════════════════════════════════════
 import { createInterface } from 'node:readline';
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { makes, models } from '../data/taxonomia.mjs';
+import { normalizeListing } from '../core/normalize.mjs';
 
-const SELLER = process.argv[2];
-if (!/^\d+$/.test(SELLER ?? '')) { console.error('Uso: node scripts/ml-vendedor.mjs <id del vendedor>   (p. ej. 3163409841)'); process.exit(2); }
+const args = process.argv.slice(2);
+const opt = n => { const i = args.indexOf(`--${n}`); return i >= 0 ? args[i + 1] : undefined; };
+const BY_MODEL = args.includes('--modelos');
+const SELLER = args.find(a => /^\d+$/.test(a));
+if (!BY_MODEL && !SELLER) { console.error('Uso: node scripts/ml-vendedor.mjs <id del vendedor>   |   node scripts/ml-vendedor.mjs --modelos'); process.exit(2); }
+const PER_MODEL = Number(opt('por-modelo') ?? 100);
+const WITH_DESC = !args.includes('--sin-descripcion');
+// Categoría "Autos y Camionetas" de Mercado Libre México.
+// TODO verificar en la primera corrida: si /categories/MLM1744 no es esa, el script avisa.
+const CARS_CATEGORY = 'MLM1744';
+
 const REDIRECT = process.env.ML_REDIRECT_URI ?? 'https://carcollection.app/';
 const API = 'https://api.mercadolibre.com';
 const UA = 'MercadoMX/0.1 (+https://carcollection.app)';
@@ -59,43 +75,78 @@ if (!tr.ok || !tok.access_token) {
 const token = tok.access_token;
 console.log('✓ Conectado a Mercado Libre');
 
-// 2) anuncios del vendedor (búsqueda oficial por seller_id)
-let ids = [], total = Infinity;
-try {
-  for (let offset = 0; offset < total && offset < 1000; offset += 50) {
-    const r = await api(`/sites/MLM/search?seller_id=${SELLER}&offset=${offset}&limit=50`, token);
+// 2) ids: del vendedor, o de cada modelo de la taxonomía
+async function searchIds(query, max) {
+  const ids = [];
+  let total = Infinity;
+  for (let offset = 0; offset < total && offset < max; offset += 50) {
+    const r = await api(`/sites/MLM/search?${query}&offset=${offset}&limit=${Math.min(50, max - offset)}`, token);
     total = r.paging?.total ?? 0;
     ids.push(...(r.results ?? []).map(x => x.id));
     if (!(r.results ?? []).length) break;
-    await sleep(1000);
+    await sleep(800);
+  }
+  return { ids, total };
+}
+
+const ids = new Set();
+try {
+  if (!BY_MODEL) {
+    const { ids: found } = await searchIds(`seller_id=${SELLER}`, 1000);
+    found.forEach(i => ids.add(i));
+  } else {
+    try { const c = await api(`/categories/${CARS_CATEGORY}`, token); console.log(`  categoría ${CARS_CATEGORY}: ${c.name}`); }
+    catch (e) { console.error(`  ⚠ no pude confirmar la categoría ${CARS_CATEGORY} (${e.message}). Avísale a Claude.`); }
+    const makeName = Object.fromEntries(makes.map(m => [m.id, m.name]));
+    for (const m of models) {
+      const q = `${makeName[m.make] ?? m.make} ${m.name}`;
+      const { ids: found, total } = await searchIds(`category=${CARS_CATEGORY}&q=${encodeURIComponent(q)}`, PER_MODEL);
+      found.forEach(i => ids.add(i));
+      console.log(`  ${q}: ${found.length} de ${total}`);
+    }
   }
 } catch (e) {
-  console.error(`\n✗ La búsqueda por vendedor no está disponible para esta app: ${e.message}`);
-  console.error('  Mercado Libre restringió esta búsqueda para apps nuevas. Avísale a Claude: hay que usar el plan B (capturar desde tu navegador).');
+  console.error(`\n✗ La búsqueda no está disponible para esta app: ${e.message}`);
+  console.error('  Mercado Libre restringe la búsqueda para algunas apps. Avísale a Claude con este mensaje.');
   process.exit(1);
 }
-console.log(`✓ ${ids.length} anuncios encontrados`);
+console.log(`✓ ${ids.size} anuncios encontrados`);
 
 // 3) detalle en lotes de 20 (atributos: año, km, transmisión, color, versión…)
-const items = [];
-for (let i = 0; i < ids.length; i += 20) {
-  const batch = await api(`/items?ids=${ids.slice(i, i + 20).join(',')}`, token);
+const all = [...ids], items = [];
+for (let i = 0; i < all.length; i += 20) {
+  const batch = await api(`/items?ids=${all.slice(i, i + 20).join(',')}`, token);
   for (const b of batch) if (b.code === 200 && b.body) items.push(b.body);
-  await sleep(1000);
+  await sleep(800);
 }
 
 const attr = (it, id) => (it.attributes ?? []).find(a => a.id === id)?.value_name ?? null;
-const out = items.map(it => ({
+let out = items.filter(it => it.status === 'active' && it.currency_id === 'MXN').map(it => ({
   external_id: it.id, url: it.permalink, title: it.title, status: it.status,
   make: attr(it, 'BRAND'), model: attr(it, 'MODEL'), version: attr(it, 'TRIM'), year: attr(it, 'VEHICLE_YEAR'),
   km: attr(it, 'KILOMETERS'), transmission: attr(it, 'TRANSMISSION'), color_ext: attr(it, 'COLOR'), body: attr(it, 'VEHICLE_BODY_TYPE'),
   price: it.price, currency: it.currency_id,
   city: it.location?.city?.name ?? it.seller_address?.city?.name ?? null, state: it.location?.state?.name ?? it.seller_address?.state?.name ?? null,
   photos: (it.pictures ?? []).map(p => p.secure_url || p.url).filter(Boolean),
-  date_created: it.date_created,
+  published_on: it.start_time ?? it.date_created ?? null,
+  seller_type: SELLER ? 'broker' : 'desconocido',
+  extra: { ml_seller_id: it.seller_id ?? null, precio_anterior_declarado: it.original_price ?? null, ml_ultima_modificacion: it.last_updated ?? null },
 }));
+const skipped = items.length - out.length;
+// solo lo que entra a la taxonomía (no se piden descripciones de autos que no interesan)
+out = out.filter(a => normalizeListing({ source_id: 'mercadolibre', ...a }).inScope);
+console.log(`✓ ${out.length} dentro de la taxonomía (${skipped} sin precio en MXN o no activos se omitieron)`);
+
+// 4) descripción: ahí suelen estar factura, dueños, servicios
+if (WITH_DESC) {
+  for (const a of out) {
+    try { a.description = (await api(`/items/${a.external_id}/description`, token)).plain_text ?? null; } catch { /* sin descripción */ }
+    await sleep(500);
+  }
+}
+
 mkdirSync(new URL('../.capturas/', import.meta.url), { recursive: true });
-const file = new URL(`../.capturas/mercadolibre-${SELLER}.json`, import.meta.url);
-writeFileSync(file, JSON.stringify({ vendedor: SELLER, capturado: new Date().toISOString(), anuncios: out }, null, 2));
-console.log(`✓ ${out.length} anuncios guardados en mercado/.capturas/mercadolibre-${SELLER}.json (sin tokens).`);
+const name = BY_MODEL ? 'mercadolibre-modelos' : `mercadolibre-${SELLER}`;
+writeFileSync(new URL(`../.capturas/${name}.json`, import.meta.url), JSON.stringify({ vendedor: SELLER ?? null, capturado: new Date().toISOString(), anuncios: out }, null, 2));
+console.log(`✓ ${out.length} anuncios guardados en mercado/.capturas/${name}.json (sin tokens).`);
 console.log('Listo. Avísale a Claude para cargarlos.');

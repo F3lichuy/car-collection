@@ -66,9 +66,11 @@ const colsOf = async t => (await db.query(`select column_name from information_s
   and is_generated = 'NEVER' order by ordinal_position`, [t])).rows.map(r => r.column_name);
 const json = v => JSON.stringify(v, (k, x) => (typeof x === 'bigint' ? x.toString() : x));   // hashes de 64 bits
 const seeded = new Map();   // tabla → filas (JSON) que venían de producción: no se re-exportan
+let seededListings = null;  // anuncios de producción: a estos solo se les completan datos faltantes
 if (opt('semilla')) {
   if (!dry) { console.error('--semilla solo tiene sentido con --seco.'); process.exit(2); }
   const { tablas } = JSON.parse(readFileSync(opt('semilla'), 'utf8'));
+  seededListings = tablas.mx_listings ?? [];
   for (const [t, rows] of Object.entries(tablas)) {
     if (!rows.length) continue;
     const cols = await colsOf(t);
@@ -133,6 +135,15 @@ if (dry && opt('exportar')) {
     const key = NATURAL_KEY[t];
     const guard = key ? `\n  where not exists (select 1 from public.${t} x where ${key.map(c => `x.${c} is not distinct from r.${c}`).join(' and ')})` : '';
     out.push(`insert into public.${t} (${cols.join(', ')})\n  select ${cols.map(c => `r.${c}`).join(', ')} from json_populate_recordset(null::public.${t}, ${lit(rows)}::json) r${guard}\n  on conflict do nothing;`);
+  }
+  // Anuncios que ya estaban en producción: solo se completa lo que faltaba
+  // (hoy, la fecha de publicación que declara la fuente). Nunca se reescribe.
+  const seededIds = (seededListings ?? []).map(r => r.id);
+  if (seededIds.length) {
+    const upd = (await db.query(`select id, published_on::text as published_on from mx_listings where id = any($1::uuid[]) and published_on is not null`, [seededIds])).rows;
+    if (upd.length) out.push(`update public.mx_listings l set published_on = r.published_on
+  from json_to_recordset(${lit(upd)}::json) as r(id uuid, published_on date)
+  where l.id = r.id and l.published_on is null;`);
   }
   out.push('commit;');
   writeFileSync(opt('exportar'), out.join('\n\n') + '\n');

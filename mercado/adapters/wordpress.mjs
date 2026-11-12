@@ -113,6 +113,7 @@ export class VehicaAdapter {
         price: amount > 0 && this.cfg.currency ? amount : null, currency: amount > 0 ? knownCurrency(this.cfg.currency) : null,
         description: decode(c.content?.rendered),
         photos: Array.isArray(c[F.gallery]) ? c[F.gallery].filter(u => typeof u === 'string') : [],
+        published_on: c.date ?? null,   // fecha de publicación del post en WordPress
         city: this.source.cities?.[0] ?? null, seller_type: 'broker', seller_name: this.source.name,
         extra: { clasificacion: terms['clasificación'] ?? null, condicion: terms['condición'] ?? null, km_relleno: fillerKm.has(km) || undefined },
       };
@@ -145,7 +146,7 @@ export class StmListingsAdapter {
           vin: m.vin_number || null,
           price: amount > 0 && this.cfg.currency ? amount : null, currency: amount > 0 ? knownCurrency(this.cfg.currency) : null,
           description: decode(c.content?.rendered),
-          photos: [], city: this.source.cities?.[0] ?? null, seller_type: 'broker', seller_name: this.source.name,
+          photos: [], published_on: c.date ?? null, city: this.source.cities?.[0] ?? null, seller_type: 'broker', seller_name: this.source.name,
           extra: { condicion: terms.condition ?? null },
         };
         const ids = [c.featured_media, ...Object.values(m.gallery ?? {})].filter(x => Number(x) > 0);

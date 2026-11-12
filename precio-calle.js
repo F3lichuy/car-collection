@@ -23,31 +23,56 @@
   const INVOICE = { agencia: "De agencia", aseguradora: "De aseguradora", refacturado: "Refacturado", otra: "Otra" };
   const ORIGIN = { nacional: "Nacional", importado: "Importado", fronterizo: "Fronterizo", legalizado: "Legalizado" };
   const SERVICE = { agencia_completo: "En agencia, completos", agencia_parcial: "En agencia, parciales", taller_externo: "Taller externo", sin_historial: "Sin historial" };
+  const BODY = { coupe: "Coupé", targa: "Targa", cabriolet: "Convertible", roadster: "Roadster", speedster: "Speedster", suv: "SUV", sedan: "Sedán", shooting_brake: "Shooting brake" };
+  const EXT_FAM = ["negro", "blanco", "gris", "plata", "rojo", "azul", "verde", "amarillo", "naranja", "morado", "cafe", "beige", "dorado", "rosa", "otro"];
+  const INT_FAM = ["negro", "gris", "beige", "cafe", "rojo", "azul", "verde", "blanco", "amarillo", "naranja", "otro"];
   const STATUS = { activo: "Activo", desaparecido: "Ya no aparece", vendido_confirmado: "Vendido (confirmado)", vendido_inferido: "Vendido (inferido)", republicado: "Republicado" };
 
   // ── datos ──────────────────────────────────────────────────────────────
+  const SPEC_COLS = "year,km,transmission,body,exterior_color,exterior_color_family,exterior_color_raw,interior_color,interior_color_family,interior_color_raw,invoice_type,origin,owners,service_history,antique_plates";
+  const listingSelect = withPublished => `id,title,url,city,state,source_id,status,first_seen,last_seen,is_demo${withPublished ? ",published_on" : ""},
+        vehicle:mx_vehicles(id,vin,version_id,is_demo,
+          version:mx_versions(name), generation:mx_generations(name), model:mx_models(name,segment,make:mx_makes(name))),
+        specs:mx_specs(${SPEC_COLS},parse_confidence),
+        prices:mx_price_snapshots(price,currency,negotiable,observed_from,observed_to),
+        photos:mx_photos(url,position)`;
+
   async function load() {
     const c = client();
     if (!c) throw new Error("Sin conexión con la base");
-    const [ls, src, st, fx] = await Promise.all([
-      c.from("mx_listings").select(`id,title,url,city,state,source_id,status,first_seen,last_seen,is_demo,
-        vehicle:mx_vehicles(id,vin,version_id,is_demo,
-          version:mx_versions(name), generation:mx_generations(name), model:mx_models(name,segment,make:mx_makes(name))),
-        specs:mx_specs(year,km,transmission,body,exterior_color,exterior_color_family,exterior_color_raw,interior_color,interior_color_family,interior_color_raw,
-          invoice_type,origin,owners,service_history,antique_plates,parse_confidence),
-        prices:mx_price_snapshots(price,currency,negotiable,observed_from,observed_to),
-        photos:mx_photos(url,position)`).limit(2000),
+    const [ls0, manual, src, st, fx] = await Promise.all([
+      c.from("mx_listings").select(listingSelect(true)).limit(2000),
+      // fichas capturadas a mano (sin anuncio): mandan sobre lo que dijo el anuncio
+      c.from("mx_specs").select(`vehicle_id,${SPEC_COLS},notes,updated_at`).is("listing_id", null).order("updated_at", { ascending: false }),
       c.from("mx_sources_public").select("id,name,kind,base_url"),
       c.from("mx_settings").select("key,value"),
       c.from("mx_fx_rates").select("day,usd_mxn").order("day", { ascending: false }).limit(1),
     ]);
+    let ls = ls0;
+    // la columna published_on llega con la migración 005; sin ella, todo lo demás funciona igual
+    if (ls.error && /published_on/.test(ls.error.message || "")) ls = await c.from("mx_listings").select(listingSelect(false)).limit(2000);
     if (ls.error) throw ls.error;
+    S.manual = {};
+    for (const m of manual.data || []) if (!S.manual[m.vehicle_id]) S.manual[m.vehicle_id] = m;   // la más reciente
     S.sources = Object.fromEntries((src.data || []).map(s => [s.id, s]));
     S.settings = Object.fromEntries((st.data || []).map(r => [r.key, r.value]));
     S.fx = fx.data && fx.data[0] ? fx.data[0] : null;
     S.listings = (ls.data || []).length;
     S.vehicles = groupVehicles(ls.data || []);
     S.loaded = true;
+  }
+
+  const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" });
+  const daysBetween = (a, b) => (a && b ? Math.max(0, Math.round((Date.parse(b) - Date.parse(a)) / 864e5)) : null);
+  // Cambios de precio de un anuncio: cada vez que el tramo siguiente pide otra cifra.
+  function priceChanges(l) {
+    const pr = (l.prices || []).filter(p => p.price != null).sort((a, b) => String(a.observed_from).localeCompare(String(b.observed_from)));
+    const out = [];
+    for (let i = 1; i < pr.length; i++) {
+      if (Number(pr[i].price) !== Number(pr[i - 1].price) && pr[i].currency === pr[i - 1].currency)
+        out.push({ day: pr[i].observed_from, from: Number(pr[i - 1].price), to: Number(pr[i].price), currency: pr[i].currency, source_id: l.source_id, url: l.url });
+    }
+    return out;
   }
 
   function lastPrice(l) {
@@ -71,12 +96,24 @@
       const m = x.v.model || {};
       x.make = (m.make && m.make.name) || ""; x.model = m.name || ""; x.gen = (x.v.generation && x.v.generation.name) || "";
       x.version = (x.v.version && x.v.version.name) || "";
-      x.year = sp.year ?? null; x.km = specs.map(s => s.km).filter(k => k != null).sort((a, b) => b - a)[0] ?? null;
-      x.tx = specs.map(s => s.transmission).find(Boolean) || null;
-      x.specs = sp; x.confidence = Math.max(...specs.map(s => Number(s.parse_confidence ?? 0)), 0);
+      // Lo capturado a mano manda campo por campo; lo demás sale de los anuncios.
+      const man = (S.manual || {})[x.id] || null, merged = { ...sp };
+      x.manualFields = new Set(); x.manualAt = man ? man.updated_at : null; x.notes = man ? man.notes : null;
+      if (man) for (const k of SPEC_COLS.split(",")) if (man[k] != null) { merged[k] = man[k]; x.manualFields.add(k); }
+      // lo que dicen los anuncios, sin la captura manual (para saber qué corrigió la persona)
+      x.parsed = { ...sp, km: specs.map(s => s.km).filter(k => k != null).sort((a, b) => b - a)[0] ?? null, transmission: specs.map(s => s.transmission).find(Boolean) || null };
+      x.year = merged.year ?? null;
+      x.km = man && man.km != null ? man.km : x.parsed.km;
+      x.tx = (man && man.transmission) || x.parsed.transmission;
+      x.specs = merged; x.confidence = Math.max(...specs.map(s => Number(s.parse_confidence ?? 0)), man ? 1 : 0, 0);
+      // Tiempo publicado: la fecha que declara la fuente; si ninguna la da, desde que lo vimos.
+      const pub = x.listings.filter(l => l.published_on).sort((a, b) => String(a.published_on).localeCompare(String(b.published_on)))[0];
+      x.publishedOn = pub ? pub.published_on : null; x.publishedBy = pub ? pub.source_id : null;
+      x.changes = x.listings.flatMap(priceChanges).sort((a, b) => String(b.day).localeCompare(String(a.day)));
       x.price = lastPrice(main);
       x.active = x.listings.some(l => l.status === "activo");
       x.lastSeen = main.last_seen; x.firstSeen = x.listings.map(l => l.first_seen).sort()[0];
+      x.days = daysBetween(x.publishedOn || x.firstSeen, today()); x.daysKnown = !!x.publishedOn;
       x.city = main.city || main.state || "";
       x.demo = !!(x.v.is_demo || main.is_demo);
       x.photo = x.listings.flatMap(l => (l.photos || []).slice().sort((a, b) => (a.position ?? 99) - (b.position ?? 99))).map(p => p.url)[0] || null;
@@ -185,10 +222,12 @@
       <p class="pc-count">${list.length === 1 ? "1 auto" : `${nf.format(list.length)} autos`}${list.length !== act.length ? ` de ${nf.format(act.length)}` : ""}</p>
       <div class="grid pc-grid">${shown.map(card).join("") || `<p class="pc-none">Nada con esos filtros.</p>`}</div>
       ${list.length > shown.length ? `<div class="mk-more"><button class="btn" onclick="PrecioCalle.more()">Cargar más</button></div>` : ""}
+      ${analysis(act)}
       ${byModel(act)}` : `
       <div class="empty"><h2>Todavía no hay autos</h2><p>En cuanto corra la primera captura de las fuentes, aquí aparece el mercado.</p></div>`}
       <p class="pc-foot">Precios <b>pedidos</b> en anuncios públicos, no precios de venta. Cada auto muestra de qué anuncios sale su información.</p>
     </div>`;
+    wireTips(root.querySelector("#pcAnalisis"));
   }
 
   function card(x) {
@@ -205,6 +244,51 @@
       </div></article>`;
   }
 
+  // ── análisis del mercado: cuándo se publicaron, cuánto llevan, qué precios se movieron ──
+  function analysis(act) {
+    const dated = act.filter(x => x.daysKnown);
+    // publicaciones por mes (fecha que declara la fuente), últimos 18 meses + "antes"
+    const now = new Date(today()), months = [];
+    for (let i = 17; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); }
+    const cnt = Object.fromEntries(months.map(m => [m, 0])); let before = 0;
+    for (const x of dated) { const m = String(x.publishedOn).slice(0, 7); if (m in cnt) cnt[m]++; else if (m < months[0]) before++; }
+    const MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+    const bars = [...(before ? [["antes", before, `Antes de ${MES[Number(months[0].slice(5)) - 1]} ${months[0].slice(0, 4)}`]] : []),
+      ...months.map(m => [m, cnt[m], `${MES[Number(m.slice(5)) - 1]} ${m.slice(0, 4)}`])];
+    let chart = `<p class="pc-foot">Ninguna fuente activa dice cuándo publicó sus autos todavía.</p>`;
+    if (dated.length) {
+      const W = 640, H = 200, L = 28, R = 8, T = 14, B = 30, max = Math.max(...bars.map(b => b[1]), 1), bw = (W - L - R) / bars.length;
+      const yt = ticks(0, max, Math.min(4, max)).filter(v => Number.isInteger(v)), Y = v => T + (1 - v / yt[yt.length - 1]) * (H - T - B);
+      chart = `<svg class="pc-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Autos publicados por mes">
+        ${yt.map(v => `<line class="pc-grid" x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text class="pc-ax" x="${L - 6}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${v}</text>`).join("")}
+        ${bars.map(([k, v, lab], i) => { const x0 = L + i * bw, y = Y(v), hgt = Y(0) - y;
+          return `${v ? `<path class="pc-bar" d="M${(x0 + 1).toFixed(1)},${Y(0).toFixed(1)}V${(y + Math.min(4, hgt)).toFixed(1)}q0,-${Math.min(4, hgt).toFixed(1)} ${Math.min(4, hgt).toFixed(1)},-${Math.min(4, hgt).toFixed(1)}H${(x0 + bw - 1 - Math.min(4, hgt)).toFixed(1)}q${Math.min(4, hgt).toFixed(1)},0 ${Math.min(4, hgt).toFixed(1)},${Math.min(4, hgt).toFixed(1)}V${Y(0).toFixed(1)}Z"/>` : ""}
+            <rect class="pc-hit" x="${x0.toFixed(1)}" y="${T}" width="${bw.toFixed(1)}" height="${H - T - B}" data-tip="${tip(`${lab}\n${v === 1 ? "1 auto" : `${v} autos`}`)}"/>
+            ${i % 3 === (bars.length - 1) % 3 ? `<text class="pc-ax" x="${(x0 + bw / 2).toFixed(1)}" y="${H - 10}" text-anchor="middle">${k === "antes" ? "antes" : `${MES[Number(k.slice(5)) - 1]} ${k.slice(2, 4)}`}</text>` : ""}`; }).join("")}
+        <line class="pc-base" x1="${L}" x2="${W - R}" y1="${Y(0).toFixed(1)}" y2="${Y(0).toFixed(1)}"/></svg>`;
+    }
+    // más tiempo en venta
+    const longest = act.slice().sort((a, b) => (b.days ?? 0) - (a.days ?? 0) || (b.daysKnown - a.daysKnown)).slice(0, 8);
+    // cambios de precio
+    const changes = act.flatMap(x => x.changes.map(c => ({ ...c, x }))).sort((a, b) => String(b.day).localeCompare(String(a.day))).slice(0, 12);
+    return `<section class="pc-section" id="pcAnalisis"><div class="home-sechead"><h2>Tiempo en el mercado</h2></div>
+      <div class="pc-split">
+        <div><h4 class="pc-h4">Cuándo se publicaron</h4>${chart}
+          <p class="pc-foot">${dated.length} de ${act.length} autos traen la fecha de publicación de su fuente. Los demás se cuentan desde que los vimos por primera vez.</p></div>
+        <div><h4 class="pc-h4">Más tiempo a la venta</h4>
+          <table class="pc-table"><tbody>${longest.map(x => `<tr onclick="PrecioCalle.open('${x.id}')" class="pc-rowlink"><th scope="row">${h(x.name)}${x.year ? ` · ${x.year}` : ""}</th>
+            <td class="num">${h(dayTxt(x.days))}${x.daysKnown ? "" : ` <span class="pc-insuf" title="La fuente no da la fecha: desde que lo vimos">*</span>`}</td></tr>`).join("")}</tbody></table>
+          ${longest.some(x => !x.daysKnown) ? `<p class="pc-foot">* Desde que lo vimos; la fuente no dice cuándo lo publicó.</p>` : ""}</div>
+      </div>
+      <div class="pc-sub"><h4 class="pc-h4">Cambios de precio</h4>
+        ${changes.length ? `<table class="pc-table"><thead><tr><th>Auto</th><th>Fecha</th><th class="num">Antes</th><th class="num">Ahora</th><th class="num">Cambio</th></tr></thead><tbody>
+          ${changes.map(c => { const p = pct(c.from, c.to); return `<tr class="pc-rowlink" onclick="PrecioCalle.open('${c.x.id}')"><th scope="row">${h(c.x.name)}${c.x.year ? ` · ${c.x.year}` : ""}</th><td>${h(fmtDate(c.day))}</td>
+            <td class="num">${h(money({ price: c.from, currency: c.currency }))}</td><td class="num">${h(money({ price: c.to, currency: c.currency }))}</td><td class="num">${p < 0 ? "↓" : "↑"} ${Math.abs(p)}%</td></tr>`; }).join("")}</tbody></table>`
+        : `<p class="pc-foot">Todavía ningún auto ha cambiado de precio desde que los vemos. La captura diaria compara cada día el precio de cada anuncio y aquí aparece cuando alguno sube o baja.</p>`}
+      </div>
+      <div class="pc-tip" role="tooltip" hidden></div></section>`;
+  }
+
   // Mediana pedida por modelo: solo con n suficiente; si no, "datos insuficientes".
   function byModel(act) {
     const minN = Number(S.settings.min_n_for_stats ?? 5);
@@ -214,15 +298,21 @@
       const mx = xs.map(x => x.price).filter(p => p && p.price != null && (p.currency === "MXN" || S.fx))
         .map(p => Number(p.price) * (p.currency === "USD" ? Number(S.fx.usd_mxn) : 1));
       const med = mx.length >= minN ? money({ price: median(mx), currency: "MXN" }) : null;
-      return `<tr><th scope="row">${h(k)}</th><td class="num">${xs.length}</td><td class="num">${med ? h(med) : `<span class="pc-insuf">Datos insuficientes</span>`}</td></tr>`;
+      const dk = xs.filter(x => x.daysKnown).map(x => x.days);
+      const dmed = dk.length >= minN ? `${nf.format(Math.round(median(dk)))} días` : null;
+      const falta = Math.max(0, minN - mx.length);
+      return `<tr><th scope="row">${h(k)}</th><td class="num">${xs.length}</td><td class="num">${med ? h(med) : `<span class="pc-insuf">Faltan ${falta} con precio</span>`}</td>
+        <td class="num">${dmed ? h(dmed) : `<span class="pc-insuf">${dk.length} con fecha</span>`}</td></tr>`;
     }).join("");
+    const covered = [...groups.values()].filter(xs => xs.filter(x => x.price && x.price.price != null).length >= minN).length;
     return `<section class="pc-section"><div class="home-sechead"><h2>Por modelo</h2></div>
-      <div class="pc-tablewrap"><table class="pc-table"><thead><tr><th>Modelo</th><th class="num">Autos (n)</th><th class="num">Mediana pedida</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="pc-foot">La mediana aparece cuando hay al menos ${minN} autos con precio del mismo modelo. Las tendencias y el "¿está caro?" llegan cuando haya historial suficiente.</p></section>`;
+      <p class="pc-foot" style="margin:0 0 12px">${covered} de ${groups.size} modelos tienen ya ${minN} o más autos con precio para comparar.</p>
+      <div class="pc-tablewrap"><table class="pc-table"><thead><tr><th>Modelo</th><th class="num">Autos (n)</th><th class="num">Mediana pedida</th><th class="num">Tiempo publicado (mediana)</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="pc-foot">La mediana aparece cuando hay al menos ${minN} autos con precio del mismo modelo; el tiempo publicado, cuando ${minN} de ellos traen la fecha de publicación de su fuente.</p></section>`;
   }
 
   // ── ficha de un auto ───────────────────────────────────────────────────
-  PC.open = function (id) {
+  PC.open = function (id, opts = {}) {
     const x = S.vehicles.find(v => v.id === id);
     if (!x) return;
     let scrim = document.getElementById("pcScrim");
@@ -235,8 +325,10 @@
     const s = x.specs || {};
     const photos = [...new Set(x.listings.flatMap(l => (l.photos || []).slice().sort((a, b) => (a.position ?? 99) - (b.position ?? 99)).map(p => p.url)))].slice(0, 12);
     const color = (n, fam, raw) => n || raw || (fam ? fam[0].toUpperCase() + fam.slice(1) : null);
-    const row = (k, v) => `<tr><th scope="row">${h(k)}</th><td>${v == null || v === "" ? `<span class="pc-unk">Sin dato</span>` : h(v)}</td></tr>`;
+    const mark = f => (f && x.manualFields.has(f) ? ` <span class="pc-man" title="Capturado a mano, no sale del anuncio">a mano</span>` : "");
+    const row = (k, v, f) => `<tr><th scope="row">${h(k)}</th><td>${v == null || v === "" ? `<span class="pc-unk">Sin dato</span>` : h(v)}${mark(f)}</td></tr>`;
     const path = [x.make, x.model, x.gen, x.version].filter(Boolean).map(h).join(" › ");
+    const missing = [x.year, x.km, x.tx, s.exterior_color || s.exterior_color_family, s.invoice_type, s.origin, s.owners, s.service_history].filter(v => v == null || v === "").length;
     document.getElementById("pcModal").innerHTML = `
       <div class="mh"><h3 id="pcTitle">${h(x.name || x.listings[0].title)}${x.year ? ` · ${h(x.year)}` : ""}</h3>
         <button class="iconbtn" onclick="document.getElementById('pcScrim').classList.remove('show')" aria-label="Cerrar">×</button></div>
@@ -247,14 +339,20 @@
           <div>
             <div class="pc-price big">${h(money(x.price))}</div>
             <p class="pc-foot">Último precio pedido · visto el ${h(fmtDate(x.lastSeen))}</p>
+            ${timeTiles(x)}
+            ${opts.edit && canEdit() ? specForm(x) : `
             <table class="pc-table pc-specs"><tbody>
-              ${row("Año", x.year)}${row("Kilometraje", x.km == null ? null : km(x.km))}${row("Transmisión", x.tx ? TX[x.tx] || x.tx : null)}
-              ${row("Color exterior", color(s.exterior_color, s.exterior_color_family, s.exterior_color_raw))}
-              ${row("Interior", color(s.interior_color, s.interior_color_family, s.interior_color_raw))}
-              ${row("Factura", s.invoice_type ? INVOICE[s.invoice_type] : null)}${row("Origen", s.origin ? ORIGIN[s.origin] : null)}
-              ${row("Dueños", s.owners)}${row("Servicios", s.service_history ? SERVICE[s.service_history] : null)}
-              ${row("Placas de auto antiguo", s.antique_plates ? "Sí" : null)}${row("VIN", x.v.vin ? "Registrado" : null)}
+              ${row("Año", x.year, "year")}${row("Kilometraje", x.km == null ? null : km(x.km), "km")}${row("Transmisión", x.tx ? TX[x.tx] || x.tx : null, "transmission")}
+              ${row("Carrocería", s.body ? BODY[s.body] || s.body : null, "body")}
+              ${row("Color exterior", color(s.exterior_color, s.exterior_color_family, s.exterior_color_raw), x.manualFields.has("exterior_color") ? "exterior_color" : "exterior_color_family")}
+              ${row("Interior", color(s.interior_color, s.interior_color_family, s.interior_color_raw), x.manualFields.has("interior_color") ? "interior_color" : "interior_color_family")}
+              ${row("Factura", s.invoice_type ? INVOICE[s.invoice_type] : null, "invoice_type")}${row("Origen", s.origin ? ORIGIN[s.origin] : null, "origin")}
+              ${row("Dueños", s.owners, "owners")}${row("Servicios", s.service_history ? SERVICE[s.service_history] : null, "service_history")}
+              ${row("Placas de auto antiguo", s.antique_plates == null ? null : s.antique_plates ? "Sí" : "No", "antique_plates")}${row("VIN", x.v.vin ? "Registrado" : null)}
             </tbody></table>
+            ${x.notes ? `<p class="pc-notes">${h(x.notes)}</p>` : ""}
+            ${x.manualAt ? `<p class="pc-foot">Lo marcado <span class="pc-man">a mano</span> se capturó el ${h(fmtDate(String(x.manualAt).slice(0, 10)))}; lo demás sale de los anuncios.</p>` : ""}
+            ${canEdit() ? `<button class="btn sm pc-editbtn" onclick="PrecioCalle.open('${x.id}',{edit:true})">${missing ? `Completar datos (${missing} sin dato)` : "Corregir datos"}</button>` : ""}`}
           </div>
           <div>
             <h4 class="pc-h4">De dónde sale esta información</h4>
@@ -269,10 +367,177 @@
             }).join("")}
           </div>
         </div>
+        ${historyChart(x)}
+        ${compareChart(x)}
         <p class="pc-foot">Precio pedido en anuncios públicos, no precio de venta.${x.confidence < 0.7 ? " Algunos datos de este auto están por confirmar." : ""}</p>
-      </div>`;
+      </div>
+      <div class="pc-tip" role="tooltip" hidden></div>`;
+    wireTips(document.getElementById("pcModal"));
     scrim.classList.add("show");
   };
+
+  // ── tiempo publicado y cambios de precio ───────────────────────────────
+  const dayTxt = d => (d == null ? "—" : d === 0 ? "Menos de 1 día" : d === 1 ? "1 día" : `${nf.format(d)} días`);
+  const pct = (a, b) => Math.round(((b - a) / a) * 1000) / 10;
+  function timeTiles(x) {
+    const src = x.publishedBy ? (S.sources[x.publishedBy] ? S.sources[x.publishedBy].name : sourceName(x.publishedBy)) : "";
+    const pub = x.daysKnown
+      ? `<div><dt>Tiempo publicado</dt><dd>${h(dayTxt(x.days))}</dd><p>Desde el ${h(fmtDate(x.publishedOn))}, según ${h(src)}</p></div>`
+      : `<div><dt>Lo vemos desde hace</dt><dd>${h(dayTxt(x.days))}</dd><p>La fuente no dice cuándo lo publicó; contamos desde el ${h(fmtDate(x.firstSeen))}</p></div>`;
+    let pr;
+    if (x.changes.length) {
+      const oldest = x.changes[x.changes.length - 1], newest = x.changes[0], p = pct(oldest.from, newest.to);
+      const what = p < 0 ? `Bajó ${Math.abs(p)}%` : p > 0 ? `Subió ${p}%` : "Volvió al mismo precio";
+      pr = `<div><dt>Precio</dt><dd>${h(what)}</dd><p>${x.changes.length === 1 ? "1 cambio" : `${x.changes.length} cambios`}: de ${h(money({ price: oldest.from, currency: oldest.currency }))} a ${h(money({ price: newest.to, currency: newest.currency }))} (último el ${h(fmtDate(newest.day))})</p></div>`;
+    } else if (!x.price || x.price.price == null) {
+      pr = `<div><dt>Precio</dt><dd>Sin cifra</dd><p>El anuncio no publica precio${x.price && x.price.negotiable ? " (a tratar)" : ""}</p></div>`;
+    } else {
+      pr = `<div><dt>Precio</dt><dd>Sin cambios</dd><p>Mismo precio desde el ${h(fmtDate(x.firstSeen))}, el primer día que lo vimos</p></div>`;
+    }
+    return `<dl class="pc-tiles">${pub}${pr}</dl>`;
+  }
+
+  // ── captura manual (solo admin; la base lo vuelve a revisar con RLS) ───
+  const canEdit = () => { try { return typeof isAdmin === "function" && isAdmin() && typeof session !== "undefined" && !!session; } catch (e) { return false; } };
+  function specForm(x) {
+    const s = x.specs || {};
+    const sel = (k, map, val) => `<select class="ctrl" name="${k}"><option value="">Sin dato</option>${Object.entries(map).map(([v, l]) => `<option value="${h(v)}"${String(val ?? "") === v ? " selected" : ""}>${h(l)}</option>`).join("")}</select>`;
+    const fam = (k, list, val) => sel(k, Object.fromEntries(list.map(f => [f, f[0].toUpperCase() + f.slice(1)])), val);
+    const f = (label, input) => `<label class="pc-field"><span>${h(label)}</span>${input}</label>`;
+    const num = (k, val, attrs) => `<input class="ctrl" name="${k}" inputmode="numeric" value="${h(val ?? "")}" ${attrs || ""}>`;
+    return `<form class="pc-form" onsubmit="event.preventDefault();PrecioCalle.saveSpecs('${x.id}', this)">
+      <p class="pc-foot" style="margin-top:0">Lo que captures aquí manda sobre lo que dice el anuncio y queda marcado <span class="pc-man">a mano</span> con la fecha. Deja en "Sin dato" lo que no sepas.</p>
+      <div class="pc-formgrid">
+        ${f("Año", num("year", x.year, 'maxlength="4" placeholder="1989"'))}
+        ${f("Kilometraje", num("km", x.km, 'placeholder="45000"'))}
+        ${f("Transmisión", sel("transmission", TX, x.tx))}
+        ${f("Carrocería", sel("body", BODY, s.body))}
+        ${f("Color exterior (nombre)", `<input class="ctrl" name="exterior_color" value="${h(s.exterior_color ?? "")}" placeholder="Guards Red">`)}
+        ${f("Familia de color exterior", fam("exterior_color_family", EXT_FAM, s.exterior_color_family))}
+        ${f("Interior (nombre)", `<input class="ctrl" name="interior_color" value="${h(s.interior_color ?? "")}" placeholder="Piel negra">`)}
+        ${f("Familia de color interior", fam("interior_color_family", INT_FAM, s.interior_color_family))}
+        ${f("Factura", sel("invoice_type", INVOICE, s.invoice_type))}
+        ${f("Origen", sel("origin", ORIGIN, s.origin))}
+        ${f("Dueños", num("owners", s.owners, 'maxlength="2"'))}
+        ${f("Servicios", sel("service_history", SERVICE, s.service_history))}
+        ${f("Placas de auto antiguo", sel("antique_plates", { true: "Sí", false: "No" }, s.antique_plates == null ? "" : String(s.antique_plates)))}
+      </div>
+      ${f("Notas (de dónde sale el dato: llamada, visita, Instagram…)", `<textarea class="ctrl" name="notes" rows="2" maxlength="500">${h(x.notes ?? "")}</textarea>`)}
+      <p class="pc-formmsg" role="status"></p>
+      <div class="pc-formbtns"><button class="btn primary sm" type="submit">Guardar</button>
+        <button class="btn ghost sm" type="button" onclick="PrecioCalle.open('${x.id}')">Cancelar</button></div>
+    </form>`;
+  }
+  PC.saveSpecs = async function (id, form) {
+    const x = S.vehicles.find(v => v.id === id), msg = form.querySelector(".pc-formmsg"), btn = form.querySelector('[type="submit"]');
+    const NUM = new Set(["year", "km", "owners"]), data = {};
+    for (const [k, raw] of new FormData(form)) {
+      const v = String(raw).trim();
+      if (v === "") continue;
+      const val = NUM.has(k) ? Number(v.replace(/[^\d]/g, "")) : k === "antique_plates" ? v === "true" : v;
+      if (NUM.has(k) && !Number.isFinite(val)) { msg.textContent = "Revisa los números."; return; }
+      // igual a lo que ya dice el anuncio y no estaba capturado a mano: no se guarda como captura
+      const base = x.parsed[k];
+      if (!x.manualFields.has(k) && base != null && String(base) === String(val)) continue;
+      data[k] = val;
+    }
+    if (data.year != null && (data.year < 1900 || data.year > new Date().getFullYear() + 1)) { msg.textContent = "El año no parece correcto."; return; }
+    btn.disabled = true; msg.textContent = "Guardando…";
+    const { error } = await client().rpc("mx_save_manual_specs", { p_vehicle: id, p_data: data });
+    if (error) { btn.disabled = false; msg.textContent = `No se guardó: ${error.message}`; return; }
+    S.loaded = false; S.loading = load(); await S.loading;
+    draw(root()); PC.open(id);
+    if (typeof toast === "function") toast("Datos guardados");
+  };
+
+  // ── gráficas (SVG en línea, colores del tema) ──────────────────────────
+  const toMxn = p => (p && p.price != null ? (p.currency === "USD" ? (S.fx ? Number(p.price) * Number(S.fx.usd_mxn) : null) : Number(p.price)) : null);
+  const short = v => (v <= 0 ? "$0" : v >= 1e6 ? `$${(v / 1e6).toFixed(v >= 1e7 ? 0 : 1)} M` : `$${nf.format(Math.round(v / 1e3))} k`);
+  function ticks(lo, hi, n = 4) {
+    const span = hi - lo || Math.abs(hi) || 1, step0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(step0)));
+    const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= step0) || 10 * mag;
+    const out = []; for (let v = Math.floor(lo / step) * step; v <= hi + step * 0.001; v += step) out.push(v);
+    return out;
+  }
+  const tip = s => h(s).replace(/\n/g, "&#10;");
+
+  function historyChart(x) {
+    const series = x.listings.map(l => ({ l, pts: (l.prices || []).filter(p => toMxn(p) != null).sort((a, b) => String(a.observed_from).localeCompare(String(b.observed_from))) })).filter(s => s.pts.length);
+    const all = series.flatMap(s => s.pts);
+    const head = `<section class="pc-sub"><h4 class="pc-h4">Historial de precio</h4>`;
+    if (!all.length) return `${head}<p class="pc-foot">Este auto no tiene precio publicado.</p></section>`;
+    const d0 = all.map(p => p.observed_from).sort()[0], d1 = all.map(p => p.observed_to).sort().pop();
+    const spanDays = daysBetween(d0, d1);
+    if (spanDays < 7 && !x.changes.length)
+      return `${head}<p class="pc-foot">Lo vemos desde el ${h(fmtDate(d0))}. La gráfica aparece con una semana de historial: la captura diaria registra cada día si el precio sigue igual, sube o baja.</p></section>`;
+    const W = 640, H = 220, L = 64, R = 96, T = 12, B = 28, t0 = Date.parse(d0), t1 = Date.parse(d1) + 864e5;
+    const vals = all.map(toMxn), lo = Math.min(...vals), hi = Math.max(...vals), pad = (hi - lo) * 0.15 || hi * 0.05;
+    const yt = ticks(lo - pad, hi + pad), y0 = yt[0], y1 = yt[yt.length - 1];
+    const X = t => L + ((t - t0) / (t1 - t0)) * (W - L - R), Y = v => T + (1 - (v - y0) / (y1 - y0 || 1)) * (H - T - B);
+    const xt = [t0, (t0 + t1) / 2, t1 - 864e5];
+    const lines = series.map((s, i) => {
+      let d = "";
+      s.pts.forEach((p, j) => { const a = X(Date.parse(p.observed_from)), b = X(Date.parse(p.observed_to) + 864e5), y = Y(toMxn(p)); d += `${j ? "L" : "M"}${a.toFixed(1)},${y.toFixed(1)}H${b.toFixed(1)}`; });
+      const last = s.pts[s.pts.length - 1], name = S.sources[s.l.source_id] ? S.sources[s.l.source_id].name : sourceName(s.l.source_id);
+      const dots = s.pts.map(p => { const cx = X(Date.parse(p.observed_from)), cy = Y(toMxn(p));
+        return `<circle class="pc-dot ${i ? "alt" : ""}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="4"/><circle class="pc-hit" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="12" data-tip="${tip(`${name}\n${fmtDate(p.observed_from)} – ${fmtDate(p.observed_to)}\n${money(p)}`)}"/>`; }).join("");
+      return `<path class="pc-line ${i ? "alt" : ""}" d="${d}"/>${dots}<text class="pc-lab" x="${(W - R + 6).toFixed(1)}" y="${(Y(toMxn(last)) + 4).toFixed(1)}">${h(name)}</text>`;
+    }).join("");
+    return `${head}<svg class="pc-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Precio pedido por día de ${h(x.name)}">
+      ${yt.map(v => `<line class="pc-grid" x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text class="pc-ax" x="${L - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${short(v)}</text>`).join("")}
+      ${xt.map((t, i) => `<text class="pc-ax" x="${X(t).toFixed(1)}" y="${H - 8}" text-anchor="${["start", "middle", "end"][i]}">${fmtDate(new Date(t).toISOString().slice(0, 10))}</text>`).join("")}
+      ${lines}</svg>
+      <p class="pc-foot">Cada tramo es un precio que se mantuvo esos días. Pasa el cursor por los puntos para ver fechas y cifra.</p></section>`;
+  }
+
+  // El auto contra los demás del mismo modelo: año contra precio pedido.
+  function compareChart(x) {
+    const minN = Number(S.settings.min_n_for_stats ?? 5);
+    const peers = S.vehicles.filter(v => v.active && v.make === x.make && v.model === x.model && v.year && toMxn(v.price) != null);
+    const label = modelLabel(x.make, x.model), head = `<section class="pc-sub"><h4 class="pc-h4">Contra otros ${h(label)} a la venta</h4>`;
+    const n = peers.length, falta = Math.max(0, minN - n);
+    const others = peers.filter(v => v.id !== x.id);
+    if (!others.length) return `${head}<p class="pc-foot">Es el único ${h(label)} con año y precio que tenemos. Con ${minN} o más se calcula la mediana del modelo.</p></section>`;
+    const prices = peers.map(v => toMxn(v.price)), med = n >= minN ? median(prices) : null;
+    const W = 640, H = 240, L = 64, R = 16, T = 14, B = 28;
+    const years = peers.map(v => v.year); let ya = Math.min(...years), yb = Math.max(...years); if (ya === yb) { ya -= 2; yb += 2; } else { ya -= 1; yb += 1; }
+    const lo = Math.min(...prices), hi = Math.max(...prices), pad = (hi - lo) * 0.15 || hi * 0.1, yt = ticks(lo - pad, hi + pad), p0 = yt[0], p1 = yt[yt.length - 1];
+    const X = yr => L + ((yr - ya) / (yb - ya)) * (W - L - R), Y = v => T + (1 - (v - p0) / (p1 - p0 || 1)) * (H - T - B);
+    const xt = ticks(ya, yb, Math.min(6, yb - ya)).filter(t => t >= ya && t <= yb && Number.isInteger(t));
+    const dot = v => { const me = v.id === x.id, cx = X(v.year).toFixed(1), cy = Y(toMxn(v.price)).toFixed(1);
+      return `<circle class="pc-dot ${me ? "" : "peer"}" cx="${cx}" cy="${cy}" r="${me ? 6 : 5}"/><circle class="pc-hit" cx="${cx}" cy="${cy}" r="12" ${me ? "" : `onclick="PrecioCalle.open('${v.id}')"`} data-tip="${tip(`${me ? "Este auto" : v.name}\n${v.year} · ${km(v.km)}\n${money(v.price)}`)}"/>`; };
+    const mine = toMxn(x.price), vsMed = med && mine != null ? pct(med, mine) : null;
+    return `${head}
+      <svg class="pc-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Año contra precio pedido de ${n} ${h(label)}">
+        ${yt.map(v => `<line class="pc-grid" x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text class="pc-ax" x="${L - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${short(v)}</text>`).join("")}
+        ${xt.map(t => `<text class="pc-ax" x="${X(t).toFixed(1)}" y="${H - 8}" text-anchor="middle">${t}</text>`).join("")}
+        ${med ? `<line class="pc-med" x1="${L}" x2="${W - R}" y1="${Y(med).toFixed(1)}" y2="${Y(med).toFixed(1)}"/><text class="pc-ax" x="${W - R}" y="${(Y(med) - 6).toFixed(1)}" text-anchor="end">mediana ${short(med)}</text>` : ""}
+        ${others.map(dot).join("")}${peers.some(v => v.id === x.id) ? dot(x) : ""}
+      </svg>
+      <p class="pc-legend"><span class="pc-key"></span> Este auto <span class="pc-key peer"></span> Otros ${h(label)} (toca uno para abrirlo)</p>
+      <p class="pc-foot">${n} ${h(label)} con año y precio.${mine == null ? " Este auto no publica precio, así que no aparece en la gráfica." : ""}${
+        vsMed != null ? ` Este auto pide ${vsMed === 0 ? "lo mismo que la mediana" : `${Math.abs(vsMed)}% ${vsMed > 0 ? "más" : "menos"} que la mediana`}.`
+        : med ? "" : ` Faltan ${falta} para calcular la mediana; mientras, compáralo punto por punto.`}</p>
+      <details class="pc-details"><summary>Ver como tabla</summary><table class="pc-table"><thead><tr><th>Auto</th><th class="num">Año</th><th class="num">Km</th><th class="num">Precio</th></tr></thead><tbody>
+        ${peers.slice().sort((a, b) => a.year - b.year).map(v => `<tr><th scope="row">${v.id === x.id ? "<b>Este auto</b>" : h(v.name)}</th><td class="num">${v.year}</td><td class="num">${h(km(v.km))}</td><td class="num">${h(money(v.price))}</td></tr>`).join("")}
+      </tbody></table></details></section>`;
+  }
+
+  // Tooltip: un solo globo que sigue al cursor o al foco; el dato siempre está también en texto o tabla.
+  function wireTips(box) {
+    if (!box || box.dataset.tips) return;   // el modal se reutiliza: se conecta una vez y el globo se busca en cada movimiento
+    box.dataset.tips = "1";
+    box.addEventListener("pointermove", e => {
+      const t = box.querySelector(".pc-tip"), el = e.target.closest && e.target.closest("[data-tip]");
+      if (!t) return;
+      if (!el) { t.hidden = true; return; }
+      t.textContent = el.getAttribute("data-tip"); t.hidden = false;
+      const r = box.getBoundingClientRect();
+      t.style.left = `${Math.max(8, Math.min(e.clientX - r.left + 14, r.width - t.offsetWidth - 8))}px`;
+      t.style.top = `${e.clientY - r.top + box.scrollTop + 14}px`;
+    });
+    box.addEventListener("pointerleave", () => { const t = box.querySelector(".pc-tip"); if (t) t.hidden = true; });
+  }
 
   // ── acciones ───────────────────────────────────────────────────────────
   const root = () => document.getElementById("tab-calle");
@@ -340,7 +605,48 @@
     .pc-hist{list-style:none;margin:0 0 8px;padding:0;font-size:13px}
     .pc-hist li{display:flex;justify-content:space-between;gap:10px;padding:3px 0;color:var(--ink-dim)}
     .pc-hist b{color:var(--ink);font-weight:500}
+    .pc-tiles{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;margin:16px 0 0;border-top:1px solid var(--line)}
+    .pc-tiles div{padding:12px 0 0}
+    .pc-tiles dt{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+    .pc-tiles dd{margin:4px 0 2px;font-size:20px;color:var(--ink)}
+    .pc-tiles p{margin:0;font-size:12px;color:var(--ink-faint)}
+    .pc-man{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:0 4px;vertical-align:1px;margin-left:4px}
+    .pc-notes{font-size:13px;color:var(--ink-dim);margin:10px 0 0;white-space:pre-wrap}
+    .pc-editbtn{margin-top:14px}
+    .pc-form{margin-top:16px}
+    .pc-formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+    .pc-field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--ink-dim);margin-top:10px}
+    .pc-formgrid .pc-field{margin-top:0}
+    .pc-field .ctrl{width:100%;max-width:none;box-sizing:border-box}
+    .pc-formmsg{font-size:12px;color:var(--ink-dim);min-height:1em;margin:8px 0}
+    .pc-formbtns{display:flex;gap:8px}
+    .pc-sub{margin-top:28px;position:relative}
+    .pc-section{position:relative}
+    .pc-split{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:28px}
+    .pc-chart{width:100%;height:auto;display:block;overflow:visible}
+    .pc-chart text{font-family:var(--mono);font-size:10px}
+    .pc-ax{fill:var(--ink-faint);font-variant-numeric:tabular-nums}
+    .pc-lab{fill:var(--ink-dim)}
+    .pc-grid{stroke:var(--line);stroke-width:1}
+    .pc-base{stroke:var(--ink-faint);stroke-width:1}
+    .pc-med{stroke:var(--ink-dim);stroke-width:1}
+    .pc-line{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round}
+    .pc-line.alt{stroke:var(--ink-dim)}
+    .pc-dot{fill:var(--accent);stroke:var(--bg2,var(--bg));stroke-width:2}
+    .pc-dot.alt,.pc-dot.peer{fill:var(--ink-faint)}
+    .pc-bar{fill:var(--accent)}
+    .pc-hit{fill:transparent;cursor:pointer}
+    .pc-tip{position:absolute;z-index:5;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;line-height:1.4;padding:6px 9px;white-space:pre;max-width:260px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+    .pc-legend{font-size:12px;color:var(--ink-dim);margin:8px 0 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .pc-key{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+    .pc-key.peer{background:var(--ink-faint);margin-left:10px}
+    .pc-details{margin-top:10px;font-size:13px}
+    .pc-details summary{cursor:pointer;color:var(--ink-dim);font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+    .pc-rowlink{cursor:pointer}
+    .pc-rowlink:hover th{color:var(--accent)}
+    #pcModal{position:relative}
     @media (max-width:720px){
+      .pc-split,.pc-formgrid,.pc-tiles{grid-template-columns:1fr}
       .pc-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
       .pc-filters select.ctrl{max-width:none;flex:1 1 45%}
       .pc-ficha{grid-template-columns:1fr;gap:18px}

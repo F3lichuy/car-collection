@@ -83,16 +83,17 @@ export class Store {
 
   async insertListing(db, vehicleId, l, day) {
     return (await one(db, `insert into mx_listings (vehicle_id, source_id, capture_method, external_id, url, url_canonical, title,
-        city, state, seller_type, first_seen, last_seen) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11) returning id`,
-      [vehicleId, l.source_id, l.capture_method, l.external_id, l.url, l.url_canonical, l.title, l.city, l.state, l.seller_type, day])).id;
+        city, state, seller_type, first_seen, last_seen, published_on) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11,$12) returning id`,
+      [vehicleId, l.source_id, l.capture_method, l.external_id, l.url, l.url_canonical, l.title, l.city, l.state, l.seller_type, day, l.published_on ?? null])).id;
   }
 
   async touchListing(db, listingId, l, day) {
     await db.query(`update mx_listings set last_seen = greatest(last_seen, $2::date), first_seen = least(first_seen, $2::date),
         title = coalesce($3, title), city = coalesce($4, city), state = coalesce($5, state),
+        published_on = coalesce(published_on, $6::date),   -- la primera fecha que dio la fuente no se reescribe
         status = case when status in ('desaparecido') then 'activo' else status end,
         status_changed_at = case when status in ('desaparecido') then now() else status_changed_at end
-      where id = $1`, [listingId, day, l.title, l.city, l.state]);
+      where id = $1`, [listingId, day, l.title, l.city, l.state, l.published_on ?? null]);
   }
 
   async upsertPrivate(db, listingId, p) {

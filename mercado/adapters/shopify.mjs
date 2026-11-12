@@ -34,6 +34,7 @@ export class ShopifyAdapter {
           price: v.price != null && /^(MXN|USD)$/.test(currency ?? '') ? Number(v.price) : null, currency: /^(MXN|USD)$/.test(currency ?? '') ? currency : null,
           description: `${stripHtml(p.body_html)}\n${tagText}`,
           photos: (p.images ?? []).map(i => i.src).filter(Boolean),
+          published_on: p.published_at ?? p.created_at ?? null,   // cuándo la tienda lo puso a la venta
           city: this.source.cities?.[0] ?? null, seller_type: 'broker', seller_name: this.source.name,
           extra: { tags, vendor: p.vendor ?? null, product_type: p.product_type ?? null, shopify_updated_at: p.updated_at },
         };

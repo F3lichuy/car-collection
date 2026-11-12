@@ -65,11 +65,21 @@ export function resolveMake(text) {
 // (en cualquier orden); si no, se prueba pegado ("gt3rs", "lp6104"). Una
 // versión cuyo nombre es solo el del modelo ("911", "Testarossa") no cuenta:
 // sería suponer la versión base.
+// Las palabras del modelo dentro del nombre de la versión ("718 Cayman GT4 RS") no son obligatorias:
+// "Porsche 718 GT4RS" es esa versión. Cuentan como del modelo su nombre y sus alias numéricos (718).
+const mixed = s => s.length >= 4 || (s.length === 3 && /\d/.test(s) && /[a-z]/.test(s));
 function versionScore(v, tset, cmpText, model) {
-  const modelTok = new Set(model ? tokens(model.name) : []);
+  // (solo números de 3+ cifras: "718", "911"; un "63" de "G 63" sí distingue la versión)
+  const modelTok = new Set(model ? [...tokens(model.name), ...(model.aliases ?? []).flat().filter(t => /^\d{3,}$/.test(t))] : []);
   if (v.tok.every(x => modelTok.has(x))) return 0;
   if (v.tok.every(x => tset.has(x))) return v.tok.length * 10 + v.cmp.length;
-  if (v.cmp.length >= 4 && cmpText.includes(v.cmp)) return 5 + v.cmp.length;
+  // pegado: "gt3rs", "lp6104"; con 3 caracteres solo si mezcla letra y número ("g63" en "G63 AMG")
+  if (mixed(v.cmp) && cmpText.includes(v.cmp)) return 5 + v.cmp.length;
+  const dist = v.tok.filter(x => !modelTok.has(x));
+  if (dist.length < v.tok.length) {
+    if (dist.every(x => tset.has(x))) return dist.length * 10 + dist.join('').length;
+    if (mixed(dist.join('')) && cmpText.includes(dist.join(''))) return 5 + dist.join('').length;
+  }
   return 0;
 }
 
@@ -128,6 +138,12 @@ export function resolveTaxonomy({ make, model, version, title, year }) {
     if (year && v.year_from && (year < v.year_from - 1 || (v.year_to && year > v.year_to + 1))) continue;
     if (!best.length || score > best[0].score) best = [{ v, g, score }];
     else if (score === best[0].score) best.push({ v, g, score });
+  }
+  // Empate por la tolerancia de ±1 año ("Carrera 4S 2020": 991.2 hasta 2019 y 992.1 desde 2020):
+  // si el año cae exacto en una sola de las versiones empatadas, es esa.
+  if (best.length > 1 && year) {
+    const exact = best.filter(b => year >= (b.v.year_from ?? 0) && year <= (b.v.year_to ?? 9999));
+    if (exact.length === 1) best = exact;
   }
   let generation_id = genCands.length === 1 ? genCands[0].id : null, version_id = null;
   // Generación con una sola versión (Carrera GT, 918, 512 TR…): esa es, no hay que suponer.
@@ -248,9 +264,28 @@ export function normalizeListing(raw) {
   const inScope = !!tax.model_id;
   issues.push(...tax.issues);
 
-  const { km, raw: kmRaw } = parseKm(raw.km, raw.km_unit);
+  let { km, raw: kmRaw } = parseKm(raw.km, raw.km_unit);
+  // sin campo de km: "con 14,000 km" en el título o la descripción (un solo número; si hay varios, no se adivina)
+  // En la descripción solo con contexto ("kilometraje: 35,000", "con 12 mil km", "recorrido 8,000 km"):
+  // un "servicio cada 10,000 km" no es el kilometraje del auto.
+  if (km == null) {
+    const N = '(?:\\d{1,3}(?:[,.]\\d{3})+|\\d{1,6})\\s*(?:mil\\s*)?';
+    const ctx = [
+      ...[...desc.matchAll(new RegExp(`(?:kilometraje|recorrido|od[oó]metro)\\s*:?\\s*(${N}(?:km|kms|kil[oó]metros)?)`, 'gi'))].map(m => m[1]),
+      ...[...desc.matchAll(new RegExp(`(?:\\bcon|\\btiene|\\bs[oó]lo|\\bapenas)\\s+(${N}(?:km|kms|kil[oó]metros))\\b(?!\\s*\\/\\s*h)`, 'gi'))].map(m => m[1]),
+      // renglón que solo dice el kilometraje: "• 11,000 km"
+      ...[...desc.matchAll(new RegExp(`(?:^|\\n)\\s*[•·*-]?\\s*(${N}(?:km|kms|kil[oó]metros))\\s*\\.?\\s*(?=\\n|$)`, 'gi'))].map(m => m[1]),
+    ];
+    const t = kmInText(raw.title) ?? (new Set(ctx.map(s => parseKm(s).km)).size === 1 ? ctx[0] : null);
+    if (t) ({ km, raw: kmRaw } = parseKm(t));
+  }
   const price = parsePrice(raw.price ?? raw.price_text, raw.currency, raw.price_text ?? '');
   if (raw.negotiable) price.negotiable = true;
+  // precio "antes" que la fuente muestra tachado; solo si es mayor que el actual y en la misma moneda
+  if (price.price != null && raw.list_price != null) {
+    const lp = parsePrice(raw.list_price, raw.currency ?? price.currency);
+    if (lp.price != null && lp.currency === price.currency && lp.price > price.price && lp.price < price.price * 3) price.list_price = lp.price;
+  }
   const tx = parseTransmission(raw.transmission, raw.title, tax.version ?? { transmissions: tax.genTransmissions ?? [] }, year, tax.make_id);
   if (tx.impossible) issues.push('transmision_imposible_para_la_version');
   const ext = parseColor(raw.color_ext), int = parseColor(raw.color_int);
@@ -260,7 +295,8 @@ export function normalizeListing(raw) {
   if (!vin) { const found = findVins(`${raw.title ?? ''} ${desc}`); if (found.length === 1) vin = found[0]; else if (found.length > 1) issues.push('varios_vin_en_texto'); }
 
   const specs = {
-    year, km, km_raw: kmRaw, body: raw.body ? mapBody(raw.body) : null,
+    // carrocería: el campo; si no viene, la palabra clara del título ("911 Targa 4S", "SL Convertible")
+    year, km, km_raw: kmRaw, body: raw.body ? mapBody(raw.body) : bodyInTitle(raw.title),
     transmission: tx.transmission, transmission_raw: tx.raw,
     exterior_color: ext.name, exterior_color_family: ext.family, exterior_color_raw: ext.raw,
     interior_color: int.name, interior_color_family: int.family && D.COLOR_FAMILY.some(([f]) => f === int.family) && ['negro', 'gris', 'beige', 'cafe', 'rojo', 'azul', 'verde', 'blanco', 'amarillo', 'naranja'].includes(int.family) ? int.family : (int.family ? 'otro' : null),
@@ -296,6 +332,25 @@ export function normalizeListing(raw) {
     photos: (raw.photos ?? []).filter(Boolean),
     inferred: tx.inferred,
   };
+}
+
+function bodyInTitle(t) {
+  const s = norm(t ?? '');
+  if (/\btarga\b/.test(s)) return 'targa';
+  if (/\bspeedster\b/.test(s)) return 'speedster';
+  if (/\b(cabrio|cabriolet|convertible|descapotable|spider|spyder|volante)\b/.test(s)) return 'cabriolet';
+  if (/\broadster\b/.test(s)) return 'roadster';
+  if (/\b(coupe|coupé)\b/.test(s)) return 'coupe';
+  return null;
+}
+
+// "1,700 km", "14mil km", "con 14,000 kilómetros" (no "0-100 km/h"). Uno solo; si hay varios distintos, null.
+export function kmInText(s) {
+  const found = new Set();
+  for (const m of String(s ?? '').matchAll(/(\d{1,3}(?:[,.]\d{3})+|\d{1,6})\s*(mil\s*)?(?:km|kms|kilómetros|kilometros)\b(?!\s*\/\s*h)/gi)) {
+    found.add(Number(m[1].replace(/[,.]/g, '')) * (m[2] ? 1000 : 1));
+  }
+  return found.size === 1 ? String([...found][0]) : null;
 }
 
 function mapBody(b) {

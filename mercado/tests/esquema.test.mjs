@@ -224,7 +224,9 @@ describe('datos demo', () => {
     await db.query(`update mx_vehicles set merged_into = $1 where id = $2`, [d1.vehicle, d2.vehicle]);
     await db.query(`insert into mx_merges (kept_id, merged_id, reason) values ($1, $2, 'manual')`, [d1.vehicle, d2.vehicle]);
 
-    const r = await as(db, 'admin', tx => tx.query('select mx_purge_demo() r'), { commit: true });
+    // desde la app ni un admin borra filas (007): se corre por el CLI, con la conexión directa
+    await rejects(as(db, 'admin', tx => tx.query('select mx_purge_demo() r')), /permission denied/);
+    const r = await db.query('select mx_purge_demo() r');
     assert.equal(r.rows[0].r.vehiculos, 2);
     const left = await one(db, `select
       (select count(*) from mx_vehicles where is_demo) + (select count(*) from mx_listings where is_demo) +

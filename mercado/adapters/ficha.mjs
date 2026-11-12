@@ -114,6 +114,10 @@ export class FichaAdapter {
       if (m) { price = Number(m[1].replace(/,/g, '')); currency = knownCurrency(m[2]); }
     }
     currency = currency ?? knownCurrency(this.cfg.currency);
+    // precio tachado junto al título (WooCommerce: <del>$5,559,000</del> <ins>$5,189,000</ins>)
+    const near = h1At > 0 ? main.slice(h1At, h1At + 4000) : '';
+    const delM = stripHtml(near.match(/<del[^>]*>([\s\S]*?)<\/del>/i)?.[1] ?? '').match(/([\d]{1,3}(?:,\d{3})+|\d{5,})/);
+    const listPrice = delM ? Number(delM[1].replace(/,/g, '')) : null;
 
     // Prestige DLC publica "https://prestigedlc.comhttps://…blob…": se toma la URL de adentro
     const ldImages = [].concat(ld?.image ?? []).map(i => (typeof i === 'string' ? i : i?.url)).filter(Boolean)
@@ -144,6 +148,7 @@ export class FichaAdapter {
       color_int: f.color_int ?? ldText(ld?.vehicleInteriorColor),
       vin: ld?.vehicleIdentificationNumber ?? f.vin ?? null,
       price: price > 0 && currency ? price : null, currency: price > 0 ? currency : null,
+      list_price: price > 0 && listPrice > price ? listPrice : null,
       description: [stripHtml(ld?.description ?? ''), text.slice(0, 4000)].filter(Boolean).join('\n'),
       photos: photos.slice(0, 40),
       // fecha de publicación que declara la página (JSON-LD del auto o de la página, o la meta de WordPress/Yoast)

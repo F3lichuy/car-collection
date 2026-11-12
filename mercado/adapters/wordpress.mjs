@@ -53,6 +53,7 @@ export class WooStoreAdapter {
         const f = labelFields(`${short}\n${long}`);
         const minor = Number(p.prices?.currency_minor_unit ?? 2);
         const amount = Number(p.prices?.price) / 10 ** minor;
+        const regular = Number(p.prices?.regular_price) / 10 ** minor;   // tachado si está en oferta
         const currency = knownCurrency(this.source.config?.currency ?? p.prices?.currency_code);
         const name = decode(p.name);
         yield {
@@ -62,6 +63,7 @@ export class WooStoreAdapter {
           color_ext: f.color_ext ?? null, color_int: f.color_int ?? null, vin: f.vin ?? null,
           // precio 0 = "pregunta por él": no es un precio
           price: amount > 0 && currency ? amount : null, currency: amount > 0 ? currency : null,
+          list_price: amount > 0 && regular > amount ? regular : null,
           description: [short, long].filter(Boolean).join('\n'),
           photos: (p.images ?? []).map(i => i.src).filter(Boolean),
           city: this.source.cities?.[0] ?? null, seller_type: 'broker', seller_name: this.source.name,
@@ -145,6 +147,7 @@ export class StmListingsAdapter {
           transmission: terms.transmission ?? null, color_ext: terms['exterior-color'] ?? null, color_int: terms['interior-color'] ?? null,
           vin: m.vin_number || null,
           price: amount > 0 && this.cfg.currency ? amount : null, currency: amount > 0 ? knownCurrency(this.cfg.currency) : null,
+          list_price: sale > 0 && list > sale ? list : null,
           description: decode(c.content?.rendered),
           photos: [], published_on: c.date ?? null, city: this.source.cities?.[0] ?? null, seller_type: 'broker', seller_name: this.source.name,
           extra: { condicion: terms.condition ?? null },

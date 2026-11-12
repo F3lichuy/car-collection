@@ -101,12 +101,14 @@
       var cur = q(c, ".poly-price__current .andes-money-amount, .ui-search-price__second-line .andes-money-amount") || q(c, ".andes-money-amount:not(.andes-money-amount--previous)");
       var sym = txt(q(cur || c, ".andes-money-amount__currency-symbol")), fr = txt(q(cur || c, ".andes-money-amount__fraction"));
       var p = money((sym || "$") + fr);
+      var prev = q(c, ".andes-money-amount--previous"), lp = prev ? money((txt(q(prev, ".andes-money-amount__currency-symbol")) || "$") + txt(q(prev, ".andes-money-amount__fraction"))) : null;
       var attrs = qa(c, ".poly-attributes_list__item, .poly-attributes-list__item, .ui-search-card-attributes__attribute").map(txt).join(" · ");
       var img = q(c, "img"), k = kmOf(attrs);
       out.push({
         external_id: id, url: url, title: txt(q(c, ".poly-component__title, .ui-search-item__title, h2, h3")) || txt(a),
         year: yearOf(attrs), km: k && k.km, km_unit: k && k.km_unit,
         price: p && p.price, currency: p && p.currency, currency_ambiguous: p ? p.ambiguous && !sym : false,
+        list_price: lp && p && lp.currency === p.currency && lp.price > p.price ? lp.price : null,   // precio tachado
         city: txt(q(c, ".poly-component__location, .ui-search-item__location")) || null,
         photos: img ? [img.getAttribute("data-src") || img.src].filter(function (u) { return /^https:/.test(u || ""); }) : [],
       });
@@ -118,18 +120,29 @@
     if (!title) return [];
     var cur = q(document, ".ui-pdp-price__second-line .andes-money-amount") || q(document, ".andes-money-amount:not(.andes-money-amount--previous)");
     var p = money(txt(q(cur, ".andes-money-amount__currency-symbol")) + txt(q(cur, ".andes-money-amount__fraction")));
+    var prev = q(document, ".ui-pdp-price__original-value, .ui-pdp-price .andes-money-amount--previous");
+    var lp = prev ? money((txt(q(prev, ".andes-money-amount__currency-symbol")) || "$") + txt(q(prev, ".andes-money-amount__fraction"))) : null;
     var rows = {};
     qa(document, "tr").forEach(function (tr) { var th = txt(q(tr, "th")), td = txt(q(tr, "td")); if (th && td) rows[th.toLowerCase()] = td; });
     var sub = txt(q(document, ".ui-pdp-subtitle, .ui-pdp-header__subtitle"));
     var k = kmOf(rows["kilómetros"] || rows.kilometros || sub), ago = agoDate(sub);
-    var imgs = qa(document, ".ui-pdp-gallery img, figure img").map(function (i) { return i.getAttribute("data-zoom") || i.getAttribute("data-src") || i.src; })
-      .filter(function (u) { return /^https:\/\/http2\.mlstatic\.com\//.test(u || ""); });
+    // una foto por imagen: ML repite cada una en miniatura (-R) y grande (-F / 2X); se queda la grande
+    var byId = {}, order = [];
+    qa(document, ".ui-pdp-gallery img, figure img").map(function (i) { return i.getAttribute("data-zoom") || i.getAttribute("data-src") || i.src; })
+      .filter(function (u) { return /^https:\/\/http2\.mlstatic\.com\//.test(u || ""); })
+      .forEach(function (u) {
+        var m = u.match(/(\d{5,}-MLM\d+_\d+)/), key = m ? m[1] : u, big = /-F[.-]|_2X_/.test(u);
+        if (!(key in byId)) { order.push(key); byId[key] = u; } else if (big && !/-F[.-]|_2X_/.test(byId[key])) byId[key] = u;
+      });
+    var imgs = order.map(function (k) { return byId[k]; });
     return [{
       external_id: mlId(location.href), url: abs(location.href.split("#")[0].split("?")[0]), title: title,
       make: rows.marca || null, model: [rows.modelo, rows["versión"] || rows.version].filter(Boolean).join(" ") || null,
       version: rows["versión"] || rows.version || null, year: yearOf(rows["año"] || rows.ano || sub || title),
       km: k && k.km, km_unit: k && k.km_unit, transmission: rows["transmisión"] || rows.transmision || null,
       color_ext: rows.color || null, price: p && p.price, currency: p && p.currency, currency_ambiguous: false,
+      list_price: lp && p && lp.currency === p.currency && lp.price > p.price ? lp.price : null,
+      body: rows["tipo de carrocería"] || rows["tipo de carroceria"] || null,
       city: txt(q(document, ".ui-vip-location__subtitle, .ui-seller-info__status-info__subtitle")) || null,
       description: txt(q(document, ".ui-pdp-description__content")).slice(0, 4000) || null,
       photos: Array.from(new Set(imgs)).slice(0, 30), published_on: ago && ago.date, extra: ago ? { publicado_texto: ago.text } : undefined,

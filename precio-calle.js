@@ -12,7 +12,7 @@
   const PC = (window.PrecioCalle = {});
   const S = {
     loaded: false, loading: null, error: null, vehicles: [], listings: 0, sources: {}, settings: {}, fx: null,
-    f: { q: "", make: "", model: "", tx: "", seg: "", sort: "recientes" }, usd: false, limit: 48,
+    f: { q: "", make: "", model: "", variant: "", tx: "", seg: "", sort: "recientes" }, usd: false, limit: 48,
   };
   const h = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const client = () => (typeof supa !== "undefined" ? supa : null);
@@ -30,46 +30,71 @@
 
   // ── datos ──────────────────────────────────────────────────────────────
   const SPEC_COLS = "year,km,transmission,body,exterior_color,exterior_color_family,exterior_color_raw,interior_color,interior_color_family,interior_color_raw,invoice_type,origin,owners,service_history,antique_plates";
-  const listingSelect = withPublished => `id,title,url,city,state,source_id,status,first_seen,last_seen,is_demo${withPublished ? ",published_on" : ""},
-        vehicle:mx_vehicles(id,vin,version_id,is_demo,
+  // v: 7 = con migración 007 (borrado y precio anterior), 5 = con published_on, 0 = lo más viejo
+  const listingSelect = v => `id,title,url,city,state,source_id,status,first_seen,last_seen,is_demo${v >= 5 ? ",published_on" : ""},
+        vehicle:mx_vehicles(id,vin,version_id,is_demo${v >= 7 ? ",deleted_at,delete_reason" : ""},
           version:mx_versions(name), generation:mx_generations(name), model:mx_models(name,segment,make:mx_makes(name))),
         specs:mx_specs(${SPEC_COLS},parse_confidence),
-        prices:mx_price_snapshots(price,currency,negotiable,observed_from,observed_to),
+        prices:mx_price_snapshots(price,currency,negotiable,observed_from,observed_to${v >= 7 ? ",list_price" : ""}),
         photos:mx_photos(url,position)`;
 
   async function load() {
     const c = client();
     if (!c) throw new Error("Sin conexión con la base");
-    const [ls0, manual, src, st, fx] = await Promise.all([
-      c.from("mx_listings").select(listingSelect(true)).limit(2000),
+    const signedIn = typeof session !== "undefined" && !!session;
+    // Supabase entrega máximo 1,000 filas por consulta: se piden por páginas hasta traer todas
+    const listingsAll = async v => {
+      const out = [];
+      for (let from = 0; from < 20000; from += 1000) {
+        const r = await c.from("mx_listings").select(listingSelect(v)).order("id").range(from, from + 999);
+        if (r.error) return r;
+        out.push(...(r.data || []));
+        if ((r.data || []).length < 1000) break;
+      }
+      return { data: out, error: null };
+    };
+    const [ls0, manual, src, st, fx, own] = await Promise.all([
+      listingsAll(7),
       // fichas capturadas a mano (sin anuncio): mandan sobre lo que dijo el anuncio
       c.from("mx_specs").select(`vehicle_id,${SPEC_COLS},notes,updated_at`).is("listing_id", null).order("updated_at", { ascending: false }),
       c.from("mx_sources_public").select("id,name,kind,base_url"),
       c.from("mx_settings").select("key,value"),
       c.from("mx_fx_rates").select("day,usd_mxn").order("day", { ascending: false }).limit(1),
+      // ¿esta cuenta es la dueña? (solo ella borra y restaura autos; la base lo vuelve a revisar)
+      signedIn ? c.rpc("mx_is_owner") : Promise.resolve({ data: false }),
     ]);
     let ls = ls0;
-    // la columna published_on llega con la migración 005; sin ella, todo lo demás funciona igual
-    if (ls.error && /published_on/.test(ls.error.message || "")) ls = await c.from("mx_listings").select(listingSelect(false)).limit(2000);
+    // columnas que llegan con las migraciones 007 y 005: sin ellas, todo lo demás funciona igual
+    if (ls.error && /deleted_at|list_price|delete_reason/.test(ls.error.message || "")) ls = await listingsAll(5);
+    if (ls.error && /published_on/.test(ls.error.message || "")) ls = await listingsAll(0);
     if (ls.error) throw ls.error;
+    S.owner = !own.error && own.data === true;
     S.manual = {};
     for (const m of manual.data || []) if (!S.manual[m.vehicle_id]) S.manual[m.vehicle_id] = m;   // la más reciente
     S.sources = Object.fromEntries((src.data || []).map(s => [s.id, s]));
     S.settings = Object.fromEntries((st.data || []).map(r => [r.key, r.value]));
     S.fx = fx.data && fx.data[0] ? fx.data[0] : null;
-    S.listings = (ls.data || []).length;
-    S.vehicles = groupVehicles(ls.data || []);
+    const all = groupVehicles(ls.data || []);
+    S.deleted = all.filter(x => x.deleted);    // solo los ve la dueña (RLS), para restaurarlos
+    S.vehicles = all.filter(x => !x.deleted);
+    S.listings = S.vehicles.reduce((n, x) => n + x.listings.length, 0);
     S.loaded = true;
   }
 
   const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Mexico_City" });
   const daysBetween = (a, b) => (a && b ? Math.max(0, Math.round((Date.parse(b) - Date.parse(a)) / 864e5)) : null);
   // Cambios de precio de un anuncio: cada vez que el tramo siguiente pide otra cifra.
+  // Además, la rebaja que la propia fuente anuncia con el precio anterior tachado (list_price):
+  // no sabemos cuándo bajó; la fecha es el primer día que la vimos así.
   function priceChanges(l) {
     const pr = (l.prices || []).filter(p => p.price != null).sort((a, b) => String(a.observed_from).localeCompare(String(b.observed_from)));
     const out = [];
-    for (let i = 1; i < pr.length; i++) {
-      if (Number(pr[i].price) !== Number(pr[i - 1].price) && pr[i].currency === pr[i - 1].currency)
+    for (let i = 0; i < pr.length; i++) {
+      const prevList = i ? pr[i - 1].list_price : null;
+      if (pr[i].list_price != null && Number(pr[i].list_price) > Number(pr[i].price) && Number(prevList) !== Number(pr[i].list_price)
+          && !(i && Number(pr[i - 1].price) === Number(pr[i].list_price)))
+        out.push({ day: pr[i].observed_from, from: Number(pr[i].list_price), to: Number(pr[i].price), currency: pr[i].currency, source_id: l.source_id, url: l.url, announced: true });
+      if (i && Number(pr[i].price) !== Number(pr[i - 1].price) && pr[i].currency === pr[i - 1].currency)
         out.push({ day: pr[i].observed_from, from: Number(pr[i - 1].price), to: Number(pr[i].price), currency: pr[i].currency, source_id: l.source_id, url: l.url });
     }
     return out;
@@ -96,6 +121,7 @@
       const m = x.v.model || {};
       x.make = (m.make && m.make.name) || ""; x.model = m.name || ""; x.gen = (x.v.generation && x.v.generation.name) || "";
       x.version = (x.v.version && x.v.version.name) || "";
+      x.deleted = !!x.v.deleted_at; x.deleteReason = x.v.delete_reason || null; x.deletedAt = x.v.deleted_at || null;
       // Lo capturado a mano manda campo por campo; lo demás sale de los anuncios.
       const man = (S.manual || {})[x.id] || null, merged = { ...sp };
       x.manualFields = new Set(); x.manualAt = man ? man.updated_at : null; x.notes = man ? man.notes : null;
@@ -123,6 +149,13 @@
       const modelTok = x.model.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
       const versionHasModel = x.version && x.version.toLowerCase().split(/[^a-z0-9]+/).some(t => modelTok.includes(t));
       x.name = [modelLabel(x.make, versionHasModel ? "" : x.model), x.version].filter(Boolean).join(" ");
+      // Variante para comparar precios: la versión; en Porsche la carrocería es aparte (un Carrera 4S
+      // Cabriolet no pide lo mismo que el coupé) y sin versión, al menos la carrocería ("Targa").
+      x.body = merged.body || null;
+      const bodyTxt = x.body && x.body !== "coupe" ? BODY[x.body] || x.body : "";
+      x.variant = x.version
+        ? (x.make === "Porsche" && bodyTxt && !new RegExp(bodyTxt.split(" ")[0], "i").test(x.version) ? `${x.version} ${bodyTxt}` : x.version)
+        : bodyTxt ? `${bodyTxt} (versión por confirmar)` : "Versión por confirmar";
       x.search = `${x.name} ${x.gen} ${main.title || ""} ${x.city}`.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
       return x;
     });
@@ -163,7 +196,7 @@
   function filtered() {
     const f = S.f, q = f.q.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
     let a = S.vehicles.filter(x => x.active
-      && (!f.make || x.make === f.make) && (!f.model || x.model === f.model)
+      && (!f.make || x.make === f.make) && (!f.model || x.model === f.model) && (!f.variant || x.variant === f.variant)
       && (!f.tx || x.tx === f.tx) && (!f.seg || x.seg === f.seg) && (!q || q.split(/\s+/).every(w => x.search.includes(w))));
     const pv = x => (x.price && x.price.price != null ? Number(x.price.price) * (x.price.currency === "USD" && S.fx ? Number(S.fx.usd_mxn) : 1) : null);
     const by = {
@@ -187,6 +220,7 @@
     const act = S.vehicles.filter(x => x.active);
     const makes = [...new Set(act.map(x => x.make))].sort();
     const models = [...new Set(act.filter(x => !S.f.make || x.make === S.f.make).map(x => x.model))].sort();
+    const variants = S.f.model ? [...new Set(act.filter(x => x.model === S.f.model && (!S.f.make || x.make === S.f.make)).map(x => x.variant))].sort((a, b) => (/por confirmar/.test(a) - /por confirmar/.test(b)) || a.localeCompare(b, "es")) : [];
     const txs = [...new Set(act.map(x => x.tx).filter(Boolean))];
     const segs = [...new Set(act.map(x => x.seg).filter(Boolean))];
     const srcN = new Set(act.flatMap(x => x.sourceIds)).size;
@@ -215,6 +249,7 @@
         <input class="ctrl grow" placeholder="Buscar: 993, GT3, Testarossa…" value="${h(S.f.q)}" oninput="PrecioCalle.set('q', this.value)">
         <select class="ctrl" aria-label="Marca" onchange="PrecioCalle.set('make', this.value)">${opt("", S.f.make, "Todas las marcas")}${makes.map(m => opt(m, S.f.make, m)).join("")}</select>
         <select class="ctrl" aria-label="Modelo" onchange="PrecioCalle.set('model', this.value)">${opt("", S.f.model, "Todos los modelos")}${models.map(m => opt(m, S.f.model, m)).join("")}</select>
+        ${variants.length > 1 ? `<select class="ctrl" aria-label="Versión" onchange="PrecioCalle.set('variant', this.value)">${opt("", S.f.variant, "Todas las versiones")}${variants.map(v => opt(v, S.f.variant, v)).join("")}</select>` : ""}
         <select class="ctrl" aria-label="Transmisión" onchange="PrecioCalle.set('tx', this.value)">${opt("", S.f.tx, "Cualquier caja")}${txs.map(t => opt(t, S.f.tx, TX[t] || t)).join("")}</select>
         <select class="ctrl" aria-label="Segmento" onchange="PrecioCalle.set('seg', this.value)">${opt("", S.f.seg, "Todos los segmentos")}${segs.map(t => opt(t, S.f.seg, SEG[t] || t)).join("")}</select>
         <select class="ctrl" aria-label="Orden" onchange="PrecioCalle.set('sort', this.value)">
@@ -285,9 +320,10 @@
       </div>
       <div class="pc-sub"><h4 class="pc-h4">Cambios de precio</h4>
         ${changes.length ? `<table class="pc-table"><thead><tr><th>Auto</th><th>Fecha</th><th class="num">Antes</th><th class="num">Ahora</th><th class="num">Cambio</th></tr></thead><tbody>
-          ${changes.map(c => { const p = pct(c.from, c.to); return `<tr class="pc-rowlink" onclick="PrecioCalle.open('${c.x.id}')"><th scope="row">${h(c.x.name)}${c.x.year ? ` · ${c.x.year}` : ""}</th><td>${h(fmtDate(c.day))}</td>
+          ${changes.map(c => { const p = pct(c.from, c.to); return `<tr class="pc-rowlink" onclick="PrecioCalle.open('${c.x.id}')"><th scope="row">${h(c.x.name)}${c.x.year ? ` · ${c.x.year}` : ""}</th><td>${c.announced ? `<span title="La fuente muestra el precio anterior tachado; no dice cuándo bajó">Rebaja anunciada*</span>` : h(fmtDate(c.day))}</td>
             <td class="num">${h(money({ price: c.from, currency: c.currency }))}</td><td class="num">${h(money({ price: c.to, currency: c.currency }))}</td><td class="num">${p < 0 ? "↓" : "↑"} ${Math.abs(p)}%</td></tr>`; }).join("")}</tbody></table>`
         : `<p class="pc-foot">Todavía ningún auto ha cambiado de precio desde que los vemos. La captura diaria compara cada día el precio de cada anuncio y aquí aparece cuando alguno sube o baja.</p>`}
+        ${changes.some(c => c.announced) ? `<p class="pc-foot">* La fuente muestra el precio anterior tachado junto al actual. No dice cuándo bajó, así que no lleva fecha.</p>` : ""}
       </div>
       <div class="pc-tip" role="tooltip" hidden></div></section>`;
   }
@@ -295,23 +331,30 @@
   // Mediana pedida por modelo: solo con n suficiente; si no, "datos insuficientes".
   function byModel(act) {
     const minN = Number(S.settings.min_n_for_stats ?? 5);
-    const groups = new Map();
-    for (const x of act) { const k = modelLabel(x.make, x.model); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x); }
-    const rows = [...groups.entries()].sort((a, b) => b[1].length - a[1].length).map(([k, xs]) => {
+    // Un GT3 no pide lo mismo que un Carrera o un Targa: cada versión es su propio mercado.
+    const groups = new Map(), byModelN = new Map();
+    for (const x of act) {
+      const m = modelLabel(x.make, x.model), k = `${m} · ${x.variant}`;
+      if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x); byModelN.set(m, (byModelN.get(m) || 0) + 1);
+    }
+    const modelOf = k => k.split(" · ")[0];
+    const rows = [...groups.entries()].sort((a, b) => (byModelN.get(modelOf(b[0])) - byModelN.get(modelOf(a[0]))) || modelOf(a[0]).localeCompare(modelOf(b[0]), "es")
+        || (/por confirmar/.test(a[0]) - /por confirmar/.test(b[0])) || b[1].length - a[1].length).map(([k, xs]) => {
+      const yrs = xs.map(x => x.year).filter(Boolean), yTxt = yrs.length ? (Math.min(...yrs) === Math.max(...yrs) ? String(yrs[0]) : `${Math.min(...yrs)}–${Math.max(...yrs)}`) : "—";
       const mx = xs.map(x => x.price).filter(p => p && p.price != null && (p.currency === "MXN" || S.fx))
         .map(p => Number(p.price) * (p.currency === "USD" ? Number(S.fx.usd_mxn) : 1));
       const med = mx.length >= minN ? money({ price: median(mx), currency: "MXN" }) : null;
       const dk = xs.filter(x => x.daysKnown).map(x => x.days);
       const dmed = dk.length >= minN ? `${nf.format(Math.round(median(dk)))} días` : null;
       const falta = Math.max(0, minN - mx.length);
-      return `<tr><th scope="row">${h(k)}</th><td class="num">${xs.length}</td><td class="num">${med ? h(med) : `<span class="pc-insuf">Faltan ${falta} con precio</span>`}</td>
+      return `<tr><th scope="row">${h(k)}</th><td class="num">${h(yTxt)}</td><td class="num">${xs.length}</td><td class="num">${med ? h(med) : `<span class="pc-insuf">Faltan ${falta} con precio</span>`}</td>
         <td class="num">${dmed ? h(dmed) : `<span class="pc-insuf">${dk.length} con fecha</span>`}</td></tr>`;
     }).join("");
     const covered = [...groups.values()].filter(xs => xs.filter(x => x.price && x.price.price != null).length >= minN).length;
-    return `<section class="pc-section"><div class="home-sechead"><h2>Por modelo</h2></div>
-      <p class="pc-foot" style="margin:0 0 12px">${covered} de ${groups.size} modelos tienen ya ${minN} o más autos con precio para comparar.</p>
-      <div class="pc-tablewrap"><table class="pc-table"><thead><tr><th>Modelo</th><th class="num">Autos (n)</th><th class="num">Mediana pedida</th><th class="num">Tiempo publicado (mediana)</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="pc-foot">La mediana aparece cuando hay al menos ${minN} autos con precio del mismo modelo; el tiempo publicado, cuando ${minN} de ellos traen la fecha de publicación de su fuente.</p></section>`;
+    return `<section class="pc-section"><div class="home-sechead"><h2>Por modelo y versión</h2></div>
+      <p class="pc-foot" style="margin:0 0 12px">${covered} de ${groups.size} versiones tienen ya ${minN} o más autos con precio para comparar.</p>
+      <div class="pc-tablewrap"><table class="pc-table"><thead><tr><th>Modelo · versión</th><th class="num">Años</th><th class="num">Autos (n)</th><th class="num">Mediana pedida</th><th class="num">Tiempo publicado (mediana)</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="pc-foot">La mediana aparece cuando hay al menos ${minN} autos con precio de la misma versión; el tiempo publicado, cuando ${minN} de ellos traen la fecha de publicación de su fuente. El año pesa mucho: abre un auto para verlo contra los demás por año.</p></section>`;
   }
 
   // ── ficha de un auto ───────────────────────────────────────────────────
@@ -355,7 +398,8 @@
             </tbody></table>
             ${x.notes ? `<p class="pc-notes">${h(x.notes)}</p>` : ""}
             ${x.manualAt ? `<p class="pc-foot">Lo marcado <span class="pc-man">a mano</span> se capturó el ${h(fmtDate(String(x.manualAt).slice(0, 10)))}; lo demás sale de los anuncios.</p>` : ""}
-            ${canEdit() ? `<button class="btn sm pc-editbtn" onclick="PrecioCalle.open('${x.id}',{edit:true})">${missing ? `Completar datos (${missing} sin dato)` : "Corregir datos"}</button>` : ""}`}
+            ${canEdit() ? `<button class="btn sm pc-editbtn" onclick="PrecioCalle.open('${x.id}',{edit:true})">${missing ? `Completar datos (${missing} sin dato)` : "Corregir datos"}</button>` : ""}
+            ${S.owner ? `<button class="btn ghost sm pc-delbtn" onclick="PrecioCalle.deleteCar('${x.id}')">Borrar este auto</button>` : ""}`}
           </div>
           <div>
             <h4 class="pc-h4">De dónde sale esta información</h4>
@@ -364,7 +408,7 @@
               return `<div class="pc-listing">
                 <div class="pc-l1"><b>${h(src ? src.name : sourceName(l.source_id))}</b><span class="pc-st pc-st-${h(l.status)}">${h(STATUS[l.status] || l.status)}</span></div>
                 <div class="pc-l2">${h(l.city || l.state || "")}${l.city || l.state ? " · " : ""}visto del ${h(fmtDate(l.first_seen))} al ${h(fmtDate(l.last_seen))}</div>
-                ${pr.length ? `<ul class="pc-hist">${pr.map(p => `<li><span>${h(fmtDate(p.observed_from))}${p.observed_to !== p.observed_from ? ` – ${h(fmtDate(p.observed_to))}` : ""}</span><b>${h(money(p))}</b></li>`).join("")}</ul>` : ""}
+                ${pr.length ? `<ul class="pc-hist">${pr.map(p => `<li><span>${h(fmtDate(p.observed_from))}${p.observed_to !== p.observed_from ? ` – ${h(fmtDate(p.observed_to))}` : ""}</span><b>${p.list_price != null ? `<s class="pc-was" title="Precio anterior que muestra la fuente, tachado">${h(money({ price: p.list_price, currency: p.currency }))}</s> ` : ""}${h(money(p))}</b></li>`).join("")}</ul>` : ""}
                 ${l.url ? `<a class="link" href="${h(l.url)}" target="_blank" rel="noopener noreferrer nofollow">Ver anuncio original ↗</a>` : ""}
               </div>`;
             }).join("")}
@@ -391,7 +435,11 @@
     if (x.changes.length) {
       const oldest = x.changes[x.changes.length - 1], newest = x.changes[0], p = pct(oldest.from, newest.to);
       const what = p < 0 ? `Bajó ${Math.abs(p)}%` : p > 0 ? `Subió ${p}%` : "Volvió al mismo precio";
-      pr = `<div><dt>Precio</dt><dd>${h(what)}</dd><p>${x.changes.length === 1 ? "1 cambio" : `${x.changes.length} cambios`}: de ${h(money({ price: oldest.from, currency: oldest.currency }))} a ${h(money({ price: newest.to, currency: newest.currency }))} (último el ${h(fmtDate(newest.day))})</p></div>`;
+      const onlyAnnounced = x.changes.every(c => c.announced);
+      const src = S.sources[newest.source_id] ? S.sources[newest.source_id].name : sourceName(newest.source_id);
+      pr = onlyAnnounced
+        ? `<div><dt>Precio</dt><dd>${h(what)}</dd><p>${h(src)} lo anuncia rebajado: antes ${h(money({ price: oldest.from, currency: oldest.currency }))}, ahora ${h(money({ price: newest.to, currency: newest.currency }))}. No dice cuándo bajó; lo vemos así desde el ${h(fmtDate(newest.day))}</p></div>`
+        : `<div><dt>Precio</dt><dd>${h(what)}</dd><p>${x.changes.length === 1 ? "1 cambio" : `${x.changes.length} cambios`}: de ${h(money({ price: oldest.from, currency: oldest.currency }))} a ${h(money({ price: newest.to, currency: newest.currency }))} (último el ${h(fmtDate(newest.day))})${x.changes.some(c => c.announced) ? "; incluye la rebaja que anuncia la fuente con el precio tachado" : ""}</p></div>`;
     } else if (!x.price || x.price.price == null) {
       pr = `<div><dt>Precio</dt><dd>Sin cifra</dd><p>El anuncio no publica precio${x.price && x.price.negotiable ? " (a tratar)" : ""}</p></div>`;
     } else {
@@ -431,6 +479,26 @@
         <button class="btn ghost sm" type="button" onclick="PrecioCalle.open('${x.id}')">Cancelar</button></div>
     </form>`;
   }
+  // Borrar = ocultar para todos, con deshacer (solo la cuenta dueña; la base lo vuelve a revisar)
+  PC.deleteCar = async function (id) {
+    const x = S.vehicles.find(v => v.id === id);
+    if (!x || !S.owner) return;
+    const reason = prompt(`¿Por qué borras ${x.name}${x.year ? ` ${x.year}` : ""}? (opcional, p. ej. "réplica", "precio equivocado", "no está en México")`, "");
+    if (reason === null) return;
+    if (!confirm("Se deja de ver para todos. Si su anuncio vuelve a salir, sigue oculto. Lo puedes restaurar en Agregar autos › Borrados. ¿Borrar?")) return;
+    const { error } = await client().rpc("mx_delete_vehicle", { p_vehicle: id, p_reason: reason });
+    if (error) { alert(`No se borró: ${error.message}`); return; }
+    document.getElementById("pcScrim")?.classList.remove("show");
+    S.loaded = false; S.loading = load(); await S.loading; draw(root());
+    if (typeof toast === "function") toast("Auto borrado. Lo puedes restaurar en Agregar autos › Borrados");
+  };
+  PC.restoreCar = async function (id) {
+    const { error } = await client().rpc("mx_restore_vehicle", { p_vehicle: id });
+    if (error) { alert(`No se restauró: ${error.message}`); return; }
+    S.loaded = false; S.loading = load(); await S.loading; draw(root());
+    if (typeof toast === "function") toast("Auto restaurado");
+  };
+
   PC.saveSpecs = async function (id, form) {
     const x = S.vehicles.find(v => v.id === id), msg = form.querySelector(".pc-formmsg"), btn = form.querySelector('[type="submit"]');
     const NUM = new Set(["year", "km", "owners"]), data = {};
@@ -493,14 +561,39 @@
       <p class="pc-foot">Cada tramo es un precio que se mantuvo esos días. Pasa el cursor por los puntos para ver fechas y cifra.</p></section>`;
   }
 
-  // El auto contra los demás del mismo modelo: año contra precio pedido.
+  // El auto contra los demás del mismo modelo: año contra precio pedido, separados por versión.
+  // Arriba, un botón por versión (GT3, GT3 RS, Carrera S, Targa 4S…): se prenden y apagan las que quieras ver.
+  // Arranca con la versión de este auto si hay al menos otro igual; si no, con todas.
   function compareChart(x) {
+    const label = modelLabel(x.make, x.model);
+    return `<section class="pc-sub" id="pcCompare"><h4 class="pc-h4">Contra otros ${h(label)} a la venta</h4>${compareInner(x)}</section>`;
+  }
+  PC.cmpToggle = function (key) {
+    const x = S.vehicles.find(v => v.id === S.cmp.id); if (!x) return;
+    if (key === "*") S.cmp.sel = null;
+    else { const sel = new Set(S.cmp.sel || []); sel.has(key) ? sel.delete(key) : sel.add(key); S.cmp.sel = sel.size ? sel : null; }
+    const box = document.getElementById("pcCompare");
+    if (box) box.innerHTML = `<h4 class="pc-h4">Contra otros ${h(modelLabel(x.make, x.model))} a la venta</h4>${compareInner(x)}`;
+  };
+  function compareInner(x) {
     const minN = Number(S.settings.min_n_for_stats ?? 5);
-    const peers = S.vehicles.filter(v => v.active && v.make === x.make && v.model === x.model && v.year && toMxn(v.price) != null);
-    const label = modelLabel(x.make, x.model), head = `<section class="pc-sub"><h4 class="pc-h4">Contra otros ${h(label)} a la venta</h4>`;
+    const all = S.vehicles.filter(v => v.active && v.make === x.make && v.model === x.model && v.year && toMxn(v.price) != null);
+    const label = modelLabel(x.make, x.model);
+    if (!S.cmp || S.cmp.id !== x.id) {
+      const same = all.filter(v => v.variant === x.variant).length;
+      S.cmp = { id: x.id, sel: x.version && same >= 2 ? new Set([x.variant]) : null };
+    }
+    const counts = new Map(); for (const v of all) counts.set(v.variant, (counts.get(v.variant) || 0) + 1);
+    const keys = [...counts.keys()].sort((a, b) => (/por confirmar/.test(a) - /por confirmar/.test(b)) || counts.get(b) - counts.get(a) || a.localeCompare(b, "es"));
+    const sel = S.cmp.sel;
+    const chips = keys.length > 1 ? `<div class="pc-chips" role="group" aria-label="Versiones a comparar">
+      <button class="pc-chip ${sel ? "" : "on"}" aria-pressed="${!sel}" onclick="PrecioCalle.cmpToggle('*')">Todas <span class="pc-chipn">${all.length}</span></button>
+      ${keys.map(k => `<button class="pc-chip ${sel && sel.has(k) ? "on" : ""}" aria-pressed="${!!(sel && sel.has(k))}" onclick="PrecioCalle.cmpToggle(${h(JSON.stringify(k))})"${k === x.variant ? ' title="La versión de este auto"' : ""}>${h(k)}${k === x.variant ? " (este)" : ""} <span class="pc-chipn">${counts.get(k)}</span></button>`).join("")}</div>` : "";
+    const peers = all.filter(v => !sel || sel.has(v.variant) || v.id === x.id);
+    const what = sel ? [...sel].join(", ") : "todas las versiones";
     const n = peers.length, falta = Math.max(0, minN - n);
     const others = peers.filter(v => v.id !== x.id);
-    if (!others.length) return `${head}<p class="pc-foot">Es el único ${h(label)} con año y precio que tenemos. Con ${minN} o más se calcula la mediana del modelo.</p></section>`;
+    if (!others.length) return `${chips}<p class="pc-foot">${all.length > 1 ? `No hay otros ${h(label)} de ${h(what)} con año y precio. Prende más versiones arriba.` : `Es el único ${h(label)} con año y precio que tenemos. Con ${minN} o más se calcula la mediana.`}</p>`;
     const prices = peers.map(v => toMxn(v.price)), med = n >= minN ? median(prices) : null;
     const W = 640, H = 240, L = 64, R = 16, T = 14, B = 28;
     const years = peers.map(v => v.year); let ya = Math.min(...years), yb = Math.max(...years); if (ya === yb) { ya -= 2; yb += 2; } else { ya -= 1; yb += 1; }
@@ -508,22 +601,22 @@
     const X = yr => L + ((yr - ya) / (yb - ya)) * (W - L - R), Y = v => T + (1 - (v - p0) / (p1 - p0 || 1)) * (H - T - B);
     const xt = ticks(ya, yb, Math.min(6, yb - ya)).filter(t => t >= ya && t <= yb && Number.isInteger(t));
     const dot = v => { const me = v.id === x.id, cx = X(v.year).toFixed(1), cy = Y(toMxn(v.price)).toFixed(1);
-      return `<circle class="pc-dot ${me ? "" : "peer"}" cx="${cx}" cy="${cy}" r="${me ? 6 : 5}"/><circle class="pc-hit" cx="${cx}" cy="${cy}" r="12" ${me ? "" : `onclick="PrecioCalle.open('${v.id}')"`} data-tip="${tip(`${me ? "Este auto" : v.name}\n${v.year} · ${km(v.km)}\n${money(v.price)}`)}"/>`; };
+      return `<circle class="pc-dot ${me ? "" : "peer"}" cx="${cx}" cy="${cy}" r="${me ? 6 : 5}"/><circle class="pc-hit" cx="${cx}" cy="${cy}" r="12" ${me ? "" : `onclick="PrecioCalle.open('${v.id}')"`} data-tip="${tip(`${me ? "Este auto" : v.name}\n${v.variant !== v.version ? `${v.variant}\n` : ""}${v.year} · ${km(v.km)}${v.city ? ` · ${v.city}` : ""}\n${money(v.price)}`)}"${v.photo ? ` data-tip-img="${h(thumb(v.photo))}"` : ""}/>`; };
     const mine = toMxn(x.price), vsMed = med && mine != null ? pct(med, mine) : null;
-    return `${head}
-      <svg class="pc-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Año contra precio pedido de ${n} ${h(label)}">
+    return `${chips}
+      <svg class="pc-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Año contra precio pedido de ${n} ${h(label)} (${h(what)})">
         ${yt.map(v => `<line class="pc-grid" x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text class="pc-ax" x="${L - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end">${short(v)}</text>`).join("")}
         ${xt.map(t => `<text class="pc-ax" x="${X(t).toFixed(1)}" y="${H - 8}" text-anchor="middle">${t}</text>`).join("")}
         ${med ? `<line class="pc-med" x1="${L}" x2="${W - R}" y1="${Y(med).toFixed(1)}" y2="${Y(med).toFixed(1)}"/><text class="pc-ax" x="${W - R}" y="${(Y(med) - 6).toFixed(1)}" text-anchor="end">mediana ${short(med)}</text>` : ""}
         ${others.map(dot).join("")}${peers.some(v => v.id === x.id) ? dot(x) : ""}
       </svg>
-      <p class="pc-legend"><span class="pc-key"></span> Este auto <span class="pc-key peer"></span> Otros ${h(label)} (toca uno para abrirlo)</p>
-      <p class="pc-foot">${n} ${h(label)} con año y precio.${mine == null ? " Este auto no publica precio, así que no aparece en la gráfica." : ""}${
+      <p class="pc-legend"><span class="pc-key"></span> Este auto <span class="pc-key peer"></span> Otros ${h(label)} · ${h(what)} (pasa el cursor para ver la foto; toca uno para abrirlo)</p>
+      <p class="pc-foot">${n} ${h(label)} de ${h(what)} con año y precio.${mine == null ? " Este auto no publica precio, así que no aparece en la gráfica." : ""}${
         vsMed != null ? ` Este auto pide ${vsMed === 0 ? "lo mismo que la mediana" : `${Math.abs(vsMed)}% ${vsMed > 0 ? "más" : "menos"} que la mediana`}.`
         : med ? "" : ` Faltan ${falta} para calcular la mediana; mientras, compáralo punto por punto.`}</p>
-      <details class="pc-details"><summary>Ver como tabla</summary><table class="pc-table"><thead><tr><th>Auto</th><th class="num">Año</th><th class="num">Km</th><th class="num">Precio</th></tr></thead><tbody>
-        ${peers.slice().sort((a, b) => a.year - b.year).map(v => `<tr><th scope="row">${v.id === x.id ? "<b>Este auto</b>" : h(v.name)}</th><td class="num">${v.year}</td><td class="num">${h(km(v.km))}</td><td class="num">${h(money(v.price))}</td></tr>`).join("")}
-      </tbody></table></details></section>`;
+      <details class="pc-details"><summary>Ver como tabla</summary><table class="pc-table"><thead><tr><th>Auto</th><th>Versión</th><th class="num">Año</th><th class="num">Km</th><th class="num">Precio</th></tr></thead><tbody>
+        ${peers.slice().sort((a, b) => a.year - b.year).map(v => `<tr><th scope="row">${v.id === x.id ? "<b>Este auto</b>" : h(v.name)}</th><td>${h(v.variant)}</td><td class="num">${v.year}</td><td class="num">${h(km(v.km))}</td><td class="num">${h(money(v.price))}</td></tr>`).join("")}
+      </tbody></table></details>`;
   }
 
   // Tooltip: un solo globo que sigue al cursor o al foco; el dato siempre está también en texto o tabla.
@@ -534,7 +627,14 @@
       const t = box.querySelector(".pc-tip"), el = e.target.closest && e.target.closest("[data-tip]");
       if (!t) return;
       if (!el) { t.hidden = true; return; }
-      t.textContent = el.getAttribute("data-tip"); t.hidden = false;
+      // con foto (comparativa): la imagen arriba y el texto abajo; el texto siempre como texto, nunca HTML
+      const img = el.getAttribute("data-tip-img"), key = `${img || ""}|${el.getAttribute("data-tip")}`;
+      if (t.dataset.key !== key) {
+        t.dataset.key = key; t.textContent = "";
+        if (img) { const i = document.createElement("img"); i.src = img; i.alt = ""; i.referrerPolicy = "no-referrer"; i.onerror = () => i.remove(); t.appendChild(i); }
+        const s = document.createElement("span"); s.textContent = el.getAttribute("data-tip"); t.appendChild(s);
+      }
+      t.hidden = false;
       const r = box.getBoundingClientRect();
       t.style.left = `${Math.max(8, Math.min(e.clientX - r.left + 14, r.width - t.offsetWidth - 8))}px`;
       t.style.top = `${e.clientY - r.top + box.scrollTop + 14}px`;
@@ -548,7 +648,7 @@
   // por el normalizador y el anti-duplicados; nada entra directo a los anuncios.
   const CAP_SOURCE = { facebook: "facebook-marketplace", mercadolibre: "mercadolibre-autos" };
   const CAP_FIELDS = ["external_id", "url", "title", "make", "model", "version", "year", "km", "km_unit", "transmission", "color_ext", "vin",
-    "price", "currency", "city", "description", "photos", "published_on", "extra"];
+    "price", "list_price", "body", "currency", "city", "description", "photos", "published_on", "extra"];
   function capSource(d) {
     if (CAP_SOURCE[d.site]) return CAP_SOURCE[d.site];
     let host = ""; try { host = new URL(d.page_url).hostname.replace(/^www\./, ""); } catch (e) {}
@@ -630,7 +730,7 @@
   let marcadorHref = null;
   async function ensureMarcador() {
     if (marcadorHref) return marcadorHref;
-    try { const r = await fetch("captura-marcador.js?v=1", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
+    try { const r = await fetch("captura-marcador.js?v=2", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
     return marcadorHref;
   }
   function adminPanel() {
@@ -640,11 +740,18 @@
         <p class="pc-foot" style="margin-top:0">Arrastra este botón a tu barra de favoritos (si no la ves: Ctrl + Shift + B). Luego, en una página de Facebook Marketplace o Mercado Libre con autos, dale clic.</p>
         <p><a class="btn primary sm pc-marcador" id="pcMarcador" href="#" onclick="event.preventDefault();alert('Arrástralo a tu barra de favoritos; no se usa aquí.')">Guardar en Precio de Calle</a></p>
         <p class="pc-foot">En una página de resultados guarda todos los autos que se ven; dentro de un anuncio, ese auto con fotos y descripción.</p>
+        <p class="pc-foot"><b>¿Ya lo tenías en tu barra?</b> Bórralo de la barra y vuelve a arrastrar este: cada versión nueva del botón se instala así.</p>
       </div><div><h4 class="pc-h4">Últimas capturas</h4><div id="pcCapturas"><p class="pc-foot">Cargando…</p></div></div></div>
       <div class="pc-sub"><h4 class="pc-h4">Buscar más autos por ciudad</h4>
         <p class="pc-foot" style="margin-top:0">Elige un modelo: se abre la búsqueda en cada ciudad. Ahí da clic en el botón de tu barra para guardar lo que veas. Arriba van los modelos con menos autos para comparar.</p>
         <div class="toolbar"><select class="ctrl grow" id="pcBuscaModelo" aria-label="Modelo a buscar" onchange="PrecioCalle.renderBusqueda()"><option>Cargando modelos…</option></select></div>
-        <div id="pcBuscaLigas"></div></div></section>`;
+        <div id="pcBuscaLigas"></div></div>
+      ${S.owner ? `<div class="pc-sub"><h4 class="pc-h4">Borrados (${(S.deleted || []).length})</h4>
+        ${(S.deleted || []).length ? `<table class="pc-table"><tbody>${S.deleted.slice().sort((a, b) => String(b.deletedAt).localeCompare(String(a.deletedAt))).map(x => `<tr>
+          <th scope="row">${h(x.name || x.listings[0].title)}${x.year ? ` · ${x.year}` : ""}<br><span class="pc-foot">${h(fmtDate(String(x.deletedAt).slice(0, 10)))}${x.deleteReason ? ` · ${h(x.deleteReason)}` : ""}</span></th>
+          <td class="num"><button class="btn sm" onclick="PrecioCalle.restoreCar('${x.id}')">Restaurar</button></td></tr>`).join("")}</tbody></table>`
+        : `<p class="pc-foot">No has borrado ningún auto. Para borrar uno, ábrelo y usa "Borrar este auto" (solo tu cuenta lo ve).</p>`}</div>` : ""}
+      </section>`;
   }
   // Búsquedas listas para abrir (las abre la persona; nosotros no entramos a Facebook ni a Mercado Libre).
   // Ciudades con el nombre que Facebook usa en sus direcciones (verificadas 2026-11-12).
@@ -704,7 +811,7 @@
   const root = () => document.getElementById("tab-calle");
   let qTimer = null;
   PC.set = (k, v) => {
-    S.f[k] = v; if (k === "make") S.f.model = ""; S.limit = 48;
+    S.f[k] = v; if (k === "make") S.f.model = ""; if (k === "make" || k === "model") S.f.variant = ""; S.limit = 48;
     if (k === "q") { clearTimeout(qTimer); qTimer = setTimeout(() => { draw(root()); const i = root().querySelector(".pc-filters input"); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 220); return; }
     draw(root());
   };
@@ -799,6 +906,15 @@
     .pc-bar{fill:var(--accent)}
     .pc-hit{fill:transparent;cursor:pointer}
     .pc-tip{position:absolute;z-index:5;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;line-height:1.4;padding:6px 9px;white-space:pre;max-width:260px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+    .pc-tip img{display:block;width:220px;max-width:100%;aspect-ratio:4/3;object-fit:cover;margin:-2px 0 6px;background:var(--bg2)}
+    .pc-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+    .pc-chip{font:inherit;font-size:12px;padding:5px 10px;border:1px solid var(--line);background:transparent;color:var(--ink-dim);cursor:pointer;border-radius:999px}
+    .pc-chip:hover{color:var(--ink);border-color:var(--ink-faint)}
+    .pc-chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+    .pc-chipn{opacity:.6;margin-left:2px;font-variant-numeric:tabular-nums}
+    .pc-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    .pc-was{color:var(--ink-faint);font-weight:400;margin-right:4px}
+    .pc-delbtn{margin-left:8px;color:var(--ink-dim)}
     .pc-legend{font-size:12px;color:var(--ink-dim);margin:8px 0 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
     .pc-key{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--accent)}
     .pc-key.peer{background:var(--ink-faint);margin-left:10px}

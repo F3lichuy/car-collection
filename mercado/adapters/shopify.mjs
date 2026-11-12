@@ -32,6 +32,8 @@ export class ShopifyAdapter {
           make: null, model: p.title,
           year: yearFromTitle(p.title),
           price: v.price != null && /^(MXN|USD)$/.test(currency ?? '') ? Number(v.price) : null, currency: /^(MXN|USD)$/.test(currency ?? '') ? currency : null,
+          // "compare at": el precio tachado que muestra la tienda
+          list_price: Number(v.compare_at_price) > Number(v.price) ? Number(v.compare_at_price) : null,
           description: `${stripHtml(p.body_html)}\n${tagText}`,
           photos: (p.images ?? []).map(i => i.src).filter(Boolean),
           published_on: p.published_at ?? p.created_at ?? null,   // cuándo la tienda lo puso a la venta

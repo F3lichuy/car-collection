@@ -142,7 +142,7 @@ export const models = [
     { code: '982', name: '982 (718)', from: 2017, to: null, tx: MP, notes: 'Fin de producción por verificar', v: [
       ['718 Cayman GTS 4.0', 2021, null], ['718 Cayman GT4', 2020, null], ['718 Cayman GT4 RS', 2022, null, P]] },
   ] },
-  { make: 'porsche', name: 'Boxster', segment: 'moderno', aliases: ['boxster', '718 boxster'], gens: [
+  { make: 'porsche', name: 'Boxster', segment: 'moderno', aliases: ['boxster', '718 boxster', '718 spyder', 'spyder'], gens: [
     { code: '981', name: '981', from: 2012, to: 2016, tx: MP, v: [['Boxster GTS', 2015, 2016], ['Boxster Spyder', 2016, 2016, M]] },
     { code: '982', name: '982 (718)', from: 2017, to: null, tx: MP, notes: 'Fin de producción por verificar', v: [
       ['718 Boxster GTS 4.0', 2021, null], ['718 Spyder', 2020, null], ['718 Spyder RS', 2024, null, P]] },

@@ -37,6 +37,9 @@ export class CarDealerAdapter extends FichaAdapter {
       ?? block.match(/<span class="currency currency-([A-Z]{3})">[^<]*<\/span>\s*([\d,]+)/);
     const currency = /^(MXN|USD)$/.test(pm?.[1] ?? '') ? pm[1] : null;
     const price = pm ? Number(pm[2].replace(/,/g, '')) : null;
+    // en oferta, el tema muestra el precio anterior en <bdi class="old-price">
+    const om = block.match(/<bdi class="old-price">\s*<span class="currency currency-[A-Z]{3}">[^<]*<\/span>\s*([\d,]+)/);
+    const oldPrice = om ? Number(om[1].replace(/,/g, '')) : null;
 
     const title = stripHtml(html.match(/<h3 class="vehicle-title">([\s\S]*?)<\/h3>/)?.[1]
       ?? html.match(/<meta property="og:title" content="([^"]+)"/)?.[1] ?? '').trim();
@@ -57,6 +60,7 @@ export class CarDealerAdapter extends FichaAdapter {
       year: Number(a.year) || null, km: a.km ?? null, transmission: a.transmission ?? null,
       color_ext: a.color_ext ?? null, color_int: a.color_int ?? null, vin: a.vin ?? null,
       price: price > 0 && currency ? price : null, currency: price > 0 ? currency : null,
+      list_price: price > 0 && oldPrice > price ? oldPrice : null,
       description: [a.body && `Carrocería: ${a.body}`, a.engine && `Motor: ${a.engine}`].filter(Boolean).join('\n') || null,
       photos: [...seen.values()].slice(0, 40),
       published_on: html.match(/<meta[^>]+property=["']article:published_time["'][^>]+content=["']([^"']+)/i)?.[1] ?? null,

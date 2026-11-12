@@ -1,6 +1,6 @@
 -- GENERADO por mercado/scripts/build-taxonomy-sql.mjs desde mercado/data/taxonomia.mjs.
 -- No lo edites a mano: edita el .mjs y corre `npm run build:taxonomia`.
--- 19 marcas · 58 modelos · 103 generaciones · 405 versiones · 918 alias
+-- 19 marcas · 58 modelos · 103 generaciones · 405 versiones · 920 alias
 begin;
 insert into public.mx_makes (id, name, country, sort) values
   ('porsche', 'Porsche', 'DE', 1),
@@ -929,6 +929,8 @@ insert into public.mx_aliases (alias, level, target_id) values
   ('718caymangt4rs', 'version', 'porsche-cayman-982-718-cayman-gt4-rs'),
   ('boxster', 'model', 'porsche-boxster'),
   ('718 boxster', 'model', 'porsche-boxster'),
+  ('718 spyder', 'model', 'porsche-boxster'),
+  ('spyder', 'model', 'porsche-boxster'),
   ('981', 'generation', 'porsche-boxster-981'),
   ('boxster gts', 'version', 'porsche-boxster-981-boxster-gts'),
   ('boxstergts', 'version', 'porsche-boxster-981-boxster-gts'),

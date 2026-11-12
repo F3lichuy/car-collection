@@ -69,9 +69,13 @@ describe('taxonomía', () => {
     const r = tx('Porsche 718 Boxster S', 2018);
     assert.deepEqual([r.model_id, r.generation_id, r.version_id], ['porsche-boxster', 'porsche-boxster-982', null]);
   });
-  test('"992" en el título con año frontera → generación ambigua, a revisión', () => {
-    const r = tx('Porsche 911 GT3 992', 2024);
+  test('"992" sin año → versión ambigua, a revisión; con año frontera decide el año exacto de la versión', () => {
+    const r = tx('Porsche 911 GT3 992', null);
     assert.equal(r.version_id, null); assert.ok(r.issues.includes('version_ambigua'));
+    // el GT3 992.2 arranca como modelo 2025: un 2024 es 992.1 aunque la generación 992.2 empiece en 2024
+    assert.equal(tx('Porsche 911 GT3 992', 2024).version_id, 'porsche-911-992-1-gt3');
+    assert.equal(tx('Porsche 911 Carrera 4S', 2020).version_id, 'porsche-911-992-1-carrera-4s');
+    assert.equal(tx('Porsche 911 Carrera 4S', 2019).version_id, 'porsche-911-991-2-carrera-4s');
   });
 });
 

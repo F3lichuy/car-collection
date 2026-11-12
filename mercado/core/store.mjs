@@ -125,7 +125,13 @@ export class Store {
 
   async recordPrice(db, listingId, price, day) {
     if (!price) return null;
-    return (await one(db, `select mx_record_price($1, $2, $3, $4, $5) r`, [listingId, price.price, price.currency, price.negotiable, day])).r;
+    const r = (await one(db, `select mx_record_price($1, $2, $3, $4, $5) r`, [listingId, price.price, price.currency, price.negotiable, day])).r;
+    // precio "antes" que la fuente muestra tachado (migración 007): va en el tramo de este día
+    if (price.list_price != null && r !== 'conflicto') {
+      await db.query(`update mx_price_snapshots set list_price = $2 where listing_id = $1 and $3::date between observed_from and observed_to
+        and list_price is distinct from $2 and (price is null or $2 > price)`, [listingId, price.list_price, day]);
+    }
+    return r;
   }
 
   async insertPhotos(db, listingId, photos) {

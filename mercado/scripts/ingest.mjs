@@ -58,7 +58,8 @@ if (dry) {
 } else {
   if (!process.env.SUPABASE_DB_URL) { console.error('Falta SUPABASE_DB_URL (secret de GitHub).'); process.exit(2); }
   const postgres = (await import('postgres')).default;
-  db = fromPostgres(postgres(process.env.SUPABASE_DB_URL, { max: 1, prepare: false, idle_timeout: 20 }));
+  const { dbOptions } = await import('../core/dburl.mjs');
+  db = fromPostgres(postgres({ ...dbOptions(process.env.SUPABASE_DB_URL), max: 1, prepare: false, idle_timeout: 20 }));
 }
 const store = new Store(db);
 await store.syncSources(all);

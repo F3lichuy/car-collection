@@ -5,6 +5,7 @@ import shopify from './shopify.mjs';
 import archivoJson from './archivo-json.mjs';
 import ficha from './ficha.mjs';
 import { wooStore, vehica, stmListings } from './wordpress.mjs';
+import capturas from './capturas.mjs';
 
 export const adapters = {
   seminuevos,
@@ -14,4 +15,5 @@ export const adapters = {
   vehica,
   'stm-listings': stmListings,
   ficha,
+  capturas,
 };

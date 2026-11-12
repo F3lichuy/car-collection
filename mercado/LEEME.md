@@ -97,6 +97,16 @@ En la ficha de un auto, un admin ve "Completar datos". Se guarda con `mx_save_ma
 fila de `mx_specs` sin anuncio (`listing_id` null) con quién y cuándo. En la página manda sobre lo que dice el
 anuncio, campo por campo, y se marca **a mano**. Las notas sirven para anotar de dónde salió el dato.
 
+## Botón "Guardar en Precio de Calle" (Facebook Marketplace y Mercado Libre)
+
+Mercado Libre cerró su buscador a apps de terceros (403) y Facebook prohíbe la recolección automática, así que
+esos dos entran solo cuando **tú** navegas: el botón (`../captura-marcador.js`, instalado desde el panel "Agregar
+autos" de Precio de Calle) lee la página que estás viendo, la manda a carcollection.app (`#capturar`), la revisas y
+se guarda en `mx_capturas` (migración 006, solo admin). La corrida diaria la pasa por el pipeline con el adaptador
+`capturas` (`core/capturas.mjs`): normalizador, anti-duplicados, solo pesos; deja el resumen en la captura.
+Volver a capturar el mismo auto otro día registra su precio de ese día (así se ven las bajadas).
+Páginas de prueba del botón: `tests/fixtures/captura/`.
+
 ## Aplicar en Supabase (solo con tu OK)
 
 ```bash
@@ -105,6 +115,7 @@ npx supabase db query --remote --file ../supabase/mercado/002_taxonomia.sql
 npx supabase db query --remote --file ../supabase/mercado/003_antiduplicados.sql
 npx supabase db query --remote --file ../supabase/mercado/004_fuentes_publicas.sql
 npx supabase db query --remote --file ../supabase/mercado/005_publicacion_y_captura.sql
+npx supabase db query --remote --file ../supabase/mercado/006_capturas.sql
 ```
 
 Todos son idempotentes: se pueden volver a correr.

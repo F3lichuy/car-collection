@@ -1870,7 +1870,7 @@
   ov.addEventListener("animationend",function(e){ if(e.animationName==="introOut") kill(); });
   setTimeout(function(){ if(ov&&!leaving) ov.classList.add("wait"); },1300);   // la línea "respira" mientras carga
   // con un enlace directo (rareza, garage) no hay estudio que esperar
-  if(/^#(rare|\/?u)\//i.test(location.hash)) leave(); else window.addEventListener("hero-ready",leave,{once:true});
+  if(/^#(rare|\/?u)\//i.test(location.hash)||location.hash==="#capturar") leave(); else window.addEventListener("hero-ready",leave,{once:true});
   setTimeout(leave,MAX); setTimeout(kill,MAX+2500);   // respaldo
 })();
 </script>
@@ -5295,7 +5295,7 @@ function loadPrecioCalle(){
   const el=$("#tab-calle"); if(!el) return;
   if(window.PrecioCalle) return PrecioCalle.render(el);
   el.innerHTML='<p style="color:var(--ink-faint);margin:28px 0">Cargando…</p>';
-  const s=document.createElement("script"); s.src="precio-calle.js?v=1";
+  const s=document.createElement("script"); s.src="precio-calle.js?v=2";
   s.onload=()=>PrecioCalle.render(el);
   s.onerror=()=>{ el.innerHTML='<div class="empty"><h2>No se pudo cargar Precio de Calle</h2><p>Revisa tu conexión y vuelve a intentar.</p></div>'; };
   document.head.appendChild(s);
@@ -5857,6 +5857,20 @@ async function routeAndLoad(){
   applyAfterLoad();
   if(session && !myProfile) promptUsername();
   if(rm){ showTab("rare"); openRareFromLink(rm[1],rm[2],Number(rm[3])); }
+  if(location.hash==="#capturar") showTab("calle");
+}
+/* Botón "Guardar en Precio de Calle": la pestaña de Facebook / Mercado Libre que abrió esta
+   ventana nos manda los autos que leyó. Solo se acepta de esa pestaña (window.opener). */
+window.pcCaptura=null;
+if(location.hash==="#capturar"){
+  window.addEventListener("message",function(e){
+    if(!window.opener||e.source!==window.opener) return;
+    var d=e.data; if(!d||d.type!=="pc-captura"||!Array.isArray(d.items)) return;
+    try{ e.source.postMessage("pc-captura-recibida",e.origin); }catch(err){}
+    if(window.pcCaptura) return;   // el botón reenvía hasta recibir confirmación
+    window.pcCaptura=Object.assign({},d,{origin:e.origin});
+    if(window.PrecioCalle&&PrecioCalle.openCaptura) PrecioCalle.openCaptura();
+  });
 }
 async function loadMyGarage(){
   myProfile=null;

@@ -157,6 +157,7 @@
       catch (e) { S.error = e; S.loading = null; }
     }
     draw(root);
+    if (location.hash === "#capturar") PC.openCaptura();
   };
 
   function filtered() {
@@ -208,6 +209,7 @@
         <div><dt>Fuentes</dt><dd>${nf.format(srcN)}</dd></div>
         <div><dt>Actualizado</dt><dd>${h(fmtDate(last))}</dd></div>
       </dl>
+      ${adminPanel()}
       ${act.length ? `
       <div class="toolbar pc-filters">
         <input class="ctrl grow" placeholder="Buscar: 993, GT3, Testarossa…" value="${h(S.f.q)}" oninput="PrecioCalle.set('q', this.value)">
@@ -228,6 +230,7 @@
       <p class="pc-foot">Precios <b>pedidos</b> en anuncios públicos, no precios de venta. Cada auto muestra de qué anuncios sale su información.</p>
     </div>`;
     wireTips(root.querySelector("#pcAnalisis"));
+    if (canEdit()) PC.loadCapturas();
   }
 
   function card(x) {
@@ -539,6 +542,121 @@
     box.addEventListener("pointerleave", () => { const t = box.querySelector(".pc-tip"); if (t) t.hidden = true; });
   }
 
+  // ── botón "Guardar en Precio de Calle" (capturas desde tu navegador) ───
+  // Los autos llegan de la pestaña donde le diste clic (window.pcCaptura, lo pone index.html),
+  // se revisan aquí y se guardan como pendientes en mx_capturas. La corrida diaria los pasa
+  // por el normalizador y el anti-duplicados; nada entra directo a los anuncios.
+  const CAP_SOURCE = { facebook: "facebook-marketplace", mercadolibre: "mercadolibre-autos" };
+  const CAP_FIELDS = ["external_id", "url", "title", "make", "model", "version", "year", "km", "km_unit", "transmission", "color_ext", "vin",
+    "price", "currency", "city", "description", "photos", "published_on", "extra"];
+  function capSource(d) {
+    if (CAP_SOURCE[d.site]) return CAP_SOURCE[d.site];
+    let host = ""; try { host = new URL(d.page_url).hostname.replace(/^www\./, ""); } catch (e) {}
+    const hit = Object.values(S.sources).find(s => { try { return new URL(s.base_url).hostname.replace(/^www\./, "") === host; } catch (e) { return false; } });
+    return hit ? hit.id : "contacto-directo";
+  }
+  function capClean(it) {
+    const o = {};
+    for (const k of CAP_FIELDS) if (it[k] != null && it[k] !== "") o[k] = it[k];
+    for (const k of ["title", "make", "model", "version", "city", "transmission", "color_ext"]) if (o[k]) o[k] = String(o[k]).slice(0, 300);
+    if (o.description) o.description = String(o.description).slice(0, 4000);
+    if (Array.isArray(o.photos)) o.photos = o.photos.filter(u => /^https:\/\//.test(u)).slice(0, 30); else delete o.photos;
+    if (o.price != null && !(Number(o.price) > 0)) { delete o.price; delete o.currency; }
+    return o;
+  }
+  function capModal(html) {
+    let scrim = document.getElementById("pcScrim");
+    if (!scrim) {
+      scrim = document.createElement("div"); scrim.className = "scrim"; scrim.id = "pcScrim";
+      scrim.innerHTML = `<div class="modal wide" id="pcModal" role="dialog" aria-modal="true" aria-labelledby="pcTitle"></div>`;
+      scrim.addEventListener("click", e => { if (e.target === scrim) scrim.classList.remove("show"); });
+      document.body.appendChild(scrim);
+    }
+    document.getElementById("pcModal").innerHTML = `<div class="mh"><h3 id="pcTitle">Guardar en Precio de Calle</h3>
+      <button class="iconbtn" onclick="document.getElementById('pcScrim').classList.remove('show')" aria-label="Cerrar">×</button></div><div class="mb">${html}</div>`;
+    scrim.classList.add("show");
+  }
+  let capWait = null;
+  PC.openCaptura = function () {
+    const d = window.pcCaptura;
+    if (!canEdit()) { capModal(`<p>Para guardar autos inicia sesión con tu cuenta de admin en esta ventana y vuelve a darle clic al botón.</p>`); return; }
+    if (!d) {
+      capModal(`<p>Esperando los autos de la otra pestaña…</p><div id="pcPaste" hidden>
+        <p class="pc-foot">¿No llegan? El botón también los copió. Haz clic en el cuadro y pega (Ctrl + V).</p>
+        <textarea class="ctrl" rows="3" style="width:100%" placeholder="Pega aquí" oninput="PrecioCalle.pasteCaptura(this.value)"></textarea></div>`);
+      clearTimeout(capWait); capWait = setTimeout(() => { const p = document.getElementById("pcPaste"); if (p) p.hidden = false; }, 5000);
+      return;
+    }
+    clearTimeout(capWait);
+    const src = capSource(d), name = S.sources[src] ? S.sources[src].name : sourceName(src);
+    const items = d.items.slice(0, 200);
+    const ambiguous = items.some(x => x.currency_ambiguous);
+    const row = (x, i) => {
+      const usd = x.currency === "USD";
+      return `<label class="pc-caprow${usd ? " off" : ""}">
+        <input type="checkbox" data-i="${i}" ${usd ? "disabled" : "checked"}>
+        ${x.photos && x.photos[0] ? `<img src="${h(x.photos[0])}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="pc-capimg"></span>`}
+        <span class="pc-captxt"><b>${h(x.title || "Sin título")}</b>
+          <span>${[x.year, x.km ? `${nf.format(Number(x.km))} ${x.km_unit === "mi" ? "millas" : "km"}` : null, x.city].filter(Boolean).map(h).join(" · ") || "Sin año ni km en la página"}</span></span>
+        <span class="pc-capprice">${x.price ? h(money({ price: x.price, currency: x.currency || "MXN" })) : "Sin precio"}${usd ? `<small>En dólares: no se guarda</small>` : ""}</span>
+      </label>`;
+    };
+    capModal(`<p class="pc-foot" style="margin-top:0">De <b>${h(name)}</b> · ${items.length === 1 ? "1 auto" : `${items.length} autos`} en la página que estabas viendo. Quita la palomita a los que no quieras.</p>
+      ${ambiguous ? `<p class="pc-foot">Los precios que solo dicen "$" se guardan como pesos mexicanos.</p>` : ""}
+      <div class="pc-caplist">${items.map(row).join("")}</div>
+      <p class="pc-formmsg" id="pcCapMsg" role="status"></p>
+      <div class="pc-formbtns"><button class="btn primary sm" id="pcCapSave" onclick="PrecioCalle.saveCaptura()">Guardar</button>
+        <button class="btn ghost sm" onclick="document.getElementById('pcScrim').classList.remove('show')">Cancelar</button></div>
+      <p class="pc-foot">No entran al instante: la actualización diaria (6:17 am) revisa duplicados contra todo lo que ya tenemos, deja fuera los modelos que no seguimos y los suma a Precio de Calle.</p>`);
+  };
+  PC.pasteCaptura = function (v) {
+    try { const d = JSON.parse(v); if (d && d.type === "pc-captura" && Array.isArray(d.items)) { window.pcCaptura = d; PC.openCaptura(); } } catch (e) { /* aún no es el texto completo */ }
+  };
+  PC.saveCaptura = async function () {
+    const d = window.pcCaptura, msg = document.getElementById("pcCapMsg"), btn = document.getElementById("pcCapSave");
+    const pick = [...document.querySelectorAll(".pc-caplist input:checked")].map(i => d.items[Number(i.dataset.i)])
+      .filter(x => x && x.currency !== "USD").map(capClean).filter(x => x.url && x.title);
+    if (!pick.length) { msg.textContent = "No hay autos marcados."; return; }
+    btn.disabled = true; msg.textContent = "Guardando…";
+    const { error } = await client().from("mx_capturas").insert({ source_id: capSource(d), page_url: String(d.page_url || "").slice(0, 2000), items: pick });
+    if (error) { btn.disabled = false; msg.textContent = `No se guardó: ${error.message}`; return; }
+    window.pcCaptura = null;
+    capModal(`<p><b>Listo: ${pick.length === 1 ? "1 auto guardado" : `${pick.length} autos guardados`}.</b></p>
+      <p class="pc-foot" style="margin-top:0">Mañana a las 6:17 am se procesan y aparecen en Precio de Calle (los repetidos se juntan con el que ya teníamos). Puedes cerrar esta ventana y seguir navegando.</p>`);
+    PC.loadCapturas();
+  };
+
+  // Panel de admin: instalar el botón y ver cómo quedaron las capturas.
+  let marcadorHref = null;
+  async function ensureMarcador() {
+    if (marcadorHref) return marcadorHref;
+    try { const r = await fetch("captura-marcador.js?v=1", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
+    return marcadorHref;
+  }
+  function adminPanel() {
+    if (!canEdit()) return "";
+    return `<section class="pc-section pc-admin"><div class="home-sechead"><h2>Agregar autos</h2></div>
+      <div class="pc-split"><div>
+        <p class="pc-foot" style="margin-top:0">Arrastra este botón a tu barra de favoritos (si no la ves: Ctrl + Shift + B). Luego, en una página de Facebook Marketplace o Mercado Libre con autos, dale clic.</p>
+        <p><a class="btn primary sm pc-marcador" id="pcMarcador" href="#" onclick="event.preventDefault();alert('Arrástralo a tu barra de favoritos; no se usa aquí.')">Guardar en Precio de Calle</a></p>
+        <p class="pc-foot">En una página de resultados guarda todos los autos que se ven; dentro de un anuncio, ese auto con fotos y descripción.</p>
+      </div><div><h4 class="pc-h4">Últimas capturas</h4><div id="pcCapturas"><p class="pc-foot">Cargando…</p></div></div></div></section>`;
+  }
+  PC.loadCapturas = async function () {
+    const box = document.getElementById("pcCapturas");
+    const a = document.getElementById("pcMarcador");
+    if (a) ensureMarcador().then(href => { if (href) a.href = href; });
+    if (!box) return;
+    const { data, error } = await client().from("mx_capturas").select("id,captured_at,source_id,items,status,result").order("id", { ascending: false }).limit(8);
+    if (error) { box.innerHTML = `<p class="pc-foot">No se pudieron leer las capturas (${h(error.message)}).</p>`; return; }
+    if (!data.length) { box.innerHTML = `<p class="pc-foot">Todavía no guardas ninguna.</p>`; return; }
+    const ST = { pendiente: "Se procesa mañana 6:17", procesada: "Procesada", error: "Con error" };
+    box.innerHTML = `<table class="pc-table"><tbody>${data.map(c => { const r = c.result || {};
+      const res = c.status === "procesada" ? `${r.nuevos ?? 0} nuevos · ${(r.sin_cambio ?? 0) + (r.actualizados ?? 0)} ya estaban · ${r.fuera_de_taxonomia ?? 0} fuera de los modelos` : c.status === "error" ? h(r.error || "") : "";
+      return `<tr><th scope="row">${h(S.sources[c.source_id] ? S.sources[c.source_id].name : sourceName(c.source_id))}<br><span class="pc-foot">${h(fmtDate(String(c.captured_at).slice(0, 10)))} · ${c.items.length} autos</span></th>
+        <td><span class="pc-st">${h(ST[c.status] || c.status)}</span><br><span class="pc-foot">${res}</span></td></tr>`; }).join("")}</tbody></table>`;
+  };
+
   // ── acciones ───────────────────────────────────────────────────────────
   const root = () => document.getElementById("tab-calle");
   let qTimer = null;
@@ -645,6 +763,17 @@
     .pc-rowlink{cursor:pointer}
     .pc-rowlink:hover th{color:var(--accent)}
     #pcModal{position:relative}
+    .pc-admin{margin-top:8px;margin-bottom:36px}
+    .pc-marcador{cursor:grab}
+    .pc-caplist{max-height:min(52vh,460px);overflow:auto;border-top:1px solid var(--line);margin:10px 0}
+    .pc-caprow{display:grid;grid-template-columns:20px 64px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+    .pc-caprow.off{opacity:.5;cursor:default}
+    .pc-caprow img,.pc-capimg{width:64px;height:48px;object-fit:cover;background:var(--card2);display:block}
+    .pc-captxt{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .pc-captxt b{font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pc-captxt span{font-size:12px;color:var(--ink-faint)}
+    .pc-capprice{text-align:right;font-size:14px;color:var(--ink);white-space:nowrap}
+    .pc-capprice small{display:block;font-size:11px;color:var(--ink-faint)}
     @media (max-width:720px){
       .pc-split,.pc-formgrid,.pc-tiles{grid-template-columns:1fr}
       .pc-stats{grid-template-columns:repeat(2,minmax(0,1fr))}

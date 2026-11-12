@@ -120,7 +120,7 @@ sources:
     base_url: https://autos.mercadolibre.com.mx
     capture_mode: scraper
     data: "API oficial requiere app de desarrollador (gratis, OAuth). El listado HTML trae JSON-LD Product (48 por página)"
-    verify: "Preferir API con app gratuita que crees tú; respaldo HTML"
+    verify: "2026-11-12: el buscador de la API responde 403 a nuestra app (con llave de app y con cuenta); ML lo cerró a terceros. Su robots.txt no permite leer el HTML con agentes. Queda: captura con el botón mientras navegas"
     enabled: false
 
   - id: kavak
@@ -159,7 +159,7 @@ sources:
     cities: [Monterrey, CDMX, Guadalajara, Querétaro, Puebla, León, San Luis Potosí, Cancún, Tijuana]
     base_url: https://www.facebook.com/marketplace
     capture_mode: script_local
-    data: "Script Playwright en tu computadora con tu sesión + bookmarklet de respaldo"
+    data: "Facebook prohíbe la recolección automática: solo con el botón 'Guardar en Precio de Calle' mientras tú navegas (mx_capturas → corrida diaria)"
     enabled: false
 
   # ── Subastas (ventas reales, no solo precio pedido) ─────────────────────
@@ -189,7 +189,7 @@ sources:
       sold: "Precio\\s+VENDIDO"          # los vendidos siguen publicados con "Precio: VENDIDO"
     capture_mode: scraper
     data: "Joomla: lista en /nuestros-autos + etiquetas de la ficha (Transmisión, Kilometraje, Color); precio '$1,450,000.00 MXN'. Ojo: su etiqueta 'Modelo:' es el año"
-    enabled: false
+    enabled: true
 
   - id: jah-motors
     name: JAH Motors
@@ -200,7 +200,7 @@ sources:
     capture_mode: scraper
     data: "WooCommerce Store API pública (moneda MXN declarada). No publica precios (precio 0 → sin precio)"
     notes: "Posiblemente el 'JA Motors' que mencionaste — confirmar"
-    enabled: false
+    enabled: true
 
   - id: autos-consigna
     name: Autos Consigna
@@ -234,7 +234,7 @@ sources:
     capture_mode: scraper
     data: "Sitemap de autos (tema Pixad) + etiquetas de la ficha (Make, Model, Made Year, Kilometraje, Transmisión, Color)"
     verify: "El sitio no marca vendidos: su lista /cars/ y el sitemap traen los mismos ~103. Se toma lo publicado como en venta"
-    enabled: false
+    enabled: true
 
   - id: rich-wonders
     name: Rich Wonders
@@ -256,7 +256,7 @@ sources:
     base_url: https://euroclassic-import.com
     capture_mode: scraper
     data: "Shopify: /products.json estructurado"
-    enabled: false
+    enabled: true
 
   - id: netmotors-garage
     name: NetMotors Garage (clásicos)
@@ -270,7 +270,7 @@ sources:
       fields: { year: vehica_14696, version: vehica_23407, km: vehica_6664, color: vehica_23408, price: vehica_6656, gallery: vehica_6673 }
     capture_mode: scraper
     data: "Tema Vehica: API REST /wp-json/wp/v2/cars (166 autos, la mayoría clásicos americanos fuera de la taxonomía)"
-    enabled: false
+    enabled: true
 
   - id: parkmate-mx
     name: ParkMate MX
@@ -326,6 +326,7 @@ sources:
     base_url: https://vehiculos.mercadolibre.com.mx/_CustId_3163409841
     capture_mode: script_local
     data: "Vende en Mercado Libre (vendedor 3163409841). Su robots.txt prohíbe leer páginas de vendedor: solo por la API oficial con tu app (scripts/ml-vendedor.mjs)"
+    verify: "2026-11-12: la búsqueda por vendedor responde 403 a nuestra app. Opciones: que Motorstalgia autorice la app (su token sí deja ver su inventario) o captura con el botón"
     enabled: false
 
   - id: cars-and-more-mty
@@ -385,7 +386,7 @@ sources:
       content_end: "Valoraciones|te recomendamos|Productos relacionados"   # después vienen otros autos
     capture_mode: scraper
     data: "Sitemap de productos + JSON-LD Product/Offer en cada ficha (precio y moneda MXN declarados)"
-    enabled: false
+    enabled: true
 
   - id: luxury-cars-puebla
     name: Luxury Cars Puebla (Chipilo)
@@ -423,7 +424,7 @@ sources:
     capture_mode: scraper
     data: "Tema Motors: API REST /wp-json/wp/v2/listings (103 autos; car_meta con precio, km y VIN; bandera 'vendido')"
     verify: "Mucho premium alemán general: filtrar solo modelos de la taxonomía"
-    enabled: false
+    enabled: true
 
   - id: imperia-motors
     name: Imperia Motors
@@ -438,7 +439,7 @@ sources:
     capture_mode: scraper
     data: "Sitemap de autos + etiquetas de la ficha (Marca, Año, Kilometraje, Transmisión); precio '$ 950,000 MXN'"
     verify: "Confirmar ciudad"
-    enabled: false
+    enabled: true
 
   # ── Tijuana / Mérida ────────────────────────────────────────────────────
   - id: dlux-seminuevos-tijuana

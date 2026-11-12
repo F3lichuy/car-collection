@@ -10,7 +10,7 @@
 //       Todas las fuentes con enabled: true en sources.yaml, contra Supabase.
 //       Requiere SUPABASE_DB_URL (secret de GitHub, nunca en el código).
 //
-// Opciones: --fuente a,b · --limite N · --sin-fotos · --hoy AAAA-MM-DD · --reporte archivo.json
+// Opciones: --fuente a,b · --limite N · --sin-fotos · --sin-capturas · --hoy AAAA-MM-DD · --reporte archivo.json
 //           --semilla .capturas/semilla-prod.json (solo con --seco): arranca la base temporal con
 //           lo que ya hay en Supabase (scripts/semilla-prod.mjs), para que el anti-duplicados
 //           compare contra producción; --exportar deja fuera esas filas.
@@ -47,7 +47,8 @@ if (!dry && only && sources.some(s => !s.enabled)) {
   console.error('Solo se corren contra Supabase fuentes con enabled: true. Usa --seco para probar una desactivada.');
   process.exit(2);
 }
-if (!sources.length) { console.log('No hay fuentes para correr.'); process.exit(0); }
+const doCaptures = !only && !flag('sin-capturas');   // capturas del botón: solo en la corrida completa
+if (!sources.length && !doCaptures) { console.log('No hay fuentes para correr.'); process.exit(0); }
 
 let db;
 if (dry) {
@@ -91,6 +92,11 @@ const makeFetcher = s => new PoliteFetcher({ userAgent: s.user_agent, minDelayMs
   log: e => { if (e.error || e.status >= 400) console.log(`    ${e.status ?? 'ERR'} ${e.url}${e.error ? ' · ' + e.error : ''}`); } });
 
 const reports = await runAll({ sources, adapters, store, makeFetcher, today, trigger: dry ? 'manual' : 'cron', limit, hashPhotos: !flag('sin-fotos') });
+// Capturas del botón "Guardar en Precio de Calle" que esperan proceso (mx_capturas).
+if (doCaptures) {
+  const { processCapturas } = await import('../core/capturas.mjs');
+  reports.push(...await processCapturas({ db, store, sources: all, adapters, makeFetcher, today, hashPhotos: !flag('sin-fotos') }));
+}
 
 console.log(`\n══ Reporte ${today} ${dry ? '(seco)' : ''} ══`);
 for (const r of reports) {

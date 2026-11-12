@@ -52,6 +52,9 @@ describe('precio anterior anunciado', () => {
     assert.deepEqual(s, { p: 5189000, lp: 5559000 });
     // un "precio anterior" menor o en otra moneda no se toma
     assert.equal(normalizeListing({ source_id: 'x', observed_on: '2026-11-12', title: 'Porsche 911 GT3 2023', price: 5189000, list_price: 4000000, currency: 'MXN' }).price.list_price, undefined);
+    // una "rebaja" de más del 33 % no es creíble (precio tachado copiado de otro auto)
+    assert.equal(normalizeListing({ source_id: 'x', observed_on: '2026-11-12', title: 'Porsche 718 Cayman 4.0 Gts Pdk 2025', price: 2489000, list_price: 4689000, currency: 'MXN' }).price.list_price, undefined);
+    assert.equal(normalizeListing({ source_id: 'x', observed_on: '2026-11-12', title: 'Porsche 911 Carrera GTS 2024', price: 3489000, list_price: 4500000, currency: 'MXN' }).price.list_price, 4500000);
     await fails(db.query(`update mx_price_snapshots set list_price = 100 where listing_id = $1`, [car.listing]), /list_price_ok/);
   });
 });

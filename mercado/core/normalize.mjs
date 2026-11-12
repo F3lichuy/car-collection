@@ -281,10 +281,12 @@ export function normalizeListing(raw) {
   }
   const price = parsePrice(raw.price ?? raw.price_text, raw.currency, raw.price_text ?? '');
   if (raw.negotiable) price.negotiable = true;
-  // precio "antes" que la fuente muestra tachado; solo si es mayor que el actual y en la misma moneda
+  // precio "antes" que la fuente muestra tachado; solo si es mayor que el actual y en la misma moneda.
+  // Rebaja máxima creíble: 33 % (tope 1.5×). Más que eso suele ser un precio copiado de otro auto
+  // (Miura: Cayman GTS 2025 con $4,689,000 tachado, el precio de su 911 Carrera 4 GTS) y se ignora.
   if (price.price != null && raw.list_price != null) {
     const lp = parsePrice(raw.list_price, raw.currency ?? price.currency);
-    if (lp.price != null && lp.currency === price.currency && lp.price > price.price && lp.price < price.price * 3) price.list_price = lp.price;
+    if (lp.price != null && lp.currency === price.currency && lp.price > price.price && lp.price <= price.price * 1.5) price.list_price = lp.price;
   }
   const tx = parseTransmission(raw.transmission, raw.title, tax.version ?? { transmissions: tax.genTransmissions ?? [] }, year, tax.make_id);
   if (tx.impossible) issues.push('transmision_imposible_para_la_version');

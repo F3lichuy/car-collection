@@ -285,7 +285,8 @@
   function sleep(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
   // Ligas a una publicación: de grupo, de página o perfil (con id numérico o "pfbid…"), permalink.php y Marketplace
   var POST_HREF = /\/groups\/[^/?#]+\/(?:posts|permalink)\/(?:\d+|pfbid\w+)|\/[^/?#]+\/posts\/(?:\d+|pfbid\w+)|[?&](?:story_fbid|multi_permalinks)=(?:\d+|pfbid\w+)|\/(?:commerce\/listing|marketplace\/item)\/\d+/;
-  var SEARCH = /^\/search\//.test(location.pathname) || window.__pcSearch;
+  // búsqueda general (/search/…) o dentro de un grupo (/groups/<id>/search/?q=…)
+  var SEARCH = /^\/search\/|^\/groups\/[^/]+\/search\b/.test(location.pathname) || window.__pcSearch;
   function postLink(href) {
     var u, m;
     try { u = new URL(href, location.href); } catch (e) { return null; }
@@ -580,7 +581,8 @@
     loop();
   }
   // grupos y búsquedas de Facebook ("ferrari en venta", con los filtros que tú elijas): el mismo recorrido
-  if (site === "facebook" && (window.__pcGroup || SEARCH || /^\/groups\/[^/]+\/?$|^\/groups\/[^/]+\/(buy_sell_discussion|for_sale|discussion)/.test(location.pathname))) { grupoMode(); return; }
+  // cualquier página de un grupo (inicio, búsqueda, venta, temas…) salvo una publicación suelta, que se lee igual con el recorrido
+  if (site === "facebook" && (window.__pcGroup || SEARCH || /^\/groups\/[^/]+/.test(location.pathname) && !/^\/groups\/(feed|discover|joins|create)\b/.test(location.pathname))) { grupoMode(); return; }
 
   // ── juntar ───────────────────────────────────────────────────────────
   var items = [];

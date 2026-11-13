@@ -117,3 +117,21 @@ test('búsqueda de Facebook: mismo recorrido, ligas de páginas (pfbid) y de gru
     assert.equal(g63.price, 3350000);
   } finally { await browser.close(); }
 });
+
+test('se activa solo con la dirección real: búsqueda dentro de un grupo y búsqueda general', { skip: !chromium && 'Playwright no está instalado', timeout: 60000 }, async () => {
+  const browser = await chromium.launch();
+  try {
+    const html = readFileSync(new URL('./fixtures/captura/fb-busqueda.html', import.meta.url), 'utf8').replace(/<script>window\.__pc[^<]*<\/script>/, '');
+    for (const path of ['/groups/2653795214672713/search/?q=ferrari', '/search/posts/?q=ferrari%20en%20venta%20mexico', '/groups/2653795214672713/']) {
+      const page = await browser.newPage();
+      await page.route('https://www.facebook.com/**', r => r.fulfill({ status: 200, contentType: 'text/html', body: html }));
+      await page.goto('https://www.facebook.com' + path);
+      await page.evaluate(() => { window.open = () => ({ closed: false, postMessage: () => {} }); window.alert = m => { window.__alerta = m; }; });
+      await page.evaluate(readFileSync(new URL('../../captura-marcador.js', import.meta.url), 'utf8'));
+      assert.equal(await page.evaluate(() => window.__alerta || null), null, path);
+      assert.match(await page.textContent('body'), path.includes('search') ? /Precio de Calle · búsqueda/ : /Precio de Calle · modo grupo/, path);
+      await page.click('[data-x]');
+      await page.close();
+    }
+  } finally { await browser.close(); }
+});

@@ -158,7 +158,7 @@
       x.active = x.listings.some(l => l.status === "activo");
       x.lastSeen = main.last_seen; x.firstSeen = x.listings.map(l => l.first_seen).sort()[0];
       x.days = daysBetween(x.publishedOn || x.firstSeen, today()); x.daysKnown = !!x.publishedOn;
-      // Publicado hace más de un año (El Auto Clásico deja anuncios desde 2009): probablemente ya se vendió.
+      // Publicado hace más de un año: probablemente ya se vendió.
       // No cuenta como "en venta" ni entra a medianas; se ve aparte como referencia.
       x.stale = !!(x.publishedOn && x.days > 365);
       x.colorExt = colorTxt(merged.exterior_color, merged.exterior_color_family, merged.exterior_color_raw);
@@ -192,7 +192,7 @@
         : bodyTxt ? `${bodyTxt} (versión por confirmar)` : "Versión por confirmar";
       // La generación también separa mercados: un Stingray C3 (1976) no es un Stingray C8 (2024), ni un GT3 991.2 un 992.1.
       const genInName = x.gen && (baseVariant.toLowerCase().includes(x.gen.toLowerCase()) || x.gen.toLowerCase() === x.model.toLowerCase());
-      x.variant = x.gen && !genInName ? `${x.gen} · ${baseVariant}` : baseVariant;
+      x.variant = x.gen && !genInName ? `${x.gen} · ${baseVariant}` : baseVariant; x.vname = baseVariant;
       x.search = `${x.name} ${x.gen} ${main.title || ""} ${x.city}`.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
       return x;
     });
@@ -448,7 +448,7 @@
     const by = new Map();
     for (const x of S.vehicles) {
       const slug = marketSlug(x);
-      if (!by.has(slug)) by.set(slug, { slug, make: x.make, model: x.model, gen: x.gen, variant: x.variant, label: modelLabel(x.make, x.model), vehicles: [] });
+      if (!by.has(slug)) by.set(slug, { slug, make: x.make, model: x.model, gen: x.gen, variant: x.variant, vname: x.vname, label: modelLabel(x.make, x.model), vehicles: [] });
       by.get(slug).vehicles.push(x);
     }
     for (const m of by.values()) {
@@ -470,45 +470,103 @@
     const el = document.getElementById("pcMarket") || root().querySelector(".pc-mercados");
     if (el) el.scrollIntoView({ block: "start", behavior: "smooth" });
   };
+  // volver de un mercado a la generación de donde viene (sirve también si se entró por enlace directo)
+  PC.backFromMarket = function (slug) { const m = markets().find(z => z.slug === slug); PC.goModel(m ? m.label : null, m ? (m.gen || GEN_NONE) : null); };
   PC.setView = function (k, v) { S.view = { ...(S.view || {}), [k]: v }; draw(root()); };
 
-  // ── directorio ──
+  // ── directorio en tres pasos: modelo (una foto por modelo) → generación → versión ──
+  // Con búsqueda escrita se salta los pasos y muestra directo las versiones que coinciden.
+  const GEN_NONE = "Generación por confirmar";
+  const genKey = m => m.gen || GEN_NONE;
+  function aggOf(list) {
+    const live = list.flatMap(m => m.live), all = list.flatMap(m => m.vehicles);
+    const withPhoto = (live.length ? live : all).filter(v => v.photo).sort((a, b) => String(b.lastSeen).localeCompare(String(a.lastSeen)));
+    const yrs = all.map(v => v.year).filter(Boolean), prices = list.flatMap(m => m.prices);
+    return { live: live.length, total: all.length, photo: withPhoto[0] ? withPhoto[0].photo : null, prices,
+      minYear: yrs.length ? Math.min(...yrs) : 0,
+      years: yrs.length ? (Math.min(...yrs) === Math.max(...yrs) ? String(yrs[0]) : `${Math.min(...yrs)}–${Math.max(...yrs)}`) : "" };
+  }
+  const priceTxt = ps => { if (!ps.length) return "Sin autos en venta hoy"; const lo = Math.min(...ps), hi = Math.max(...ps);
+    return ps.length >= 3 ? `Mediana ${short(median(ps))}` : lo === hi ? short(lo) : `${short(lo)} – ${short(hi)}`; };
+  const enVenta = n => (n === 1 ? "1 en venta" : `${nf.format(n)} en venta`);
+  const dcard = (onclick, photo, title, sub, price) => `<button class="pc-mcard" onclick="${onclick}">
+        <span class="pc-mph">${photo ? `<img src="${h(thumb(photo))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}</span>
+        <span class="pc-mtx"><b>${h(title)}</b><small>${h(sub)}</small><span class="pc-mprice">${h(price)}</span></span></button>`;
+  const jsq = s => String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+  PC.goModel = function (label, gen) {
+    S.view = { ...(S.view || {}), market: null, mode: "mercados", dmodel: label || null, dgen: gen || null };
+    try { history.replaceState(null, "", "#calle"); } catch (e) {}
+    draw(root());
+    const el = root().querySelector(".pc-mercados"); if (el) el.scrollIntoView({ block: "start", behavior: "smooth" });
+  };
+
   function directory() {
     const v = S.view, q = (v.dq || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
-    let ms = markets().filter(m => !v.dmake || m.make === v.dmake)
-      .filter(m => !q || q.split(/\s+/).every(w => `${m.label} ${m.variant}`.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").includes(w)));
+    const all = markets().filter(m => !v.dmake || m.make === v.dmake);
+    const sortKey = v.dsort || "autos";
     const sorters = {
-      autos: (a, b) => b.live.length - a.live.length || b.vehicles.length - a.vehicles.length,
-      precio: (a, b) => (median(b.prices) ?? -1) - (median(a.prices) ?? -1),
-      nombre: (a, b) => `${a.label} ${a.variant}`.localeCompare(`${b.label} ${b.variant}`, "es"),
+      autos: (a, b) => b.agg.live - a.agg.live || b.agg.total - a.agg.total,
+      precio: (a, b) => (median(b.agg.prices) ?? -1) - (median(a.agg.prices) ?? -1),
+      nombre: (a, b) => a.name.localeCompare(b.name, "es"),
     };
-    ms = ms.sort(sorters[v.dsort || "autos"]);
-    // agrupado por modelo (Porsche 911 → sus versiones), los modelos con más autos primero
-    const groups = new Map();
-    for (const m of ms) { const k = m.label; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(m); }
-    const liveOf = list => list.reduce((n, m) => n + m.live.length, 0);
-    const ordered = (v.dsort || "autos") === "autos" ? [...groups.entries()].sort((a, b) => liveOf(b[1]) - liveOf(a[1])) : [...groups.entries()];
     const makes = [...new Set(markets().map(m => m.make))].sort();
     const opt = (val, cur, label) => `<option value="${h(val)}"${val === (cur || "") ? " selected" : ""}>${h(label)}</option>`;
-    const mcard = m => {
-      const med = m.prices.length >= 3 ? median(m.prices) : null, lo = Math.min(...m.prices), hi = Math.max(...m.prices);
-      const price = !m.prices.length ? "Sin autos en venta hoy" : med ? `Mediana ${short(med)}` : m.prices.length === 1 ? short(lo) : `${short(lo)} – ${short(hi)}`;
-      return `<button class="pc-mcard" onclick="PrecioCalle.goMarket('${m.slug}')">
-        <span class="pc-mph">${m.photo ? `<img src="${h(thumb(m.photo))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}</span>
-        <span class="pc-mtx"><b>${h(m.variant)}</b>
-          <small>${m.years ? `${h(m.years)} · ` : ""}${m.live.length === 1 ? "1 en venta" : `${m.live.length} en venta`}${m.vehicles.length !== m.live.length ? ` · ${m.vehicles.length} en total` : ""}</small>
-          <span class="pc-mprice">${h(price)}</span></span></button>`;
-    };
-    return `<div class="pc-mercados">
-      <div class="toolbar pc-filters">
+    const toolbar = `<div class="toolbar pc-filters">
         <input class="ctrl grow" placeholder="Buscar: 911 GT3, Urus, 993…" value="${h(v.dq || "")}" oninput="PrecioCalle.dSearch(this.value)">
         <select class="ctrl" aria-label="Marca" onchange="PrecioCalle.setView('dmake', this.value)">${opt("", v.dmake, "Todas las marcas")}${makes.map(m => opt(m, v.dmake, m)).join("")}</select>
         <select class="ctrl" aria-label="Orden" onchange="PrecioCalle.setView('dsort', this.value)">${opt("autos", v.dsort, "Más autos en venta")}${opt("precio", v.dsort, "Precio (mediana)")}${opt("nombre", v.dsort, "Nombre")}</select>
-      </div>
-      <p class="pc-count">${ms.length === 1 ? "1 mercado" : `${nf.format(ms.length)} mercados`} · toca una versión para ver su historial</p>
-      ${ordered.map(([label, list]) => `<section class="pc-mgroup"><h3 class="pc-mgh">${h(label)} <span>${nf.format(list.reduce((n, m) => n + m.live.length, 0))} en venta</span></h3>
-        <div class="pc-mgrid">${list.map(mcard).join("")}</div></section>`).join("") || `<p class="pc-none">Nada con esa búsqueda.</p>`}
-    </div>`;
+      </div>`;
+    const verCard = m => { const a = aggOf([m]);
+      return dcard(`PrecioCalle.goMarket('${m.slug}')`, m.photo, m.vname || m.variant,
+        `${a.years ? `${a.years} · ` : ""}${enVenta(m.live.length)}${m.vehicles.length !== m.live.length ? ` · ${m.vehicles.length} en total` : ""}`, priceTxt(m.prices)); };
+    const wrap = (inner, count) => `<div class="pc-mercados">${toolbar}<p class="pc-count">${count}</p>${inner}</div>`;
+
+    // búsqueda: versiones que coinciden, agrupadas por modelo y generación
+    if (q) {
+      // cada palabra buscada debe ser el inicio de una palabra ("rs" no encuentra "Porsche")
+      const ms = all.filter(m => { const toks = ` ${m.label} ${m.variant}`.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ");
+        return q.split(/\s+/).every(w => toks.includes(" " + w)); })
+        .map(m => ({ m, name: `${m.label} ${m.variant}`, agg: aggOf([m]) })).sort(sorters[sortKey]).map(o => o.m);
+      const groups = new Map();
+      for (const m of ms) { const k = `${m.label} · ${genKey(m)}`; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(m); }
+      return wrap([...groups.entries()].map(([k, list]) => `<section class="pc-mgroup"><h3 class="pc-mgh">${h(k)} <span>${enVenta(aggOf(list).live)}</span></h3>
+        <div class="pc-mgrid">${list.map(verCard).join("")}</div></section>`).join("") || `<p class="pc-none">Nada con esa búsqueda.</p>`,
+        ms.length === 1 ? "1 versión" : `${nf.format(ms.length)} versiones`);
+    }
+
+    const byModel = new Map();
+    for (const m of all) { if (!byModel.has(m.label)) byModel.set(m.label, []); byModel.get(m.label).push(m); }
+    const model = v.dmodel && byModel.get(v.dmodel);
+
+    // paso 1: un cuadro por modelo
+    if (!model) {
+      const rows = [...byModel.entries()].map(([label, list]) => ({ label, list, name: label, agg: aggOf(list) })).sort(sorters[sortKey]);
+      return wrap(`<div class="pc-mgrid">${rows.map(r => { const gens = new Set(r.list.map(genKey)).size;
+        return dcard(`PrecioCalle.goModel('${jsq(r.label)}')`, r.agg.photo, r.label,
+          `${r.agg.years ? `${r.agg.years} · ` : ""}${enVenta(r.agg.live)}${gens > 1 ? ` · ${gens} generaciones` : ""}`, priceTxt(r.agg.prices)); }).join("")}</div>`,
+        `${byModel.size === 1 ? "1 modelo" : `${nf.format(byModel.size)} modelos`} · toca uno para ver sus generaciones y versiones`);
+    }
+
+    // paso 2: generaciones del modelo (si solo hay una, directo a sus versiones)
+    const byGen = new Map();
+    for (const m of model) { const k = genKey(m); if (!byGen.has(k)) byGen.set(k, []); byGen.get(k).push(m); }
+    const gen = byGen.size === 1 ? [...byGen.keys()][0] : v.dgen && byGen.has(v.dgen) ? v.dgen : null;
+    const back = (fn, txt) => `<button class="btn ghost sm pc-back" onclick="${fn}">← ${h(txt)}</button>`;
+    if (!gen) {
+      const rows = [...byGen.entries()].map(([g, list]) => ({ g, list, agg: aggOf(list) }))
+        .sort((a, b) => (a.g === GEN_NONE) - (b.g === GEN_NONE) || b.agg.minYear - a.agg.minYear);
+      return wrap(`${back("PrecioCalle.goModel(null)", "Todos los modelos")}<h3 class="pc-mgh">${h(v.dmodel)} <span>${enVenta(aggOf(model).live)}</span></h3>
+        <div class="pc-mgrid">${rows.map(r => dcard(`PrecioCalle.goModel('${jsq(v.dmodel)}', '${jsq(r.g)}')`, r.agg.photo, r.g,
+          `${r.agg.years ? `${r.agg.years} · ` : ""}${enVenta(r.agg.live)} · ${r.list.length === 1 ? "1 versión" : `${r.list.length} versiones`}`, priceTxt(r.agg.prices))).join("")}</div>`,
+        `${byGen.size} generaciones · toca una para ver sus versiones`);
+    }
+
+    // paso 3: versiones de esa generación
+    const list = byGen.get(gen).map(m => ({ m, name: m.vname || m.variant, agg: aggOf([m]) })).sort(sorters[sortKey]).map(o => o.m);
+    return wrap(`${byGen.size > 1 ? back(`PrecioCalle.goModel('${jsq(v.dmodel)}')`, `Generaciones de ${v.dmodel}`) : back("PrecioCalle.goModel(null)", "Todos los modelos")}
+      <h3 class="pc-mgh">${h(v.dmodel)}${byGen.size > 1 || (gen !== GEN_NONE && !v.dmodel.toLowerCase().includes(gen.toLowerCase())) ? ` · ${h(gen)}` : ""} <span>${enVenta(aggOf(byGen.get(gen)).live)}</span></h3>
+      <div class="pc-mgrid">${list.map(verCard).join("")}</div>`,
+      `${list.length === 1 ? "1 versión" : `${list.length} versiones`} · toca una para ver su historial`);
   }
   let dqTimer = null;
   PC.dSearch = val => { S.view.dq = val; clearTimeout(dqTimer); dqTimer = setTimeout(() => { draw(root()); const i = root().querySelector(".pc-mercados input"); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 220); };
@@ -529,7 +587,7 @@
     const TABS = [["precios", "Precios"], ["km", "Kilometraje"], ["anios", "Años"], ["volumen", "Volumen"], ["ubicacion", "Ubicación"]];
     const counts = { venta: inWin.filter(x => statusOf(x) === "venta").length, fuera: inWin.filter(x => statusOf(x) !== "venta").length };
     return `<div class="pc-market" id="pcMarket">
-      <button class="btn ghost sm pc-back" onclick="PrecioCalle.goMarket(null)">← Todos los mercados</button>
+      <button class="btn ghost sm pc-back" onclick="PrecioCalle.backFromMarket('${m.slug}')">← ${h(m.label)}${m.gen && !m.label.toLowerCase().includes(m.gen.toLowerCase()) ? ` · ${h(m.gen)}` : ""}</button>
       <header class="pc-mhead">
         ${m.photo ? `<img src="${h(thumb(m.photo))}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}
         <div><p class="pc-path">${h(m.make)} › ${h(m.model)}${m.gen ? ` › ${h(m.gen)}` : ""}</p>

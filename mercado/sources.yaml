@@ -523,23 +523,9 @@ sources:
     verify: "Mucho seminuevo general (Amarok, GLE): la taxonomía deja solo los de entusiasta"
     enabled: true
 
-  - id: el-auto-clasico
-    name: El Auto Clásico (portal nacional de clásicos)
-    kind: portal
-    cities: []
-    base_url: https://elautoclasico.com.mx
-    adapter: ficha
-    config:
-      sitemaps: [/1_mx_0_sitemap.xml]
-      include: "/\\d+-[^/]+\\.html$"
-      city_re: "Ubicaci[oó]n:\\s*(.+?)\\s*(?:Publicado|\\n|$)"
-      published_re: "Publicado desde:\\s*(\\d{1,2}/[A-Za-zé]+/\\d{4})"
-      seller_type: desconocido      # mezcla particulares y lotes
-      photo_path: "-large_default/"
-    capture_mode: scraper
-    data: "PrestaShop con JSON-LD Product (MXN); ~350 anuncios de todo el país (Torreón, Guadalajara…). La descripción trae Ubicación y 'Publicado desde'"
-    verify: "Muchos anuncios dicen 'Último refrendo' de 2024 y aun así 'Refrendo: Vigente'. Activada el 2026-11-12 por decisión del usuario sin filtrar por refrendo"
-    enabled: true
+  # El Auto Clásico (elautoclasico.com.mx): RETIRADA el 2026-11-13 por decisión del usuario
+  # (precios erróneos, fotos pequeñas, página torpe). Se borraron todos sus anuncios y autos de
+  # Supabase. No volver a agregarla.
 
   # ── Revisadas el 2026-11-12 (búsqueda nacional de agencias de entusiasta) ──
   - id: 360-motors

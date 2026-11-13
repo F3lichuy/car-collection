@@ -5295,7 +5295,7 @@ function loadPrecioCalle(){
   const el=$("#tab-calle"); if(!el) return;
   if(window.PrecioCalle) return PrecioCalle.render(el);
   el.innerHTML='<p style="color:var(--ink-faint);margin:28px 0">Cargando…</p>';
-  const s=document.createElement("script"); s.src="precio-calle.js?v=13";
+  const s=document.createElement("script"); s.src="precio-calle.js?v=14";
   s.onload=()=>PrecioCalle.render(el);
   s.onerror=()=>{ el.innerHTML='<div class="empty"><h2>No se pudo cargar Precio de Calle</h2><p>Revisa tu conexión y vuelve a intentar.</p></div>'; };
   document.head.appendChild(s);

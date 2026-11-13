@@ -291,3 +291,16 @@ describe('foto "de estudio" con una gemela idéntica', () => {
     assert.equal(r.action, 'match'); assert.equal(r.vehicleId, 'gemela');
   });
 });
+
+describe('Marketplace sin km: mismo título, año y precio', () => {
+  const T = { model_id: 'porsche-911', generation_id: 'porsche-911-992-2', version_id: null };
+  const base = { id: 'z', created_at: '2026-11-12', ...T, specs: { year: 2026, observed_on: '2026-11-12' }, photos: [], prices: [6350000], titles: ['2026 porsche 911 turbo s'] };
+  test('mismo precio → se propone (no se une solo); ±3 % → también; otro precio u otro año → no', () => {
+    const idx = new IdentityIndex().addVehicle(base);
+    const inc = (price, year = 2026) => idx.resolve({ ...T, specs: { year, observed_on: '2026-11-12' }, price, photos: [], listing: { title: '2026 Porsche 911 turbo s', source_id: 'fb', external_id: 'x' } });
+    let r = inc(6350000); assert.equal(r.action, 'new'); assert.deepEqual(r.reviews[0].reasons.slice(0, 2), ['mismo_titulo', 'mismo_precio']);
+    r = inc(6420000); assert.equal(r.reviews[0].reasons[1], 'precio_parecido');
+    assert.equal(inc(6900000).reviews.length, 0);
+    assert.equal(inc(6350000, 2025).reviews.length, 0);
+  });
+});

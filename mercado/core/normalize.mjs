@@ -330,6 +330,8 @@ export function normalizeListing(raw) {
       source_id: raw.source_id, capture_method: raw.capture_method ?? 'scraper', external_id: raw.external_id != null ? String(raw.external_id) : null,
       url: raw.url ?? null, url_canonical: url, title: raw.title ?? null, city: raw.city ?? null, state: raw.state ?? null,
       seller_type: raw.seller_type ?? 'desconocido', published_on: publishedOn(raw.published_on, raw.observed_on),
+      // "Publicado hace 3 meses" (Mercado Libre, Marketplace): fecha estimada, no exacta
+      published_approx: !!(raw.published_approx ?? raw.extra?.publicado_texto),
     },
     private: { seller_name: raw.seller_name ?? null, seller_contact: raw.seller_contact ?? null, description: desc || null, raw: raw.extra ?? {} },
     specs: { ...specs, parse_confidence: confidence, unresolved, observed_on: raw.observed_on },

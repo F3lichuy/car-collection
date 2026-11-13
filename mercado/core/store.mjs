@@ -17,10 +17,12 @@ export const fromPostgres = sql => ({
 const one = async (db, sql, p) => (await db.query(sql, p)).rows[0] ?? null;
 
 export class Store {
-  constructor(db) { this.db = db; }
+  // approx: la base ya tiene mx_listings.published_approx (009); syncSources lo confirma al empezar cada corrida
+  constructor(db) { this.db = db; this.approx = true; }
 
   // ── fuentes y corridas ────────────────────────────────────────────────
   async syncSources(list) {
+    this.approx = (await this.db.query(`select 1 from information_schema.columns where table_schema = 'public' and table_name = 'mx_listings' and column_name = 'published_approx'`)).rows.length > 0;
     for (const s of list) {
       await this.db.query(`
         insert into mx_sources (id, name, kind, base_url, capture_mode, enabled, status, config, notes)
@@ -66,7 +68,7 @@ export class Store {
       photos: await q(`select id, vehicle_id, phash::text, phash_center::text, low_info from mx_photos where phash is not null`),
       // color estimado de las primeras fotos de cada anuncio (008)
       photoColors: await q(`select vehicle_id, listing_id, position, color_family from mx_photos where color_checked and position <= 2`),
-      listings: await q(`select vehicle_id, url_canonical, source_id, external_id from mx_listings`),
+      listings: await q(`select vehicle_id, url_canonical, source_id, external_id, title from mx_listings`),
       distinctPairs: await q(`select vehicle_a, vehicle_b from mx_distinct_pairs`),
     };
   }
@@ -90,17 +92,24 @@ export class Store {
 
   async insertListing(db, vehicleId, l, day) {
     return (await one(db, `insert into mx_listings (vehicle_id, source_id, capture_method, external_id, url, url_canonical, title,
-        city, state, seller_type, first_seen, last_seen, published_on) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11,$12) returning id`,
-      [vehicleId, l.source_id, l.capture_method, l.external_id, l.url, l.url_canonical, l.title, l.city, l.state, l.seller_type, day, l.published_on ?? null])).id;
+        city, state, seller_type, first_seen, last_seen, published_on${this.approx ? ', published_approx' : ''}) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11,$12${this.approx ? ',$13' : ''}) returning id`,
+      [vehicleId, l.source_id, l.capture_method, l.external_id, l.url, l.url_canonical, l.title, l.city, l.state, l.seller_type, day, l.published_on ?? null,
+        ...(this.approx ? [!!(l.published_on && l.published_approx)] : [])])).id;
   }
 
+  // La primera fecha que dio la fuente no se reescribe… salvo que era aproximada ("hace 3 meses") y ahora
+  // llega una exacta. (published_approx llega con la migración 009; sin ella se omite.)
   async touchListing(db, listingId, l, day) {
+    const approxSql = this.approx ? `,
+        published_approx = case when published_on is null then coalesce($7, false)
+                                when published_approx and $6::date is not null and not $7 then false else published_approx end` : '';
     await db.query(`update mx_listings set last_seen = greatest(last_seen, $2::date), first_seen = least(first_seen, $2::date),
         title = coalesce($3, title), city = coalesce($4, city), state = coalesce($5, state),
-        published_on = coalesce(published_on, $6::date),   -- la primera fecha que dio la fuente no se reescribe
+        published_on = case when published_on is null ${this.approx ? 'or (published_approx and $6::date is not null and not $7)' : ''}
+                            then coalesce($6::date, published_on) else published_on end${approxSql},
         status = case when status in ('desaparecido') then 'activo' else status end,
         status_changed_at = case when status in ('desaparecido') then now() else status_changed_at end
-      where id = $1`, [listingId, day, l.title, l.city, l.state, l.published_on ?? null]);
+      where id = $1`, [listingId, day, l.title, l.city, l.state, l.published_on ?? null, ...(this.approx ? [!!(l.published_on && l.published_approx)] : [])]);
   }
 
   async upsertPrivate(db, listingId, p) {

@@ -32,6 +32,9 @@ const dist = (p, q) => {
 };
 const prepPhoto = p => (p && p.hash != null && !p.lowInfo) ? { h: split(p.hash), c: split(p.center), ref: p.ref ?? p.id ?? null } : null;
 
+// título para comparar: minúsculas, sin acentos ni signos, espacios simples
+const normTitle = t => (t ? norm(String(t)).replace(/[^a-z0-9]+/g, ' ').trim() : '');
+
 const pairKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 
 // ── Comparación de specs ─────────────────────────────────────────────────
@@ -123,7 +126,8 @@ export class IdentityIndex {
   addVehicle(v) {
     if (v.merged_into) return this;
     const vin = v.vin ? normalizeVin(v.vin)?.vin : null;
-    const rec = { ...v, vin, is_demo: !!v.is_demo, photos: (v.photos ?? []).map(prepPhoto).filter(Boolean) };
+    const rec = { ...v, vin, is_demo: !!v.is_demo, photos: (v.photos ?? []).map(prepPhoto).filter(Boolean),
+      titles: v.titles ?? (v.listings ?? []).map(l => normTitle(l.title)).filter(Boolean) };
     this.vehicles.set(v.id, rec);
     if (vin) this.byVin.set(vin, v.id);
     for (const l of v.listings ?? []) for (const k of listingKeys(l)) this.byListing.set(k, v.id);
@@ -134,7 +138,7 @@ export class IdentityIndex {
     const v = this.vehicles.get(id);
     if (!v) return this;
     v.photos.push(...photos.map(prepPhoto).filter(Boolean));
-    for (const l of listings) for (const k of listingKeys(l)) this.byListing.set(k, id);
+    for (const l of listings) { for (const k of listingKeys(l)) this.byListing.set(k, id); const t = normTitle(l.title); if (t) v.titles = [...(v.titles ?? []), t]; }
     return this;
   }
   addDistinct(a, b) { this.distinct.add(pairKey(a, b)); return this; }
@@ -154,7 +158,7 @@ export class IdentityIndex {
     for (const v of vehicles) idx.addVehicle({
       ...v, specs: { ...(canon.get(v.id) ?? {}), photo_color: pc.get(v.id) ?? null }, prices: (pr.get(v.id) ?? []).map(p => Number(p.price)),
       photos: (ph.get(v.id) ?? []).map(p => ({ hash: p.phash, center: p.phash_center, lowInfo: p.low_info, ref: p.id })),
-      listings: ls.get(v.id) ?? [],
+      listings: ls.get(v.id) ?? [], titles: (ls.get(v.id) ?? []).map(l => normTitle(l.title)).filter(Boolean),
     });
     for (const p of distinctPairs) idx.addDistinct(p.vehicle_a, p.vehicle_b);
     return idx;
@@ -309,6 +313,24 @@ export class IdentityIndex {
       const score = 0.35 + 0.12 * fields.length + (sameVersion ? 0.1 : 0) + 0.15 * Math.min(m.strong, 1) + 0.05 * Math.min(m.weak, 2);
       review(id, score, ['fingerprint', ...c.agree, ...(m.strong || m.weak ? ['alguna_foto_parecida'] : [])], { photos: m });
     }
+    // 3b. Sin km (Marketplace casi nunca lo da): mismo título, mismo año y precio igual o casi (±3 %) → que lo veas tú.
+    //     Facebook guarda una copia distinta de la foto en cada publicación (otro recorte), así que la foto no lo confirma.
+    const a1 = inc.specs ?? {}, incTitles = [].concat(inc.titles ?? [], inc.listing?.title ? [normTitle(inc.listing.title)] : []).filter(Boolean);
+    const incPs = [].concat(inc.prices ?? [], inc.price != null ? [inc.price] : []).map(Number).filter(p => p > 0);
+    if (inc.model_id && a1.year != null && incTitles.length && incPs.length) {
+      for (const [id, v] of this.vehicles) {
+        if (off(id) || seen.has(id) || v.model_id !== inc.model_id) continue;
+        const b = v.specs ?? {};
+        if (b.year !== a1.year || (a1.km != null && b.km != null)) continue;            // con km de los dos, deciden las otras reglas
+        if (!(v.titles ?? []).some(t => incTitles.includes(t))) continue;
+        const close = incPs.some(p => (v.prices ?? []).some(q => Math.max(p, q) / Math.min(p, q) <= 1.03));
+        if (!close) continue;
+        const c = compare(inc, v, s, this.isDistinct(id, exclude ?? ''));
+        const same = incPs.some(p => (v.prices ?? []).some(q => Math.abs(p - q) < 1));
+        review(id, same ? 0.8 : 0.7, ['mismo_titulo', same ? 'mismo_precio' : 'precio_parecido', ...c.hard, ...c.soft]);
+      }
+    }
+
     // Fotos parecidas (débiles) sin fingerprint: también vale la pena que lo veas.
     for (const [id, m] of pm.matches) {
       if (seen.has(id) || m.strong + m.weak < 2) continue;

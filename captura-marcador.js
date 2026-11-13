@@ -283,7 +283,24 @@
     });
   }
   function sleep(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
-  var POST_HREF = /\/groups\/([^/?#]+)\/(?:posts|permalink)\/(\d+)|[?&](?:story_fbid|multi_permalinks)=(\d+)|\/(?:commerce\/listing|marketplace\/item)\/(\d+)/;
+  // Ligas a una publicación: de grupo, de página o perfil (con id numérico o "pfbid…"), permalink.php y Marketplace
+  var POST_HREF = /\/groups\/[^/?#]+\/(?:posts|permalink)\/(?:\d+|pfbid\w+)|\/[^/?#]+\/posts\/(?:\d+|pfbid\w+)|[?&](?:story_fbid|multi_permalinks)=(?:\d+|pfbid\w+)|\/(?:commerce\/listing|marketplace\/item)\/\d+/;
+  var SEARCH = /^\/search\//.test(location.pathname) || window.__pcSearch;
+  function postLink(href) {
+    var u, m;
+    try { u = new URL(href, location.href); } catch (e) { return null; }
+    var p = u.pathname, fb = "https://www.facebook.com";
+    if ((m = p.match(/^\/groups\/([^/]+)\/(?:posts|permalink)\/(\d+|pfbid\w+)/))) return { gid: m[1], pid: m[2], url: fb + "/groups/" + m[1] + "/posts/" + m[2] + "/" };
+    if ((m = p.match(/\/(?:commerce\/listing|marketplace\/item)\/(\d+)/))) return { gid: "mp", pid: m[1], url: fb + "/marketplace/item/" + m[1] + "/" };
+    if ((m = p.match(/^\/([^/]+)\/posts\/(\d+|pfbid\w+)/)) && m[1] !== "groups") return { gid: m[1], pid: m[2], url: fb + "/" + m[1] + "/posts/" + m[2] + "/" };
+    var sf = u.searchParams.get("story_fbid") || u.searchParams.get("multi_permalinks");
+    if (sf && /^(\d+|pfbid\w+)$/.test(sf)) {
+      var g = (p.match(/^\/groups\/([^/]+)/) || [])[1], id = u.searchParams.get("id");
+      if (g) return { gid: g, pid: sf, url: fb + "/groups/" + g + "/posts/" + sf + "/" };
+      return { gid: id || "fb", pid: sf, url: fb + "/permalink.php?story_fbid=" + sf + (id ? "&id=" + id : "") };
+    }
+    return null;
+  }
   // ── Lo que Facebook ya le mandó a tu navegador ──────────────────────
   // Cada publicación del grupo llega a tu navegador como datos (la página los usa para dibujarse):
   // ahí vienen la fecha exacta (creation_time), el texto completo sin "Ver más" y cada foto en su
@@ -369,12 +386,12 @@
       try { timeA.blur(); } catch (e) {}
     }
     as = qa(post, "a[href]").filter(function (a) { return !a.closest('[role="article"] [role="article"]'); });
-    for (var j = 0; j < as.length && !link; j++) { var m = (as[j].href || "").match(POST_HREF); if (m) link = m; }
+    for (var j = 0; j < as.length && !link; j++) if (POST_HREF.test(as[j].href || "")) link = postLink(as[j].href);
     return { date: date, link: link };
   }
   function groupId() {
     var m = location.pathname.match(/\/groups\/([^/?#]+)/);
-    return window.__pcGroup || (m ? m[1] : "grupo");
+    return window.__pcGroup || (m ? m[1] : SEARCH ? "busqueda" : "grupo");
   }
   var inComment = function (el) { return !!(el.closest && el.closest('[role="article"] [role="article"]')); };
   // "Ver más": se le da clic (también a los que aparecen después del primero) y se espera a que crezca el texto
@@ -442,12 +459,12 @@
     var end = all.findIndex(function (l) { return /^(me gusta|like|comentar|comment|todas las reacciones|all reactions)$/i.test(l); });
     if (end >= 0) all = all.slice(0, end);
     var msg = msgEl ? postLines(msgEl) : all.slice();
-    var gid = meta.link && meta.link[1] || groupId(), pid = meta.link ? (meta.link[2] || meta.link[3] || meta.link[4]) : null;
+    var link = meta.link, gid = link ? link.gid : groupId(), pid = link ? link.pid : null;
     var fb = pid && FB[pid] ? { id: pid, d: FB[pid] } : fbByText(msg.join("\n"));
     if (fb && !pid) {
-      pid = fb.id;
-      var lm = String(fb.d.url || "").match(POST_HREF);
-      if (lm && lm[1]) gid = lm[1];
+      link = fb.d.url ? postLink(fb.d.url) : null;
+      pid = link ? link.pid : fb.id;
+      if (link) gid = link.gid;
     }
     if (fb && fb.d.text && fb.d.text.length > msg.join("\n").length) msg = fb.d.text.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
     var clean = function (ls) { return ls.filter(function (l) { return !NOISE_RE.test(l) && l.length > 1; }); };
@@ -456,7 +473,8 @@
     var text = msg.join("\n"), every = msg.concat(extra).join("\n");
     if (fb && fb.d.title) every = fb.d.title + "\n" + every;
     if (!text && !(fb && fb.d.title)) return null;
-    if (WANTED_RE.test(text) || !BRAND_RE.test(every)) return null;
+    // en un grupo se brinca lo que no menciona una marca que seguimos; en una búsqueda, lo que buscaste ya es el filtro
+    if (WANTED_RE.test(text) || (!SEARCH && !BRAND_RE.test(every))) return null;
     if (/^\s*(vendido|sold)\b/i.test(text)) return null;
     var p = priceFree(every) || (fb && fb.d.price ? (money(fb.d.price.replace(/\s/g, "")) && { price: money(fb.d.price.replace(/\s/g, "")).price, currency: money(fb.d.price.replace(/\s/g, "")).currency, list_price: null }) : null);
     if (!p || !p.price) return { skip: "sin_precio" };   // aun con el texto completo no dice precio: no sirve para Precio de Calle
@@ -466,8 +484,8 @@
     var nowY = new Date().getFullYear() + 1, years = (titleLine.match(/\b(19[5-9]\d|20[0-3]\d)\b/g) || []).concat((lines.slice(0, 4).join(" ").match(/\b(19[5-9]\d|20[0-3]\d)\b/g) || []))
       .map(Number).filter(function (y) { return y <= nowY; });
     var key = pid ? "g" + gid + "_" + pid : "g" + gid + "_t" + hash(text.slice(0, 400));
-    var url = pid ? (meta.link && meta.link[4] ? "https://www.facebook.com/marketplace/item/" + pid + "/" : "https://www.facebook.com/groups/" + gid + "/posts/" + pid + "/")
-      : "https://www.facebook.com/groups/" + gid + "/?pc_post=" + key;
+    var url = link ? link.url : pid ? "https://www.facebook.com/groups/" + gid + "/posts/" + pid + "/"
+      : "https://www.facebook.com" + (SEARCH && !window.__pcGroup ? "/search/posts/" : "/groups/" + gid + "/") + "?pc_post=" + key;
     var city = lines.filter(function (l) { return l.length < 45 && /^[A-ZÁÉÍÓÚÑ][\wáéíóúñ .]+,\s*[A-Z][\w. ]{1,25}$/.test(l) && !BRAND_RE.test(l); })[0] || null;
     // fecha: la exacta de los datos; si no, el globo de la hora; si no, lo que dice el encabezado ("Ayer", "3 d")
     var date = fb && fb.d.t ? { date: iso(new Date(fb.d.t * 1000)), text: new Date(fb.d.t * 1000).toISOString(), exact: true } : meta.date || headDate;
@@ -496,7 +514,7 @@
     var panel = S.panel = document.createElement("div");
     panel.setAttribute("style", "position:fixed;right:16px;bottom:16px;z-index:2147483647;background:#111;color:#fff;font:13px/1.4 system-ui,sans-serif;" +
       "padding:12px 14px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.35);width:270px");
-    panel.innerHTML = '<b>Precio de Calle · modo grupo</b><div data-s style="margin:6px 0 8px;opacity:.9"></div>' +
+    panel.innerHTML = '<b>Precio de Calle · ' + (SEARCH ? "búsqueda" : "modo grupo") + '</b><div data-s style="margin:6px 0 8px;opacity:.9"></div>' +
       '<label style="display:block;margin-bottom:8px;opacity:.8">Detener a los <input data-min type="number" min="5" max="120" value="30" style="width:48px"> min</label>' +
       '<button data-p style="margin-right:6px">Pausar</button><button data-x>Terminar y enviar</button>';
     document.body.appendChild(panel);
@@ -553,7 +571,7 @@
         }
         flush(false);
         S.idle = fresh ? 0 : S.idle + 1;
-        if (S.idle >= 8) return finish("Llegó al final del grupo (o Facebook dejó de cargar más).");
+        if (S.idle >= 8) return finish(SEARCH ? "Llegó al final de los resultados." : "Llegó al final del grupo (o Facebook dejó de cargar más).");
         window.scrollBy(0, Math.round(window.innerHeight * 0.8));
         await sleep(4000);   // que Facebook alcance a cargar las siguientes
       }
@@ -561,7 +579,8 @@
     show();
     loop();
   }
-  if (site === "facebook" && (window.__pcGroup || /^\/groups\/[^/]+\/?$|^\/groups\/[^/]+\/(buy_sell_discussion|for_sale|discussion)/.test(location.pathname))) { grupoMode(); return; }
+  // grupos y búsquedas de Facebook ("ferrari en venta", con los filtros que tú elijas): el mismo recorrido
+  if (site === "facebook" && (window.__pcGroup || SEARCH || /^\/groups\/[^/]+\/?$|^\/groups\/[^/]+\/(buy_sell_discussion|for_sale|discussion)/.test(location.pathname))) { grupoMode(); return; }
 
   // ── juntar ───────────────────────────────────────────────────────────
   var items = [];

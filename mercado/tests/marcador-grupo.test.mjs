@@ -92,3 +92,28 @@ test('modo grupo: lee los datos que Facebook manda al bajar (fetch y XHR, con "f
   } finally { await browser.close(); }
 });
 
+
+test('búsqueda de Facebook: mismo recorrido, ligas de páginas (pfbid) y de grupos', { skip: !chromium && 'Playwright no está instalado', timeout: 90000 }, async () => {
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage();
+    await page.goto(new URL('./fixtures/captura/fb-busqueda.html', import.meta.url).href);
+    await page.evaluate(() => { window.__sent = []; window.open = () => ({ closed: false, postMessage: m => window.__sent.push(JSON.parse(JSON.stringify(m))) }); });
+    await page.evaluate(readFileSync(new URL('../../captura-marcador.js', import.meta.url), 'utf8'));
+    assert.match(await page.textContent('body'), /Precio de Calle · búsqueda/);
+    await page.waitForFunction(() => /2 publicaciones/.test(document.querySelector('[data-s]')?.textContent || ''), null, { timeout: 60000 });
+    await page.click('[data-x]');
+    await page.waitForFunction(() => window.__sent.length > 0);
+    const items = (await page.evaluate(() => window.__sent))[0].items;
+    const puro = items.find(i => /purosangue/i.test(i.title));
+    assert.equal(puro.price, 14399000);
+    assert.equal(puro.year, 2026);
+    assert.equal(puro.km, '1200');                       // estaba detrás de "Ver más"
+    assert.equal(puro.url, 'https://www.facebook.com/luxurycarspv/posts/pfbid02AbCdEf123/');
+    assert.equal(puro.external_id, 'gluxurycarspv_pfbid02AbCdEf123');
+    assert.equal(puro.published_on, '2025-11-07');
+    const g63 = items.find(i => /G 63/.test(i.title));
+    assert.equal(g63.url, 'https://www.facebook.com/groups/seminuevosgdl/posts/5551234/');
+    assert.equal(g63.price, 3350000);
+  } finally { await browser.close(); }
+});

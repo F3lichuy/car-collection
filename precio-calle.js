@@ -1469,7 +1469,7 @@
   let marcadorHref = null;
   async function ensureMarcador() {
     if (marcadorHref) return marcadorHref;
-    try { const r = await fetch("captura-marcador.js?v=5", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
+    try { const r = await fetch("captura-marcador.js?v=6", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
     return marcadorHref;
   }
   function adminPanel() {
@@ -1478,7 +1478,7 @@
       ${dupPanel()}
       <div class="pc-addrow">
         <div class="pc-addbtn"><a class="btn primary sm pc-marcador" id="pcMarcador" href="#" onclick="event.preventDefault();alert('Arrástralo a tu barra de favoritos; no se usa aquí.')">Guardar en Precio de Calle</a>
-          <p class="pc-foot">Arrástralo a tu barra de favoritos (Ctrl + Shift + B si no la ves) y dale clic en Mercado Libre o Facebook Marketplace: en resultados guarda los autos que se ven; dentro de un anuncio, ese auto con todas sus fotos. <b>En un grupo de Facebook</b> baja solo por el grupo (hasta 30 min, a ritmo pausado) y guarda las publicaciones de venta con su fecha; deja abiertas las dos ventanas. <b>Si cambia el botón</b>, bórralo de la barra y vuelve a arrastrarlo.</p></div>
+          <p class="pc-foot">Arrástralo a tu barra de favoritos (Ctrl + Shift + B si no la ves) y dale clic en Mercado Libre o Facebook Marketplace: en resultados guarda los autos que se ven; dentro de un anuncio, ese auto con todas sus fotos. <b>En un grupo o una búsqueda de Facebook</b> baja solo por la página (hasta 30 min, a ritmo pausado) y guarda las publicaciones de venta con su fecha; deja abiertas las dos ventanas. <b>Si cambia el botón</b>, bórralo de la barra y vuelve a arrastrarlo.</p></div>
         <div class="pc-addlast"><h4 class="pc-h4">Últimas capturas</h4><div id="pcCapturas"><p class="pc-foot">Cargando…</p></div></div>
       </div>
       <div class="pc-sub"><h4 class="pc-h4">Buscar más autos por ciudad</h4>

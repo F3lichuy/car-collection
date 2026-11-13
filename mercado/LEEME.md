@@ -111,7 +111,13 @@ En el mismo panel, **Buscar más autos por ciudad** arma las búsquedas de un mo
 (CDMX, Guadalajara, Monterrey, Querétaro, Puebla, Mérida, Cancún y "cerca de mí", desde $100,000) y en Mercado Libre.
 Solo son ligas que abre el admin; los modelos con menos autos para comparar salen primero.
 
-## Modo grupo: grupos de Facebook
+## Modo grupo: grupos y búsquedas de Facebook
+
+También funciona en la **búsqueda de Facebook** (`facebook.com/search/…`): buscas lo que quieras ("ferrari en venta
+mexico"), eliges los filtros de Facebook (Publicaciones, "Fecha de publicación" por año, "Publicaciones recientes") y
+le das clic al botón. En la búsqueda no se exige que el texto mencione una marca (lo que buscaste ya es el filtro);
+la corrida deja fuera lo que no está en la taxonomía. Reconoce ligas de grupos, de páginas (`/pagina/posts/pfbid…`),
+`permalink.php` y Marketplace. Página de prueba: `tests/fixtures/captura/fb-busqueda.html`.
 
 Dentro de un grupo de compra-venta (`facebook.com/groups/…`), el mismo botón ya no lee una sola vez: **baja solo por el
 grupo en tu pestaña**, a ritmo pausado (una pantalla cada ~4 s), hasta 30 minutos o hasta el final del grupo. Un panel

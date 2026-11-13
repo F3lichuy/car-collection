@@ -163,7 +163,7 @@ sources:
     enabled: false
 
   - id: facebook-grupos
-    name: Grupos de Facebook (compra-venta de autos)
+    name: Facebook (grupos y búsquedas)
     kind: red_social
     cities: [nacional]
     base_url: https://www.facebook.com/groups

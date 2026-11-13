@@ -111,6 +111,39 @@ En el mismo panel, **Buscar más autos por ciudad** arma las búsquedas de un mo
 (CDMX, Guadalajara, Monterrey, Querétaro, Puebla, Mérida, Cancún y "cerca de mí", desde $100,000) y en Mercado Libre.
 Solo son ligas que abre el admin; los modelos con menos autos para comparar salen primero.
 
+## Modo grupo: grupos de Facebook
+
+Dentro de un grupo de compra-venta (`facebook.com/groups/…`), el mismo botón ya no lee una sola vez: **baja solo por el
+grupo en tu pestaña**, a ritmo pausado (una pantalla cada ~4 s), hasta 30 minutos o hasta el final del grupo. Un panel
+abajo a la derecha muestra cuántas publicaciones leyó y cuántos autos encontró, con Pausar y Terminar.
+
+- De cada publicación de venta: fecha exacta (la del globo de la hora), texto, precio escrito a mano (`$1,650,000`,
+  `4.2 mdp`, `850 mil`; con "antes … ahora" guarda la rebaja), año, km, ciudad, fotos y la liga a la publicación.
+- Se brinca "busco/compro", pláticas sin precio ni año, comentarios y lo vendido. No lee quién publicó; quita teléfonos,
+  correos y ligas de WhatsApp del texto.
+- Manda tandas de 25 a la ventana de carcollection.app que abre al empezar, que las guarda solas en `mx_capturas`
+  (`facebook-grupos`, migración 009) sin pedir revisión; el normalizador y el anti-duplicados de la corrida hacen el filtro.
+- El día de cada auto es el de la publicación: una de hace meses entra como "ya no aparece"; una de esta semana, activa.
+  La misma publicación vista otro día no cuenta como que sigue en venta. Un auto republicado con otro precio se une al
+  anterior por sus fotos (así salen las rebajas).
+- Facebook prohíbe la recolección automática y puede pedir verificación o limitar la cuenta si nota actividad rara:
+  úsalo en sesiones cortas, mientras estás en la computadora. Página de prueba: `tests/fixtures/captura/fb-grupo.html`.
+
+## Wayback Machine (anuncios ya borrados)
+
+`adapters/wayback.mjs` busca en el índice público de archive.org (CDX) copias de anuncios de Mercado Libre, Seminuevos,
+Kavak y Autocosmos cuya dirección menciona una marca o modelo de la taxonomía, y abre una copia por anuncio por mes.
+Cada copia entra con **su** fecha: varias copias del mismo anuncio = su historial de precio. Se guardan con el
+`source_id` del sitio original y `capture_method = 'wayback'`; lo viejo entra como "ya no aparece".
+
+```bash
+node scripts/ingest.mjs --seco --fuente wayback --limite 30          # probar, sin tocar Supabase
+```
+
+Avance entre corridas: `.capturas/wayback-estado.json` (en GitHub Actions vive en la caché). Cada corrida lee hasta
+`max_snapshots_per_run` copias (250, ~25 min) y sigue donde se quedó; al terminar un sitio lo repasa cada 30 días.
+En GitHub, "Run workflow" con **seco** prueba cualquier fuente sin tocar la base.
+
 ## Aplicar en Supabase (solo con tu OK)
 
 ```bash
@@ -120,6 +153,7 @@ npx supabase db query --remote --file ../supabase/mercado/003_antiduplicados.sql
 npx supabase db query --remote --file ../supabase/mercado/004_fuentes_publicas.sql
 npx supabase db query --remote --file ../supabase/mercado/005_publicacion_y_captura.sql
 npx supabase db query --remote --file ../supabase/mercado/006_capturas.sql
+npx supabase db query --remote --file ../supabase/mercado/010_grupos_facebook.sql
 ```
 
 Todos son idempotentes: se pueden volver a correr.

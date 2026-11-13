@@ -162,6 +162,55 @@ sources:
     data: "Facebook prohíbe la recolección automática: solo con el botón 'Guardar en Precio de Calle' mientras tú navegas (mx_capturas → corrida diaria)"
     enabled: false
 
+  - id: facebook-grupos
+    name: Grupos de Facebook (compra-venta de autos)
+    kind: red_social
+    cities: [nacional]
+    base_url: https://www.facebook.com/groups
+    capture_mode: script_local
+    data: "Modo grupo del botón 'Guardar en Precio de Calle': baja solo por el grupo que TÚ abriste, lee las publicaciones de venta (fecha, precio, año, km, fotos; sin nombres ni teléfonos) y las manda por tandas a mx_capturas"
+    enabled: false
+
+  # ── Archivo histórico ───────────────────────────────────────────────────
+  # Copias viejas de anuncios que los sitios ya borraron (adapters/wayback.mjs). Cada anuncio
+  # se guarda con el source_id del sitio original y capture_method = 'wayback'; entra como
+  # "ya no aparece" y con el precio del día de cada copia (varias copias = historial de precio).
+  # Avance entre corridas: .capturas/wayback-estado.json (en GitHub Actions, en la caché).
+  - id: wayback
+    name: Wayback Machine (anuncios archivados en archive.org)
+    adapter: wayback
+    kind: portal
+    cities: [nacional]
+    base_url: https://web.archive.org
+    capture_mode: scraper
+    min_delay_seconds: 4       # archive.org pide no apurarlo
+    data: "Índice CDX público (copias por dirección, filtradas por marca/modelo de la taxonomía) + la copia tal como se guardó (id_)"
+    verify: "Correr una vez en seco: node scripts/ingest.mjs --seco --fuente wayback --limite 30"
+    config:
+      max_snapshots_per_run: 250    # ~20-30 min por corrida a 4 s por copia
+      cdx_page: 3000
+      rescan_days: 30               # al terminar un sitio, lo repasa cada mes (archive.org sigue guardando)
+      targets:
+        - id: mercadolibre
+          source: mercadolibre-autos
+          parser: mercadolibre
+          prefixes: [auto.mercadolibre.com.mx/MLM-, articulo.mercadolibre.com.mx/MLM-, vehiculo.mercadolibre.com.mx/MLM-]
+          id_re: "MLM-?(\\d{6,})"
+          id_prefix: MLM
+        - id: seminuevos
+          source: seminuevos-com
+          parser: jsonld          # solo copias con datos estructurados de vehículo
+          prefixes: [www.seminuevos.com/, seminuevos.com/]
+        - id: kavak
+          source: kavak
+          parser: jsonld
+          prefixes: [www.kavak.com/mx/]
+        - id: autocosmos
+          source: autocosmos
+          parser: jsonld
+          prefixes: [www.autocosmos.com.mx/auto/usado/]
+    enabled: false
+
   # ── Subastas (ventas reales, no solo precio pedido) ─────────────────────
   - id: morton-subastas
     name: Morton Subastas · Autos y Camiones (clásicos y colección)

@@ -20,14 +20,14 @@ test('modo grupo: lee las publicaciones de venta, sin vendedor ni teléfonos, co
     });
     await page.evaluate(readFileSync(new URL('../../captura-marcador.js', import.meta.url), 'utf8'));
     await page.waitForFunction(() => /7 publicaciones/.test(document.querySelector('[data-s]')?.textContent || ''), null, { timeout: 90000 });
-    assert.match(await page.textContent('[data-s]'), /3 autos · 1 sin precio/);
+    assert.match(await page.textContent('[data-s]'), /4 autos · 1 sin precio/);
     await page.click('[data-x]');
     await page.waitForFunction(() => window.__sent.length > 0);
     const [batch] = await page.evaluate(() => window.__sent);
     assert.equal(batch.mode, 'grupo');
     assert.equal(batch.site, 'facebook-grupos');
     const items = batch.items;
-    assert.equal(items.length, 3, JSON.stringify(items.map(i => i.title)));
+    assert.equal(items.length, 4, JSON.stringify(items.map(i => i.title)));
 
     const p911 = items.find(i => /911/.test(i.title));
     assert.equal(p911.external_id, 'gautosmty_987654321');
@@ -43,6 +43,8 @@ test('modo grupo: lee las publicaciones de venta, sin vendedor ni teléfonos, co
     assert.ok(!/1234 5678|wa\.me/.test(p911.description), p911.description);
     assert.ok(!/Carlos/.test(JSON.stringify(p911)));
 
+    // cualquier marca entra a la lista (tú decides en carcollection.app)
+    assert.equal(items.find(i => /Versa/.test(i.title)).price, 210000);
     const f458 = items.find(i => /458/.test(i.title));
     assert.equal(f458.title, 'Ferrari 458 Italia 2012 REBAJADO');
     assert.equal(f458.price, 4200000);

@@ -45,6 +45,16 @@ export function taxonomy() {
   return TAX;
 }
 
+// Modelos que no están en data/taxonomia.mjs pero sí en la base (creados al aprobar un auto en "Por revisar").
+export function addModel({ make_id, make_name, model_id, model_name, segment = 'moderno' }) {
+  const T = taxonomy();
+  if (!T.makes.has(make_id)) T.makes.set(make_id, { id: make_id, name: make_name ?? make_id });
+  for (const a of [make_name, make_id.replace(/-/g, ' ')]) { const k = norm(a ?? '').replace(/[^a-z0-9.\/+&]+/g, ' ').trim(); if (k && !T.makesByAlias.has(k)) T.makesByAlias.set(k, make_id); }
+  const list = T.modelsByMake.get(make_id) ?? [];
+  T.modelsByMake.set(make_id, list);
+  if (!list.some(m => m.id === model_id)) list.push({ id: model_id, make_id, name: model_name, segment, aliases: [tokens(model_name)], added: true });
+}
+
 const containsSeq = (hay, needle) => {
   if (!needle.length) return false;
   for (let i = 0; i + needle.length <= hay.length; i++) if (needle.every((t, k) => hay[i + k] === t)) return true;
@@ -84,7 +94,9 @@ function versionScore(v, tset, cmpText, model) {
 }
 
 // Devuelve { model_id, generation_id, version_id, candidates, issues }
-export function resolveTaxonomy({ make, model, version, title, year }) {
+// allowAll: el anuncio lo aprobaste tú en "Por revisar": cuentan también los modelos que dejamos fuera
+// a propósito (Cayenne, Roma…) y los años sin generación en la taxonomía (queda sin generación).
+export function resolveTaxonomy({ make, model, version, title, year, allowAll = false }) {
   const T = taxonomy(), issues = [];
   const makeId = resolveMake(make) ?? resolveMake(`${model ?? ''} ${title ?? ''}`);
   if (!makeId) return { make_id: null, issues: ['marca_fuera_de_taxonomia'] };
@@ -93,9 +105,10 @@ export function resolveTaxonomy({ make, model, version, title, year }) {
   const tk = tokens(text);
   // modelos de la marca fuera de la taxonomía a propósito (Cayenne, Roma…)
   const out = (D.OUT_OF_SCOPE_MODELS[makeId] ?? []).find(m => containsSeq(tk, tokens(m)));
-  if (out) return { make_id: makeId, model_id: null, issues: ['modelo_fuera_de_taxonomia'], excluded: out };
+  if (out && !allowAll) return { make_id: makeId, model_id: null, issues: ['modelo_fuera_de_taxonomia'], excluded: out };
   // Un modelo "cabe" si alguna de sus generaciones cubre el año (±1) o si no hay año.
-  const fitsYear = id => !year || (T.gensByModel.get(id) ?? []).some(g => year >= g.year_from - 1 && year <= (g.year_to ?? 9999) + 1);
+  // (un modelo agregado desde "Por revisar" no tiene generaciones: cabe en cualquier año)
+  const fitsYear = id => { const gs = T.gensByModel.get(id) ?? []; return !year || !gs.length || gs.some(g => year >= g.year_from - 1 && year <= (g.year_to ?? 9999) + 1); };
   // modelo: alias más largo que aparece como secuencia de palabras; entre
   // alias, gana el que además cabe por año ("300 SL" 1987 es R107, no W198).
   let model_id = null, bestLen = 0, bestFits = false;
@@ -108,7 +121,9 @@ export function resolveTaxonomy({ make, model, version, title, year }) {
   // por año), se deduce por una versión inequívoca de esa marca. Solo versiones
   // con número en el nombre ("720S", "GT3 RS", "DBX707", "LP610-4", "560 SL"):
   // "Turbo" o "GTS" solos no bastan.
-  if (!model_id || !bestFits) {
+  // (si tú escribiste el modelo en "Por revisar", manda lo que escribiste: no se deduce por la versión,
+  //  "Roma Spider" no es un SF90 Spider)
+  if ((!model_id || !bestFits) && !(allowAll && model)) {
     const hits = new Set();
     for (const m of T.modelsByMake.get(makeId) ?? []) for (const g of T.gensByModel.get(m.id) ?? [])
       for (const v of T.versionsByGen.get(g.id) ?? [])
@@ -125,8 +140,11 @@ export function resolveTaxonomy({ make, model, version, title, year }) {
   const byCode = gens.filter(g => [...(T.genAliases.get(g.id) ?? [])].some(a => a.length >= 3 && new RegExp(`(^|[^a-z0-9])${a}([^0-9]|$)`).test(norm(text).replace(/\./g, ''))));
   const byYear = year ? gens.filter(g => year >= g.year_from - 1 && year <= (g.year_to ?? 9999) + 1) : [];
   // Mustang 2022, Corvette C7…: el modelo existe pero esa generación no está en la taxonomía.
-  if (year && !byYear.length) return { make_id: makeId, model_id: null, issues: ['anio_fuera_de_taxonomia'] };
-  let genCands = byCode.length ? byCode : byYear.length ? byYear : gens;
+  if (year && !byYear.length && gens.length) {
+    if (!allowAll) return { make_id: makeId, model_id: null, issues: ['anio_fuera_de_taxonomia'] };
+    issues.push('generacion_fuera_de_taxonomia');
+  }
+  let genCands = byCode.length ? byCode : byYear.length ? byYear : year && gens.length ? [] : gens;
   if (byCode.length && byYear.length) { const both = byCode.filter(g => byYear.includes(g)); if (both.length) genCands = both; }
 
   // versión: más palabras de la versión presentes (sin importar orden), luego más letras
@@ -247,6 +265,9 @@ export function publishedOn(v, today) {
   return d >= '1995-01-01' && d <= max && !Number.isNaN(Date.parse(d)) ? d : null;
 }
 
+// "no funciona", "para piezas", "motor desvielado"… (texto ya sin acentos y en minúsculas)
+export const JUNK = /\b(no (funciona|arranca|prende|enciende|camina|corre)|para (piezas|partes|refacciones|reparar|restaurar)|por (piezas|partes)|desarmad[oa]s?|sin motor|motor (desvielado|desbielado|fundido|desarmado|danado)|desvielad[oa]|desbielad[oa]|deshuesadero|chatarra|proyecto de restauracion|como proyecto|se vende como esta)\b/;
+export const MIN_PRICE_MXN = 100000;   // "extremadamente barato": menos de esto (en pesos) no entra
 const REPLICA = /(^|[^a-z])(replica|tribute|tributo|kit car|recreacion|recreation|evocation)([^a-z]|$)/;
 
 export function normalizeListing(raw) {
@@ -260,9 +281,11 @@ export function normalizeListing(raw) {
 
   // Réplicas, tributos y kit cars no son el auto que imitan: fuera de la taxonomía.
   const replica = REPLICA.test(norm([raw.title, raw.model, raw.version].filter(Boolean).join(' ')));
-  const tax = replica ? { model_id: null, issues: ['replica'] } : resolveTaxonomy({ make: raw.make, model: raw.model, version: raw.version, title: raw.title, year });
-  const inScope = !!tax.model_id;
+  const tax = replica ? { model_id: null, issues: ['replica'] } : resolveTaxonomy({ make: raw.make, model: raw.model, version: raw.version, title: raw.title, year, allowAll: !!raw.revisado });
   issues.push(...tax.issues);
+  // Autos que no funcionan, para piezas o extremadamente baratos: fuera, salvo que tú los hayas aprobado en "Por revisar".
+  const junk = JUNK.test(norm(`${raw.title ?? ''} \n ${desc}`));
+  if (junk) issues.push('no_funciona_o_piezas');
 
   let { km, raw: kmRaw } = parseKm(raw.km, raw.km_unit);
   // sin campo de km: "con 14,000 km" en el título o la descripción (un solo número; si hay varios, no se adivina)
@@ -280,6 +303,9 @@ export function normalizeListing(raw) {
     if (t) ({ km, raw: kmRaw } = parseKm(t));
   }
   const price = parsePrice(raw.price ?? raw.price_text, raw.currency, raw.price_text ?? '');
+  const cheap = price.price != null && price.currency === 'MXN' && price.price < MIN_PRICE_MXN;
+  if (cheap) issues.push('precio_muy_bajo');
+  const inScope = !!tax.model_id && (!!raw.revisado || (!junk && !cheap));
   if (raw.negotiable) price.negotiable = true;
   // precio "antes" que la fuente muestra tachado; solo si es mayor que el actual y en la misma moneda.
   // Rebaja máxima creíble: 33 % (tope 1.5×). Más que eso suele ser un precio copiado de otro auto
@@ -324,7 +350,7 @@ export function normalizeListing(raw) {
 
   const url = raw.url ? canonicalUrl(raw.url) : null;
   return {
-    inScope, confidence, issues, unresolved,
+    inScope, confidence, issues, unresolved, reviewed: !!raw.revisado,
     vehicle: { model_id: tax.model_id ?? null, generation_id: tax.generation_id ?? null, version_id: tax.version_id ?? null, vin },
     listing: {
       source_id: raw.source_id, capture_method: raw.capture_method ?? 'scraper', external_id: raw.external_id != null ? String(raw.external_id) : null,

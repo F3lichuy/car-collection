@@ -133,8 +133,15 @@ abajo a la derecha muestra cuántas publicaciones leyó y cuántos autos encontr
   `4.2 mdp`, `850 mil`; con "antes … ahora" guarda la rebaja), año, km, ciudad, fotos y la liga a la publicación.
 - Se brinca "busco/compro", pláticas sin precio ni año, comentarios y lo vendido. No lee quién publicó; quita teléfonos,
   correos y ligas de WhatsApp del texto.
-- Manda tandas de 25 a la ventana de carcollection.app que abre al empezar, que las guarda solas en `mx_capturas`
-  (`facebook-grupos`, migración 009) sin pedir revisión; el normalizador y el anti-duplicados de la corrida hacen el filtro.
+- Manda tandas de 25 a la ventana de carcollection.app que abre al empezar. **Nada se guarda solo**: todo cae en la lista
+  **"Por revisar"** (también lo de Marketplace y Mercado Libre). Ahí marcas cuáles sí, corriges la marca y el modelo
+  detectados y guardas; los demás se descartan. La lista vive en ese navegador hasta que la guardas.
+- **Cualquier marca y modelo**: si apruebas un auto cuyo modelo no está en la taxonomía (BMW M3, Ferrari Roma, Nissan
+  Versa…), la corrida crea la marca y el modelo en `mx_makes`/`mx_models` (sin generaciones) y desde ahí lo reconoce
+  siempre. Lo que apruebas no vuelve a la cola de normalización por confianza baja.
+- Llegan **sin palomita**, con el motivo: los que dicen que no funcionan o son para piezas ("no arranca", "para piezas",
+  "motor desvielado"…), los de menos de $100,000 MXN, los sin precio y los en dólares. En las fuentes que no pasan por
+  "Por revisar" (agencias, Wayback), esos mismos quedan fuera (`JUNK` y `MIN_PRICE_MXN` en `core/normalize.mjs`).
 - El día de cada auto es el de la publicación: una de hace meses entra como "ya no aparece"; una de esta semana, activa.
   La misma publicación vista otro día no cuenta como que sigue en venta. Un auto republicado con otro precio se une al
   anterior por sus fotos (así salen las rebajas).

@@ -474,8 +474,8 @@
     var text = msg.join("\n"), every = msg.concat(extra).join("\n");
     if (fb && fb.d.title) every = fb.d.title + "\n" + every;
     if (!text && !(fb && fb.d.title)) return null;
-    // en un grupo se brinca lo que no menciona una marca que seguimos; en una búsqueda, lo que buscaste ya es el filtro
-    if (WANTED_RE.test(text) || (!SEARCH && !BRAND_RE.test(every))) return null;
+    // cualquier marca: tú decides en la lista "Por revisar" de carcollection.app. Solo se brincan los "busco/compro".
+    if (WANTED_RE.test(text)) return null;
     if (/^\s*(vendido|sold)\b/i.test(text)) return null;
     var p = priceFree(every) || (fb && fb.d.price ? (money(fb.d.price.replace(/\s/g, "")) && { price: money(fb.d.price.replace(/\s/g, "")).price, currency: money(fb.d.price.replace(/\s/g, "")).currency, list_price: null }) : null);
     if (!p || !p.price) return { skip: "sin_precio" };   // aun con el texto completo no dice precio: no sirve para Precio de Calle
@@ -525,7 +525,7 @@
     q(panel, "[data-x]").addEventListener("click", function () { finish("Terminado."); });
     function show() {
       var left = Object.keys(S.pending).length;
-      st.innerHTML = S.posts + " publicaciones leídas · <b>" + S.cars + " autos</b>" + (S.sinPrecio ? " · " + S.sinPrecio + " sin precio (no se guardan)" : "") + "<br>" + S.sent + " enviados" + (left ? " · " + left + " tanda(s) esperando a carcollection.app" : "") +
+      st.innerHTML = S.posts + " publicaciones leídas · <b>" + S.cars + " autos</b>" + (S.sinPrecio ? " · " + S.sinPrecio + " sin precio (no se guardan)" : "") + "<br>" + S.sent + " en tu lista por revisar" + (left ? " · " + left + " tanda(s) esperando a carcollection.app" : "") +
         (S.oldest ? "<br>Llegó hasta el " + S.oldest : "") + (S.msg ? "<br><span style='color:#ffcf6b'>" + S.msg + "</span>" : "");
     }
     // tandas de hasta 25 autos; se reenvían hasta que carcollection.app confirma que las guardó

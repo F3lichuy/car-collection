@@ -73,6 +73,27 @@ export class Store {
     };
   }
 
+  // Modelos de la base que no vienen de data/taxonomia.mjs (los crea ensureModel al aprobar un auto en "Por revisar").
+  async extraModels() {
+    return (await this.db.query(`select m.id model_id, m.name model_name, m.segment, k.id make_id, k.name make_name
+      from mx_models m join mx_makes k on k.id = m.make_id`)).rows;
+  }
+
+  // Crea (si falta) la marca y el modelo que escribiste en "Por revisar". Devuelve los ids que quedaron.
+  async ensureModel({ makeId, makeName, modelName }) {
+    const slug = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const mk = makeId ?? slug(makeName);
+    if (!mk || !slug(modelName)) throw new Error(`marca o modelo vacío (${makeName} / ${modelName})`);
+    await this.db.query(`insert into mx_makes (id, name) values ($1, $2) on conflict do nothing`, [mk, makeName]);
+    const make = await one(this.db, `select id, name from mx_makes where id = $1 or lower(name) = lower($2) order by (id = $1) desc limit 1`, [mk, makeName]);
+    const id = `${make.id}-${slug(modelName)}`;
+    await this.db.query(`insert into mx_models (id, make_id, name, segment, notes) values ($1, $2, $3, 'moderno', 'Agregado al aprobar un auto en "Por revisar"')
+      on conflict do nothing`, [id, make.id, modelName]);
+    const model = await one(this.db, `select id, name, segment from mx_models where make_id = $1 and (id = $2 or lower(name) = lower($3)) order by (id = $2) desc limit 1`,
+      [make.id, id, modelName]);
+    return { make_id: make.id, make_name: make.name, model_id: model.id, model_name: model.name, segment: model.segment };
+  }
+
   async knownExternalIds(sourceId) {
     return new Set((await this.db.query(`select external_id from mx_listings where source_id = $1 and external_id is not null`, [sourceId])).rows.map(r => r.external_id));
   }

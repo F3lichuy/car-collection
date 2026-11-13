@@ -76,4 +76,38 @@ describe('capturas del botón', () => {
     const { rows: [p] } = await db.query(`select price::int, list_price::int, observed_from::text from mx_price_snapshots s join mx_listings l on l.id = s.listing_id where l.external_id = 'gautosmty_2'`);
     assert.deepEqual(p, { price: 4200000, list_price: 4500000, observed_from: '2026-11-25' });
   });
+
+  test('"Por revisar": cualquier marca y modelo que apruebas entra (se crea el modelo); sin aprobar, fuera lo que no funciona o es muy barato', async () => {
+    const fb = n => `https://www.facebook.com/groups/autosmty/posts/9${n}/`;
+    const aprobados = [
+      { external_id: 'r1', url: fb(1), title: 'Vendo BMW M3 Competition 2021', make: 'BMW', model: 'M3', year: 2021, km: '15000', price: 1750000, currency: 'MXN', revisado: true },
+      { external_id: 'r2', url: fb(2), title: 'Nissan Versa Advance 2019', make: 'Nissan', model: 'Versa', year: 2019, price: 210000, currency: 'MXN', revisado: true },
+      { external_id: 'r3', url: fb(3), title: 'Ferrari Roma Spider 2025', make: 'Ferrari', model: 'Roma', year: 2025, price: 6900000, currency: 'MXN', revisado: true },
+      { external_id: 'r4', url: fb(4), title: 'Ford Mustang Mach 1 2022', make: 'Ford', model: 'Mustang', year: 2022, price: 1100000, currency: 'MXN', revisado: true },
+    ];
+    const sinRevisar = [
+      { external_id: 'x1', url: fb(5), title: 'Porsche 911 Carrera 1987', description: 'No arranca, para piezas', year: 1987, price: 400000, currency: 'MXN' },
+      { external_id: 'x2', url: fb(6), title: 'Porsche 911 Carrera 1987', year: 1987, price: 45000, currency: 'MXN' },
+    ];
+    await db.query(`insert into mx_capturas (source_id, page_url, items) values ('facebook-grupos', 'https://www.facebook.com/groups/autosmty', $1::jsonb)`, [JSON.stringify([...aprobados, ...sinRevisar])]);
+    const [r] = await processCapturas({ db, store, sources: [], adapters, makeFetcher: () => null, today: '2026-11-26', hashPhotos: false, log: () => {} });
+    assert.equal(r.ok, true, r.fatal);
+    const got = (await db.query(`select l.external_id e, v.model_id m, v.generation_id g from mx_listings l join mx_vehicles v on v.id = l.vehicle_id
+      where l.external_id like 'r%' or l.external_id like 'x%' order by 1`)).rows;
+    assert.deepEqual(got, [
+      { e: 'r1', m: 'bmw-m3', g: null },
+      { e: 'r2', m: 'nissan-versa', g: null },
+      { e: 'r3', m: 'ferrari-roma', g: null },
+      { e: 'r4', m: 'ford-mustang', g: null },   // ya estaba el modelo; 2022 no tiene generación en la taxonomía
+    ]);
+    assert.deepEqual((await db.query(`select id, name from mx_makes where id = 'nissan'`)).rows, [{ id: 'nissan', name: 'Nissan' }]);
+    // los aprobados no van a la cola de normalización por no tener generación
+    assert.equal((await db.query(`select count(*)::int n from mx_review_queue q join mx_listings l on l.id = q.listing_id where l.external_id like 'r%'`)).rows[0].n, 0);
+    // la siguiente corrida ya conoce el modelo creado (sin "revisado")
+    const otro = [{ external_id: 'r9', url: fb(9), title: 'BMW M3 2018 manual', year: 2018, price: 1200000, currency: 'MXN' }];
+    await db.query(`insert into mx_capturas (source_id, page_url, items) values ('facebook-grupos', 'https://www.facebook.com/groups/autosmty', $1::jsonb)`, [JSON.stringify(otro)]);
+    await processCapturas({ db, store, sources: [], adapters, makeFetcher: () => null, today: '2026-11-27', hashPhotos: false, log: () => {} });
+    assert.equal((await db.query(`select v.model_id m from mx_listings l join mx_vehicles v on v.id = l.vehicle_id where l.external_id = 'r9'`)).rows[0]?.m, 'bmw-m3');
+  });
 });
+

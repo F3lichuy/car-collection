@@ -111,12 +111,24 @@ En el mismo panel, **Buscar más autos por ciudad** arma las búsquedas de un mo
 (CDMX, Guadalajara, Monterrey, Querétaro, Puebla, Mérida, Cancún y "cerca de mí", desde $100,000) y en Mercado Libre.
 Solo son ligas que abre el admin; los modelos con menos autos para comparar salen primero.
 
-## Modo grupo: grupos de Facebook
+## Modo grupo: grupos y búsquedas de Facebook
+
+También funciona en la **búsqueda de Facebook** (`facebook.com/search/…`): buscas lo que quieras ("ferrari en venta
+mexico"), eliges los filtros de Facebook (Publicaciones, "Fecha de publicación" por año, "Publicaciones recientes") y
+le das clic al botón. En la búsqueda no se exige que el texto mencione una marca (lo que buscaste ya es el filtro);
+la corrida deja fuera lo que no está en la taxonomía. Reconoce ligas de grupos, de páginas (`/pagina/posts/pfbid…`),
+`permalink.php` y Marketplace. Página de prueba: `tests/fixtures/captura/fb-busqueda.html`.
 
 Dentro de un grupo de compra-venta (`facebook.com/groups/…`), el mismo botón ya no lee una sola vez: **baja solo por el
 grupo en tu pestaña**, a ritmo pausado (una pantalla cada ~4 s), hasta 30 minutos o hasta el final del grupo. Un panel
 abajo a la derecha muestra cuántas publicaciones leyó y cuántos autos encontró, con Pausar y Terminar.
 
+- Cada publicación se pone al centro de la pantalla, se le da clic a **"Ver más"** y se espera a que salga el texto
+  completo. La fecha exacta, el texto completo y las **fotos en su tamaño original (sin el recorte de la cuadrícula)**
+  salen de los datos que Facebook ya le mandó a tu navegador (los de arranque y los que llegan al bajar). Si una
+  publicación no los trae, se abre su primera foto en el visor de Facebook, se recorren con "Siguiente" y se cierra;
+  si tampoco, el globo de la hora y las fotos que se ven.
+- Sin precio (aun con el texto completo, p. ej. "informes por inbox") no se guarda; el panel dice cuántas.
 - De cada publicación de venta: fecha exacta (la del globo de la hora), texto, precio escrito a mano (`$1,650,000`,
   `4.2 mdp`, `850 mil`; con "antes … ahora" guarda la rebaja), año, km, ciudad, fotos y la liga a la publicación.
 - Se brinca "busco/compro", pláticas sin precio ni año, comentarios y lo vendido. No lee quién publicó; quita teléfonos,

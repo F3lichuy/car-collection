@@ -1,15 +1,27 @@
 <!doctype html><meta charset="utf-8"><title>Autos Deportivos Monterrey | Facebook</title>
-<!-- Página de prueba del modo grupo: imita el feed de un grupo de Facebook (la hora da la liga y la fecha completa al pasar el mouse). -->
+<!-- Página de prueba del modo grupo: imita el feed de un grupo de Facebook.
+     · la hora da la liga y la fecha completa al pasar el mouse
+     · "Ver más" esconde el resto del texto (con el precio)
+     · las fotos de la publicación vienen recortadas; la original está en los datos de la página o en el visor -->
 <script>window.__pcSite = "facebook"; window.__pcGroup = "autosmty";</script>
-<style>[role=article]{display:block;margin:0 0 900px}a,span,div{display:block}</style>
+<style>[role=article]{display:block;margin:0 0 900px}a,span,div{display:block}[role=dialog]{position:fixed;inset:0;background:#000}</style>
+<!-- datos con que arranca la página (Facebook los manda así, en JSON) -->
+<script type="application/json" data-sjs>{"require":[["ScheduledServerJS","handle",null,[{"__bbox":{"result":{"data":{"node":{"__typename":"Story","post_id":"987654321",
+  "comet_sections":{"content":{"story":{"message":{"text":"Vendo Porsche 911 Carrera S 2013 PDK\n38 mil km, servicios en agencia\nPrecio $1,650,000 a tratar\nInformes al 81 1234 5678 o wa.me/5218112345678"},
+    "attachments":[{"styles":{"attachment":{"all_subattachments":{"nodes":[
+      {"media":{"image":{"uri":"https://scontent.fmty1-1.fna.fbcdn.net/v/t39.30808-6/111_222_333_n.jpg?stp=c0.0.600.600","width":600,"height":600},
+                "viewer_image":{"uri":"https://scontent.fmty1-1.fna.fbcdn.net/v/t39.30808-6/111_222_333_n.jpg?full","width":1440,"height":960}}},
+      {"media":{"viewer_image":{"uri":"https://scontent.fmty1-1.fna.fbcdn.net/v/t39.30808-6/444_555_666_n.jpg?full","width":1440,"height":960}}}]}}}}]}},
+  "context_layout":{"story":{"comet_sections":{"metadata":[{"story":{"creation_time":1697127300,"url":"https://www.facebook.com/groups/autosmty/posts/987654321/"}}]}}},
+  "actor_photo":{"story":{"actors":[{"name":"Carlos Ramírez","profile_picture":{"uri":"https://scontent.fmty1-1.fna.fbcdn.net/v/t39.30808-1/999_888_777_n.jpg","width":40}}]}}}}}}}}]]]}</script>
 <div role="main"><div role="feed">
 
 <div><div role="article" aria-labelledby="x">
   <span>Carlos Ramírez</span>
   <a href="#" class="t" data-post="987654321" data-full="martes, 12 de octubre de 2023 a las 10:15"><span>3 d</span></a>
   <div data-ad-preview="message"><div dir="auto">Vendo Porsche 911 Carrera S 2013 PDK<br>38 mil km, servicios en agencia<br>Precio $1,650,000 a tratar<br>Informes al 81 1234 5678 o wa.me/5218112345678</div></div>
-  <img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39/911-a.jpg" width="400" height="300">
-  <img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39/911-b.jpg" width="400" height="300">
+  <a href="/photo/?fbid=111"><img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39.30808-6/111_222_333_n.jpg?stp=c0.0.400.400" width="400" height="300"></a>
+  <a href="/photo/?fbid=444"><img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39.30808-6/444_555_666_n.jpg?stp=c0.0.400.400" width="400" height="300"></a>
   <img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39/perfil.jpg" width="40" height="40">
   <span>Me gusta</span><span>Comentar</span>
 </div></div>
@@ -31,7 +43,8 @@
   <span>Antes $4,500,000 ahora 4.2 mdp</span>
   <span>18,000 km</span>
   <span>San Pedro Garza García, NL</span>
-  <img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39/458.jpg" width="500" height="300">
+  <a href="/photo/?fbid=777" class="foto"><img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39/458-recorte.jpg" width="500" height="300"></a>
+  <a href="https://agencia.example/ferrari"><img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39/vista-previa-liga.jpg" width="500" height="260"></a>
   <span>Me gusta</span><span>Comentar</span>
   <div role="article" aria-label="Comentario de Ana"><span>Ana</span><span>Me interesa, $3,900,000?</span>
     <img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39/comentario.jpg" width="300" height="300"></div>
@@ -42,14 +55,48 @@
   <div data-ad-preview="message"><div dir="auto">Nissan Versa 2019 $210,000</div></div>
 </div></div>
 
+<div><div role="article">
+  <span>Rodrigo</span><a href="#" class="t" data-post="444444" data-full="domingo, 2 de noviembre de 2025 a las 18:40"><span>11 d</span></a>
+  <div data-ad-preview="message"><div dir="auto" class="corto">Vendo Lamborghini Huracán EVO 2021 impecable, único dueño… <div role="button" tabindex="0" class="vermas">Ver más</div></div></div>
+  <span>Me gusta</span><span>Comentar</span>
+</div></div>
+
+<div><div role="article">
+  <span>Sofía</span><a href="#" class="t" data-post="555555" data-full="1 de noviembre"><span>12 d</span></a>
+  <div data-ad-preview="message"><div dir="auto">Porsche Cayman GT4 2016 en venta… <div role="button" tabindex="0" class="vermas2">Ver más</div></div></div>
+</div></div>
+
 </div></div>
 <script>
-// Facebook llena la liga y muestra la fecha completa en un globo al pasar el mouse por la hora
+// la hora: liga y fecha completa al pasar el mouse
 document.querySelectorAll("a.t").forEach(function (a) {
   a.addEventListener("mouseover", function () {
     a.href = "/groups/autosmty/posts/" + a.dataset.post + "/?__cft__=x";
-    var t = document.createElement("div"); t.setAttribute("role", "tooltip"); t.textContent = a.dataset.full; document.body.appendChild(t);
+    var t = document.createElement("div"); t.setAttribute("role", "tooltip"); t.textContent = a.dataset.full;
+    setTimeout(function () { document.body.appendChild(t); }, 500);   // el globo tarda
   });
-  a.addEventListener("mouseout", function () { document.querySelectorAll('[role=tooltip]').forEach(function (t) { t.remove(); }); });
+  a.addEventListener("mouseout", function () { setTimeout(function () { document.querySelectorAll('[role=tooltip]').forEach(function (t) { t.remove(); }); }, 600); });
+  a.addEventListener("click", function (e) { e.preventDefault(); });
 });
+// "Ver más"
+document.querySelector(".vermas").addEventListener("click", function () {
+  var m = document.querySelector(".corto");
+  setTimeout(function () { m.innerHTML = "Vendo Lamborghini Huracán EVO 2021 impecable, único dueño<br>9,500 km, garantía de agencia<br>Precio: 5.9 mdp<br>Whats 55 9876 5432"; }, 300);
+});
+document.querySelector(".vermas2").addEventListener("click", function () {
+  this.parentElement.innerHTML = "Porsche Cayman GT4 2016 en venta, manual, color azul. Informes por inbox";
+});
+// el visor de fotos: completa y en tamaño grande, con "Siguiente foto" y "Cerrar"
+var FOTOS = ["https://scontent.fmty1-1.fna.fbcdn.net/v/t39/458-completa-1.jpg", "https://scontent.fmty1-1.fna.fbcdn.net/v/t39/458-completa-2.jpg"];
+document.querySelectorAll("a[href^='/photo/']").forEach(function (a) {
+  a.addEventListener("click", function (e) {
+    e.preventDefault();
+    var i = 0, d = document.createElement("div"); d.setAttribute("role", "dialog");
+    d.innerHTML = '<div aria-label="Cerrar" role="button">x</div><img width="1600" height="1067" src="' + FOTOS[0] + '"><div aria-label="Siguiente foto" role="button">&gt;</div>';
+    d.querySelector('[aria-label="Siguiente foto"]').onclick = function () { i = (i + 1) % FOTOS.length; d.querySelector("img").src = FOTOS[i]; };
+    d.querySelector('[aria-label="Cerrar"]').onclick = function () { d.remove(); };
+    setTimeout(function () { document.body.appendChild(d); }, 400);
+  });
+});
+document.querySelectorAll("a[href^='https://agencia']").forEach(function (a) { a.addEventListener("click", function (e) { e.preventDefault(); window.__salioDelGrupo = true; }); });
 </script>

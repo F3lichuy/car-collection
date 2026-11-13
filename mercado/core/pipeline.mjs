@@ -32,6 +32,8 @@ export async function runSource({ adapter, source, store, fetcher, today, trigge
     // ficha de autos que de todos modos quedarían fuera de la taxonomía.
     const ctx = { fetcher, source, today, log, isKnown: id => known.has(String(id)),
       wanted: raw => normalizeListing({ source_id: source.id, observed_on: today, ...raw }).inScope };
+    // Observaciones con fecha propia (Wayback, publicaciones viejas de grupos): antes de este día ya no cuentan como activas.
+    const staleBefore = addDays(today, -Number(settings.disappear_days ?? 21));
     let seen = 0, consecutiveErrors = 0;
 
     for await (const raw of adapter.listings(ctx)) {
@@ -43,7 +45,7 @@ export async function runSource({ adapter, source, store, fetcher, today, trigge
         if (SOLD_IN_TITLE.test(String(raw.title ?? ''))) { r.marcados_vendidos++; continue; }
         const n = normalizeListing({ source_id: source.id, observed_on: today, ...raw });
         if (!n.inScope) { r.fuera_de_taxonomia++; continue; }
-        await ingestOne({ n, store, index, today, hashPhotos, fetcher, r });
+        await ingestOne({ n, store, index, today, staleBefore, hashPhotos, fetcher, r });
         consecutiveErrors = 0;
       } catch (e) {
         consecutiveErrors++;
@@ -67,7 +69,10 @@ export async function runSource({ adapter, source, store, fetcher, today, trigge
   return r;
 }
 
-async function ingestOne({ n, store, index, today, hashPhotos, fetcher, r }) {
+async function ingestOne({ n, store, index, today, staleBefore = null, hashPhotos, fetcher, r }) {
+  // El día de la observación: el de la fuente si trae uno (copia de Wayback, fecha de la publicación), si no hoy.
+  const day = n.specs.observed_on && n.specs.observed_on < today ? n.specs.observed_on : today;
+  const old = staleBefore != null && day < staleBefore;
   const existing = await store.findListing(store.db, n.listing);
   if (existing) {
     // Si ahora trae fotos que no teníamos (p. ej. el botón leyó el anuncio completo), se suman
@@ -78,11 +83,11 @@ async function ingestOne({ n, store, index, today, hashPhotos, fetcher, r }) {
     const added = [...new Map(n.photos.filter(u => !have.has(key(u))).map(u => [key(u), u])).values()].map(url => ({ url }));
     if (added.length) await hashAll(added, { hashPhotos, fetcher, firstPosition: have.size });
     const res = await store.db.transaction(async tx => {
-      await store.touchListing(tx, existing.id, n.listing, today);
+      await store.touchListing(tx, existing.id, n.listing, day, { reactivate: !old });
       if (n.private.description || n.private.seller_name) await store.upsertPrivate(tx, existing.id, n.private);
       await store.upsertSpecs(tx, existing.vehicle_id, existing.id, n.specs);
       if (added.length) await store.insertPhotos(tx, existing.id, added, have.size);
-      return store.recordPrice(tx, existing.id, n.price, today);
+      return store.recordPrice(tx, existing.id, n.price, day);
     });
     if (added.length) {
       index.addEvidence(existing.vehicle_id, { photos: added.filter(p => p.hash != null) });
@@ -107,11 +112,12 @@ async function ingestOne({ n, store, index, today, hashPhotos, fetcher, r }) {
     let vehicleId, isNewVehicle = false;
     if (decision.action === 'match') vehicleId = decision.vehicleId;
     else { vehicleId = await store.insertVehicle(tx, n.vehicle); isNewVehicle = true; }
-    const listingId = await store.insertListing(tx, vehicleId, n.listing, today);
+    const listingId = await store.insertListing(tx, vehicleId, n.listing, day);
+    if (old) await store.markGone(tx, listingId);
     await store.upsertPrivate(tx, listingId, n.private);
     await store.upsertSpecs(tx, vehicleId, listingId, n.specs, { canonical: isNewVehicle });
     await store.insertPhotos(tx, listingId, photos);
-    await store.recordPrice(tx, listingId, n.price, today);
+    await store.recordPrice(tx, listingId, n.price, day);
     let dupReviews = 0;
     for (const rv of decision.reviews) {
       const a = rv.pairWith ?? vehicleId;
@@ -200,6 +206,7 @@ export async function rescan({ store, fetcher, hashBudget = 400, colorBudget = 1
   return out;
 }
 
+const addDays = (d, n) => new Date(Date.parse(d + 'T12:00:00Z') + n * 864e5).toISOString().slice(0, 10);
 const pick = (o, keys) => Object.fromEntries(keys.map(k => [k, o[k]]));
 
 // Corre varias fuentes, una tras otra; ninguna tumba a las demás.

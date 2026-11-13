@@ -85,7 +85,7 @@ export class PoliteFetcher {
   }
 
   // Devuelve { status, url, text | buffer, headers }
-  async get(url, { as = 'text', minDelayMs, accept = 'text/html,application/json;q=0.9,*/*;q=0.8', checkRobots = true } = {}) {
+  async get(url, { as = 'text', minDelayMs, accept = 'text/html,application/json;q=0.9,*/*;q=0.8', checkRobots = true, timeoutMs = this.timeoutMs } = {}) {
     const u = new URL(url);
     const robots = checkRobots ? await this.robotsFor(u.origin) : { delay: null, allowed: () => true };
     if (!robots.allowed(u.pathname + u.search)) throw new RobotsDenied(url);
@@ -97,7 +97,7 @@ export class PoliteFetcher {
       const t0 = Date.now();
       try {
         this.requests++;
-        const res = await this.fetchImpl(url, { headers: { 'user-agent': this.userAgent, accept, 'accept-language': 'es-MX,es;q=0.9' }, redirect: 'follow', signal: AbortSignal.timeout(this.timeoutMs) });
+        const res = await this.fetchImpl(url, { headers: { 'user-agent': this.userAgent, accept, 'accept-language': 'es-MX,es;q=0.9' }, redirect: 'follow', signal: AbortSignal.timeout(timeoutMs) });
         this.log({ url, status: res.status, ms: Date.now() - t0, attempt });
         this.noteNet(u.host, true);
         if (res.status === 429 || res.status >= 500) { lastErr = new HttpError(res.status, url); continue; }

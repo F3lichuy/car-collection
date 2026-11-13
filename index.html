@@ -5867,6 +5867,8 @@ if(location.hash==="#capturar"){
   window.addEventListener("message",function(e){
     if(!window.opener||e.source!==window.opener) return;
     var d=e.data; if(!d||d.type!=="pc-captura"||!Array.isArray(d.items)) return;
+    /* modo grupo: tandas que se guardan solas; se confirma cada una al guardarse (o se avisa por qué no) */
+    if(d.mode==="grupo"){ (window.pcGrupoCola=window.pcGrupoCola||[]).push({d:d,src:e.source,origin:e.origin}); if(window.PrecioCalle&&PrecioCalle.saveGrupo) PrecioCalle.saveGrupo(); return; }
     try{ e.source.postMessage("pc-captura-recibida",e.origin); }catch(err){}
     if(window.pcCaptura) return;   // el botón reenvía hasta recibir confirmación
     window.pcCaptura=Object.assign({},d,{origin:e.origin});

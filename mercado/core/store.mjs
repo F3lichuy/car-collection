@@ -99,17 +99,25 @@ export class Store {
 
   // La primera fecha que dio la fuente no se reescribe… salvo que era aproximada ("hace 3 meses") y ahora
   // llega una exacta. (published_approx llega con la migración 009; sin ella se omite.)
-  async touchListing(db, listingId, l, day) {
+  // reactivate: false para observaciones viejas (una copia de Wayback de 2019, una publicación de un grupo
+  // de hace meses): que el anuncio existiera entonces no dice que siga en venta hoy.
+  async touchListing(db, listingId, l, day, { reactivate = true } = {}) {
     const approxSql = this.approx ? `,
-        published_approx = case when published_on is null then coalesce($7, false)
-                                when published_approx and $6::date is not null and not $7 then false else published_approx end` : '';
+        published_approx = case when published_on is null then coalesce($8, false)
+                                when published_approx and $6::date is not null and not $8 then false else published_approx end` : '';
     await db.query(`update mx_listings set last_seen = greatest(last_seen, $2::date), first_seen = least(first_seen, $2::date),
         title = coalesce($3, title), city = coalesce($4, city), state = coalesce($5, state),
-        published_on = case when published_on is null ${this.approx ? 'or (published_approx and $6::date is not null and not $7)' : ''}
+        published_on = case when published_on is null ${this.approx ? 'or (published_approx and $6::date is not null and not $8)' : ''}
                             then coalesce($6::date, published_on) else published_on end${approxSql},
-        status = case when status in ('desaparecido') then 'activo' else status end,
-        status_changed_at = case when status in ('desaparecido') then now() else status_changed_at end
-      where id = $1`, [listingId, day, l.title, l.city, l.state, l.published_on ?? null, ...(this.approx ? [!!(l.published_on && l.published_approx)] : [])]);
+        status = case when status in ('desaparecido') and $7 then 'activo' else status end,
+        status_changed_at = case when status in ('desaparecido') and $7 then now() else status_changed_at end
+      where id = $1`, [listingId, day, l.title, l.city, l.state, l.published_on ?? null, reactivate,
+        ...(this.approx ? [!!(l.published_on && l.published_approx)] : [])]);
+  }
+
+  // Anuncio que solo conocemos por una observación vieja: entra como "ya no aparece".
+  async markGone(db, listingId) {
+    await db.query(`update mx_listings set status = 'desaparecido', status_changed_at = now() where id = $1 and status = 'activo'`, [listingId]);
   }
 
   async upsertPrivate(db, listingId, p) {

@@ -57,4 +57,23 @@ describe('capturas del botón', () => {
     assert.deepEqual(prices, [1450000, 1390000]);
     assert.equal((await db.query(`select count(*)::int n from mx_vehicles`)).rows[0].n, 1);
   });
+
+  test('modo grupo: una publicación vieja entra con su fecha y como "ya no aparece"; una reciente, activa', async () => {
+    const grupo = [
+      { external_id: 'gautosmty_1', url: 'https://www.facebook.com/groups/autosmty/posts/1/', title: 'Vendo Porsche 911 Carrera S 2013 PDK', year: 2013, km: '38000',
+        price: 1650000, currency: 'MXN', published_on: '2023-10-12', observed_on: '2023-10-12' },
+      { external_id: 'gautosmty_2', url: 'https://www.facebook.com/groups/autosmty/posts/2/', title: 'Ferrari 458 Italia 2012', year: 2012,
+        price: 4200000, list_price: 4500000, currency: 'MXN', published_on: '2026-11-25', observed_on: '2026-11-25' },
+    ];
+    await db.query(`insert into mx_capturas (source_id, page_url, items) values ('facebook-grupos', 'https://www.facebook.com/groups/autosmty', $1::jsonb)`, [JSON.stringify(grupo)]);
+    const [r] = await processCapturas({ db, store, sources: [], adapters, makeFetcher: () => null, today: '2026-11-26', hashPhotos: false, log: () => {} });
+    assert.equal(r.ok, true, r.fatal);
+    const ls = (await db.query(`select external_id, status, first_seen::text f, published_on::text p from mx_listings where source_id = 'facebook-grupos' order by external_id`)).rows;
+    assert.deepEqual(ls, [
+      { external_id: 'gautosmty_1', status: 'desaparecido', f: '2023-10-12', p: '2023-10-12' },
+      { external_id: 'gautosmty_2', status: 'activo', f: '2026-11-25', p: '2026-11-25' },
+    ]);
+    const { rows: [p] } = await db.query(`select price::int, list_price::int, observed_from::text from mx_price_snapshots s join mx_listings l on l.id = s.listing_id where l.external_id = 'gautosmty_2'`);
+    assert.deepEqual(p, { price: 4200000, list_price: 4500000, observed_from: '2026-11-25' });
+  });
 });

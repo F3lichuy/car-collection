@@ -1,0 +1,55 @@
+<!doctype html><meta charset="utf-8"><title>Autos Deportivos Monterrey | Facebook</title>
+<!-- Página de prueba del modo grupo: imita el feed de un grupo de Facebook (la hora da la liga y la fecha completa al pasar el mouse). -->
+<script>window.__pcSite = "facebook"; window.__pcGroup = "autosmty";</script>
+<style>[role=article]{display:block;margin:0 0 900px}a,span,div{display:block}</style>
+<div role="main"><div role="feed">
+
+<div><div role="article" aria-labelledby="x">
+  <span>Carlos Ramírez</span>
+  <a href="#" class="t" data-post="987654321" data-full="martes, 12 de octubre de 2023 a las 10:15"><span>3 d</span></a>
+  <div data-ad-preview="message"><div dir="auto">Vendo Porsche 911 Carrera S 2013 PDK<br>38 mil km, servicios en agencia<br>Precio $1,650,000 a tratar<br>Informes al 81 1234 5678 o wa.me/5218112345678</div></div>
+  <img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39/911-a.jpg" width="400" height="300">
+  <img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39/911-b.jpg" width="400" height="300">
+  <img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39/perfil.jpg" width="40" height="40">
+  <span>Me gusta</span><span>Comentar</span>
+</div></div>
+
+<div><div role="article">
+  <span>Laura Gómez</span><a href="#" class="t" data-post="111" data-full="11 de octubre"><span>4 d</span></a>
+  <div data-ad-preview="message"><div dir="auto">Busco Ferrari 458 Italia 2012, presupuesto $4,000,000</div></div>
+</div></div>
+
+<div><div role="article">
+  <span>Pedro</span><a href="#" class="t" data-post="222" data-full="10 de octubre"><span>5 d</span></a>
+  <div data-ad-preview="message"><div dir="auto">¿Qué opinan del nuevo 911? Se ve increíble</div></div>
+</div></div>
+
+<div><div role="article">
+  <span>Juan Pérez</span>
+  <span>Ayer a las 10:00</span>
+  <span>Ferrari 458 Italia 2012 REBAJADO</span>
+  <span>Antes $4,500,000 ahora 4.2 mdp</span>
+  <span>18,000 km</span>
+  <span>San Pedro Garza García, NL</span>
+  <img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39/458.jpg" width="500" height="300">
+  <span>Me gusta</span><span>Comentar</span>
+  <div role="article" aria-label="Comentario de Ana"><span>Ana</span><span>Me interesa, $3,900,000?</span>
+    <img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39/comentario.jpg" width="300" height="300"></div>
+</div></div>
+
+<div><div role="article">
+  <span>Mario</span><a href="#" class="t" data-post="333" data-full="9 de octubre"><span>6 d</span></a>
+  <div data-ad-preview="message"><div dir="auto">Nissan Versa 2019 $210,000</div></div>
+</div></div>
+
+</div></div>
+<script>
+// Facebook llena la liga y muestra la fecha completa en un globo al pasar el mouse por la hora
+document.querySelectorAll("a.t").forEach(function (a) {
+  a.addEventListener("mouseover", function () {
+    a.href = "/groups/autosmty/posts/" + a.dataset.post + "/?__cft__=x";
+    var t = document.createElement("div"); t.setAttribute("role", "tooltip"); t.textContent = a.dataset.full; document.body.appendChild(t);
+  });
+  a.addEventListener("mouseout", function () { document.querySelectorAll('[role=tooltip]').forEach(function (t) { t.remove(); }); });
+});
+</script>

@@ -1357,9 +1357,9 @@
   // Los autos llegan de la pestaña donde le diste clic (window.pcCaptura, lo pone index.html),
   // se revisan aquí y se guardan como pendientes en mx_capturas. La corrida diaria los pasa
   // por el normalizador y el anti-duplicados; nada entra directo a los anuncios.
-  const CAP_SOURCE = { facebook: "facebook-marketplace", mercadolibre: "mercadolibre-autos" };
+  const CAP_SOURCE = { facebook: "facebook-marketplace", "facebook-grupos": "facebook-grupos", mercadolibre: "mercadolibre-autos" };
   const CAP_FIELDS = ["external_id", "url", "title", "make", "model", "version", "year", "km", "km_unit", "transmission", "color_ext", "color_int", "vin",
-    "price", "list_price", "body", "currency", "city", "description", "photos", "published_on", "extra"];
+    "price", "list_price", "body", "currency", "city", "description", "photos", "published_on", "observed_on", "extra"];
   function capSource(d) {
     if (CAP_SOURCE[d.site]) return CAP_SOURCE[d.site];
     let host = ""; try { host = new URL(d.page_url).hostname.replace(/^www\./, ""); } catch (e) {}
@@ -1438,11 +1438,38 @@
     PC.loadCapturas();
   };
 
+  // Modo grupo (Facebook): el botón baja solo por un grupo y manda tandas de autos. Se guardan sin
+  // revisión una por una (el normalizador y el anti-duplicados de la corrida hacen el filtro) y se le
+  // confirma cada tanda a la pestaña del grupo; si no hay sesión de admin, se le dice y la reenvía.
+  const grupoHechas = new Set();
+  let grupoOcupado = false, grupoTotal = 0;
+  PC.saveGrupo = async function () {
+    if (grupoOcupado) return;
+    grupoOcupado = true;
+    try {
+      const cola = window.pcGrupoCola || [];
+      while (cola.length) {
+        const { d, src, origin } = cola.shift();
+        const reply = m => { try { src.postMessage({ type: "pc-captura-guardada", batch: d.batch, ...m }, origin); } catch (e) {} };
+        if (grupoHechas.has(d.batch)) { reply({ ok: true }); continue; }
+        if (!canEdit()) { reply({ ok: false, error: "Inicia sesión con tu cuenta de admin en la ventana de carcollection.app (la tanda se reenvía sola)." }); continue; }
+        const pick = d.items.slice(0, 200).filter(x => x && x.currency !== "USD").map(capClean).filter(x => x.url && x.title);
+        if (!pick.length) { grupoHechas.add(d.batch); reply({ ok: true }); continue; }
+        const { error } = await client().from("mx_capturas").insert({ source_id: capSource(d), page_url: String(d.page_url || "").slice(0, 2000), items: pick });
+        if (error) { reply({ ok: false, error: `No se guardó: ${error.message}` }); continue; }
+        grupoHechas.add(d.batch); grupoTotal += pick.length; reply({ ok: true });
+        capModal(`<p><b>Modo grupo: ${grupoTotal === 1 ? "1 auto guardado" : `${nf.format(grupoTotal)} autos guardados`}</b> en esta sesión.</p>
+          <p class="pc-foot" style="margin-top:0">Deja esta ventana abierta mientras el botón baja por el grupo en la otra pestaña. Cada tanda entra en unos 10 a 20 minutos (los repetidos se juntan y se quedan fuera los modelos que no seguimos).</p>`);
+      }
+    } finally { grupoOcupado = false; }
+  };
+  if ((window.pcGrupoCola || []).length) setTimeout(PC.saveGrupo, 0);
+
   // Panel de admin: instalar el botón y ver cómo quedaron las capturas.
   let marcadorHref = null;
   async function ensureMarcador() {
     if (marcadorHref) return marcadorHref;
-    try { const r = await fetch("captura-marcador.js?v=3", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
+    try { const r = await fetch("captura-marcador.js?v=4", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
     return marcadorHref;
   }
   function adminPanel() {
@@ -1451,7 +1478,7 @@
       ${dupPanel()}
       <div class="pc-addrow">
         <div class="pc-addbtn"><a class="btn primary sm pc-marcador" id="pcMarcador" href="#" onclick="event.preventDefault();alert('Arrástralo a tu barra de favoritos; no se usa aquí.')">Guardar en Precio de Calle</a>
-          <p class="pc-foot">Arrástralo a tu barra de favoritos (Ctrl + Shift + B si no la ves) y dale clic en Mercado Libre o Facebook Marketplace: en resultados guarda los autos que se ven; dentro de un anuncio, ese auto con todas sus fotos. <b>Si cambia el botón</b>, bórralo de la barra y vuelve a arrastrarlo.</p></div>
+          <p class="pc-foot">Arrástralo a tu barra de favoritos (Ctrl + Shift + B si no la ves) y dale clic en Mercado Libre o Facebook Marketplace: en resultados guarda los autos que se ven; dentro de un anuncio, ese auto con todas sus fotos. <b>En un grupo de Facebook</b> baja solo por el grupo (hasta 30 min, a ritmo pausado) y guarda las publicaciones de venta con su fecha; deja abiertas las dos ventanas. <b>Si cambia el botón</b>, bórralo de la barra y vuelve a arrastrarlo.</p></div>
         <div class="pc-addlast"><h4 class="pc-h4">Últimas capturas</h4><div id="pcCapturas"><p class="pc-foot">Cargando…</p></div></div>
       </div>
       <div class="pc-sub"><h4 class="pc-h4">Buscar más autos por ciudad</h4>

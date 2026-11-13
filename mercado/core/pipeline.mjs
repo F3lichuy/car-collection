@@ -10,7 +10,7 @@
 // mx_runs; si su parser se rompe (muchos errores seguidos) se detiene SOLO esa
 // fuente y queda en estado 'error'. Las demás siguen.
 // ════════════════════════════════════════════════════════════════════════
-import { normalizeListing } from './normalize.mjs';
+import { normalizeListing, addModel, resolveMake } from './normalize.mjs';
 import { IdentityIndex } from './dedupe.mjs';
 import { phash } from './phash.mjs';
 import { photoColor, carColor } from './photocolor.mjs';
@@ -27,6 +27,7 @@ export async function runSource({ adapter, source, store, fetcher, today, trigge
   try {
     const settings = loadSettings((await store.db.query(`select key, value from mx_settings`)).rows);
     const index = IdentityIndex.fromRows(await store.loadIndexRows(), settings);
+    for (const m of await store.extraModels()) addModel(m);   // modelos creados desde "Por revisar"
     const known = await store.knownExternalIds(source.id);
     // wanted(): el adaptador lo usa con los datos de la lista para no abrir la
     // ficha de autos que de todos modos quedarían fuera de la taxonomía.
@@ -43,7 +44,13 @@ export async function runSource({ adapter, source, store, fetcher, today, trigge
         // "Ferrari SF90 Spider SOLD": la agencia lo deja publicado pero ya no está en venta.
         // No se toma como activo; si estaba activo, dejar de verlo es la señal de venta (Fase 5).
         if (SOLD_IN_TITLE.test(String(raw.title ?? ''))) { r.marcados_vendidos++; continue; }
-        const n = normalizeListing({ source_id: source.id, observed_on: today, ...raw });
+        let n = normalizeListing({ source_id: source.id, observed_on: today, ...raw });
+        // Aprobado por ti en "Por revisar" con una marca/modelo que no teníamos: se crea y se vuelve a leer.
+        if (!n.inScope && raw.revisado && raw.make && raw.model && n.issues.some(i => /^(marca|modelo)_fuera_de_taxonomia$/.test(i))) {
+          addModel(await store.ensureModel({ makeId: resolveMake(raw.make), makeName: String(raw.make).trim(), modelName: String(raw.model).trim() }));
+          n = normalizeListing({ source_id: source.id, observed_on: today, ...raw });
+          if (n.inScope) r.modelos_nuevos = (r.modelos_nuevos ?? 0) + 1;
+        }
         if (!n.inScope) { r.fuera_de_taxonomia++; continue; }
         await ingestOne({ n, store, index, today, staleBefore, hashPhotos, fetcher, r });
         consecutiveErrors = 0;
@@ -124,7 +131,8 @@ async function ingestOne({ n, store, index, today, staleBefore = null, hashPhoto
       if (await store.enqueueDuplicate(tx, a, rv.vehicleId, rv.score, rv.reasons, { listing_id: listingId, decision: decision.action })) dupReviews++;
     }
     let normReview = false;
-    if (n.confidence < NORMALIZATION_REVIEW_BELOW || n.issues.some(i => /imposible|ambigua|vin_invalido|varios_vin/.test(i))) {
+    // (lo que ya aprobaste en "Por revisar" no vuelve a la cola por confianza baja: suele ser un modelo sin generaciones)
+    if ((n.confidence < NORMALIZATION_REVIEW_BELOW && !n.reviewed) || n.issues.some(i => /imposible|ambigua|vin_invalido|varios_vin/.test(i))) {
       await store.enqueueNormalization(tx, listingId, { reasons: [...n.issues, ...n.unresolved.map(u => `sin_${u}`)], confidence: n.confidence, inferred: n.inferred }, n.confidence);
       normReview = true;
     }
@@ -180,6 +188,7 @@ export async function rescan({ store, fetcher, hashBudget = 400, colorBudget = 1
     }
     const settings = loadSettings((await store.db.query(`select key, value from mx_settings`)).rows);
     const index = IdentityIndex.fromRows(await store.loadIndexRows(), settings);
+    for (const m of await store.extraModels()) addModel(m);   // modelos creados desde "Por revisar"
     const pending = new Set();
     for (const rv of await store.pendingDuplicateReviews()) {
       const v = index.reviewStillValid(rv.vehicle_a, rv.vehicle_b);

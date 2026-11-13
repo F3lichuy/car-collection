@@ -1359,7 +1359,7 @@
   // por el normalizador y el anti-duplicados; nada entra directo a los anuncios.
   const CAP_SOURCE = { facebook: "facebook-marketplace", "facebook-grupos": "facebook-grupos", mercadolibre: "mercadolibre-autos" };
   const CAP_FIELDS = ["external_id", "url", "title", "make", "model", "version", "year", "km", "km_unit", "transmission", "color_ext", "color_int", "vin",
-    "price", "list_price", "body", "currency", "city", "description", "photos", "published_on", "observed_on", "extra"];
+    "price", "list_price", "body", "currency", "city", "description", "photos", "published_on", "observed_on", "extra", "revisado"];
   function capSource(d) {
     if (CAP_SOURCE[d.site]) return CAP_SOURCE[d.site];
     let host = ""; try { host = new URL(d.page_url).hostname.replace(/^www\./, ""); } catch (e) {}
@@ -1387,6 +1387,142 @@
       <button class="iconbtn" onclick="document.getElementById('pcScrim').classList.remove('show')" aria-label="Cerrar">×</button></div><div class="mb">${html}</div>`;
     scrim.classList.add("show");
   }
+  // ── Lista "Por revisar" ────────────────────────────────────────────────
+  // Todo lo que manda el botón (un anuncio, una página de resultados, un grupo o una búsqueda que
+  // va bajando) cae aquí y NO se guarda hasta que tú lo apruebas. Entra cualquier marca y modelo:
+  // la marca y el modelo detectados se pueden corregir, y con eso la corrida crea el modelo si no lo
+  // teníamos. Llegan sin palomita (con el motivo) los que dicen que no funcionan o son para piezas,
+  // los extremadamente baratos, los que no tienen precio y los que están en dólares.
+  // La lista vive en este navegador (si recargas, sigue ahí) hasta que guardas o descartas.
+  const REV_KEY = "pc-revision-v1";
+  const REV = { items: [] };
+  try { const saved = JSON.parse(localStorage.getItem(REV_KEY) || "null"); if (saved && Array.isArray(saved.items)) REV.items = saved.items; } catch (e) { /* sin almacenamiento */ }
+  const revSave = () => { try { localStorage.setItem(REV_KEY, JSON.stringify({ items: REV.items.slice(-600) })); } catch (e) { /* lleno o bloqueado */ } };
+  const MIN_PRICE = () => Number((S.settings || {}).min_precio_captura) || 100000;
+  const JUNK_RE = /\b(no (funciona|arranca|prende|enciende|camina|corre)|para (piezas|partes|refacciones|reparar|restaurar)|por (piezas|partes)|desarmad[oa]s?|sin motor|motor (desvielado|desbielado|fundido|desarmado|da[nñ]ado)|desvielad[oa]|desbielad[oa]|deshuesadero|chatarra|proyecto de restauraci[oó]n|como proyecto|se vende como est[aá])\b/i;
+  function junkWhy(x) {
+    if (x.currency === "USD") return "En dólares: no se guarda";
+    if (!(Number(x.price) > 0)) return "Sin precio: no se guarda";
+    const m = JUNK_RE.exec(`${x.title || ""}\n${x.description || ""}`);
+    if (m) return `Dice "${m[0]}"`;
+    if (Number(x.price) < MIN_PRICE()) return `Precio muy bajo (menos de ${money({ price: MIN_PRICE(), currency: "MXN" })})`;
+    return null;
+  }
+  // Marca y modelo a partir del título: "Vendo BMW M3 Competition 2021" → BMW · M3
+  const MAKES = [["Acura"], ["Alfa Romeo", "alfa"], ["Alpine"], ["Aston Martin", "aston"], ["Audi"], ["Bentley"], ["BMW"], ["Bugatti"], ["Buick"], ["BYD"],
+    ["Cadillac"], ["Chevrolet", "chevy"], ["Chrysler"], ["Cupra"], ["Datsun"], ["DeLorean"], ["Dodge"], ["Ferrari"], ["Fiat"], ["Ford"], ["Genesis"], ["GMC"],
+    ["Honda"], ["Hummer"], ["Hyundai"], ["Infiniti"], ["Jaguar", "jag"], ["Jeep"], ["Kia"], ["Koenigsegg"], ["Lamborghini", "lambo", "lamborgini"],
+    ["Land Rover", "landrover"], ["Lexus"], ["Lincoln"], ["Lotus"], ["Maserati"], ["Mazda"], ["McLaren", "mc laren"], ["Mercedes-Benz", "mercedes benz", "mercedes", "benz"],
+    ["MG"], ["Mini"], ["Mitsubishi"], ["Nissan"], ["Pagani"], ["Peugeot"], ["Plymouth"], ["Polestar"], ["Pontiac"], ["Porsche"], ["RAM"], ["Renault"],
+    ["Rivian"], ["Rolls-Royce", "rolls royce", "rolls"], ["Seat"], ["Shelby"], ["Smart"], ["Subaru"], ["Suzuki"], ["Tesla"], ["Toyota"], ["Volkswagen", "vw"], ["Volvo"]];
+  const MODEL_MAKE = { corvette: "Chevrolet", camaro: "Chevrolet", mustang: "Ford", wrangler: "Jeep", "gt-r": "Nissan", gtr: "Nissan", "911": "Porsche",
+    cayenne: "Porsche", macan: "Porsche", panamera: "Porsche", taycan: "Porsche", cayman: "Porsche", boxster: "Porsche", huracan: "Lamborghini", urus: "Lamborghini",
+    aventador: "Lamborghini", gallardo: "Lamborghini", viper: "Dodge", challenger: "Dodge", charger: "Dodge", supra: "Toyota",
+    jetta: "Volkswagen", golf: "Volkswagen", vento: "Volkswagen", beetle: "Volkswagen", vocho: "Volkswagen", tiguan: "Volkswagen", amarok: "Volkswagen",
+    sentra: "Nissan", versa: "Nissan", tsuru: "Nissan", altima: "Nissan", frontier: "Nissan", "370z": "Nissan", "350z": "Nissan", civic: "Honda", accord: "Honda",
+    "cr-v": "Honda", corolla: "Toyota", camry: "Toyota", tacoma: "Toyota", hilux: "Toyota", tundra: "Toyota", "4runner": "Toyota", "land cruiser": "Toyota",
+    lobo: "Ford", "f-150": "Ford", raptor: "Ford", bronco: "Ford", explorer: "Ford", silverado: "Chevrolet", cheyenne: "Chevrolet", tahoe: "Chevrolet",
+    suburban: "Chevrolet", aveo: "Chevrolet", escalade: "Cadillac", "model 3": "Tesla", "model s": "Tesla", "model y": "Tesla", "model x": "Tesla", "g63": "Mercedes-Benz", "g 63": "Mercedes-Benz", "range rover": "Land Rover", defender: "Land Rover" };
+  const unacc = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const PREFIX = /^(serie|series|clase|range|grand|gran|model|new|amg|land|santa|grand|f|e|c|s|g|x|z)$/;
+  function guessMakeModel(x) {
+    const t = " " + unacc(x.title).replace(/[^a-z0-9-]+/g, " ") + " ";
+    let make = null, at = Infinity, len = 0;
+    for (const [name, ...al] of MAKES) for (const a of [name, ...al]) {
+      const i = t.indexOf(" " + unacc(a).replace(/[^a-z0-9-]+/g, " ") + " ");
+      if (i >= 0 && (i < at || (i === at && a.length > len))) { make = name; at = i; len = unacc(a).replace(/[^a-z0-9-]+/g, " ").length + 1; }
+    }
+    // el modelo antes que la marca ("Range Rover Sport 2018 Land Rover") o sin marca ("Corvette C8"): cuenta el modelo
+    for (const k in MODEL_MAKE) { const i = t.indexOf(" " + k + " "); if (i >= 0 && i < at) { make = MODEL_MAKE[k]; at = i - 1; len = 0; } }
+    if (!make) return { make: null, model: null };
+    const rest = t.slice(at + len + 1).trim().split(" ").filter(w => w && !/^(19|20)\d{2}$/.test(w) && !/^(de|del|modelo|año|ano|en|venta|vendo|precio)$/.test(w));
+    let model = rest[0] || null;
+    if (model && PREFIX.test(model) && rest[1] && !/^(19|20)\d{2}$/.test(rest[1])) model += " " + rest[1];
+    if (model) model = model.split(" ").map(w => /\d/.test(w) || w.length <= 3 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1)).join(" ");
+    return { make, model };
+  }
+  function revAdd(items, d) {
+    const have = new Set(REV.items.map(x => x.url));
+    let n = 0;
+    for (const raw of items.slice(0, 200)) {
+      if (!raw || !raw.url || !raw.title || have.has(raw.url)) continue;
+      const x = { ...raw, _src: capSource(d), _page: String(d.page_url || "").slice(0, 2000) };
+      const g = guessMakeModel(x);
+      x.make = x.make || g.make || ""; x.model = x.model || g.model || "";
+      x._why = junkWhy(x); x._sel = !x._why;
+      REV.items.push(x); have.add(x.url); n++;
+    }
+    revSave();
+    return n;
+  }
+  const revRow = (x, k) => {
+    const blocked = x.currency === "USD" || !(Number(x.price) > 0);
+    return `<div class="pc-caprow${x._sel ? "" : " off"}" data-k="${k}">
+      <input type="checkbox" aria-label="Guardar este auto" ${x._sel ? "checked" : ""} ${blocked ? "disabled" : ""} onchange="PrecioCalle.revSet(${k},'_sel',this.checked);this.closest('.pc-caprow').classList.toggle('off',!this.checked)">
+      ${x.photos && x.photos[0] ? `<img src="${h(x.photos[0])}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="pc-capimg"></span>`}
+      <span class="pc-captxt"><b>${x.url ? `<a href="${h(x.url)}" target="_blank" rel="noopener">${h(x.title)}</a>` : h(x.title)}</b>
+        <span>${[x.year, x.km ? `${nf.format(Number(x.km))} ${x.km_unit === "mi" ? "millas" : "km"}` : null, x.city, x.published_on ? `publicado ${fmtDate(x.published_on)}` : null].filter(Boolean).map(h).join(" · ") || "Sin año ni km"}</span>
+        <span class="pc-capmm"><input class="ctrl" value="${h(x.make || "")}" placeholder="Marca" aria-label="Marca" oninput="PrecioCalle.revSet(${k},'make',this.value)">
+          <input class="ctrl" value="${h(x.model || "")}" placeholder="Modelo" aria-label="Modelo" oninput="PrecioCalle.revSet(${k},'model',this.value)"></span>
+        ${x._why ? `<small class="pc-capwhy">${h(x._why)}</small>` : ""}</span>
+      <span class="pc-capprice">${Number(x.price) > 0 ? h(money({ price: x.price, currency: x.currency || "MXN" })) : "Sin precio"}${x.list_price ? `<small>antes ${h(money({ price: x.list_price, currency: x.currency || "MXN" }))}</small>` : ""}</span>
+    </div>`;
+  };
+  PC.revSet = function (k, f, v) { const x = REV.items[k]; if (!x) return; x[f] = v; revSave(); revCount(); };
+  function revCount() {
+    const el = document.getElementById("pcRevCount"), n = REV.items.filter(x => x._sel).length;
+    if (el) el.textContent = `${nf.format(REV.items.length)} por revisar · ${nf.format(n)} marcados`;
+    const b = document.getElementById("pcCapSave"); if (b) b.textContent = `Guardar los ${nf.format(n)} marcados y descartar los demás`;
+  }
+  let revOpen = false;
+  PC.openRevision = function () {
+    if (!canEdit()) { capModal(`<p>Para revisar y guardar autos inicia sesión con tu cuenta de admin en esta ventana.</p>`); return; }
+    if (!REV.items.length) { capModal(`<p>No hay autos por revisar.</p><p class="pc-foot">Dale clic al botón en un anuncio, una página de resultados, un grupo o una búsqueda de Facebook.</p>`); return; }
+    revOpen = true;
+    capModal(`<p class="pc-foot" style="margin-top:0"><b id="pcRevCount"></b><br>Revisa la marca y el modelo de cada uno (si el modelo no lo teníamos, se crea) y quita la palomita a los que no quieras.
+        Los que dicen que no funcionan o son para piezas, los muy baratos y los sin precio llegan sin palomita. Si la otra pestaña sigue bajando, los nuevos se van sumando abajo.</p>
+      <div class="pc-caplist" id="pcRevList">${REV.items.map(revRow).join("")}</div>
+      <p class="pc-formmsg" id="pcCapMsg" role="status"></p>
+      <div class="pc-formbtns"><button class="btn primary sm" id="pcCapSave" onclick="PrecioCalle.saveRevision()">Guardar</button>
+        <button class="btn ghost sm" onclick="document.getElementById('pcScrim').classList.remove('show')">Seguir después</button></div>
+      <p class="pc-foot">Los guardados entran en unos 10 a 20 minutos: se revisan contra todo lo que ya tenemos (los repetidos se juntan) y se suman a Precio de Calle.</p>`);
+    revCount();
+  };
+  // los que llegan con la lista abierta se agregan abajo sin tocar lo que estás editando
+  function revAppend(from) {
+    const list = document.getElementById("pcRevList");
+    if (!list || !document.getElementById("pcScrim")?.classList.contains("show")) return PC.openRevision();
+    list.insertAdjacentHTML("beforeend", REV.items.slice(from).map((x, i) => revRow(x, from + i)).join(""));
+    revCount();
+  }
+  PC.saveRevision = async function () {
+    const msg = document.getElementById("pcCapMsg"), btn = document.getElementById("pcCapSave");
+    const pick = REV.items.filter(x => x._sel && x.currency !== "USD" && Number(x.price) > 0);
+    if (pick.some(x => !String(x.make || "").trim() || !String(x.model || "").trim())) { msg.textContent = "Falta la marca o el modelo en alguno de los marcados."; return; }
+    if (!pick.length && !confirm("No marcaste ningún auto. ¿Descartar toda la lista?")) return;
+    btn.disabled = true; msg.textContent = "Guardando…";
+    // una captura por fuente y página, de 40 en 40 (cada captura admite hasta 512 KB con descripciones y fotos)
+    const groups = new Map();
+    for (const x of pick) { const k = x._src + "\n" + x._page; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x); }
+    let saved = 0;
+    for (const [k, xs] of groups) {
+      const [src, page] = k.split("\n");
+      for (let i = 0; i < xs.length; i += 40) {
+        const items = xs.slice(i, i + 40).map(x => ({ ...capClean(x), make: String(x.make).trim().slice(0, 60), model: String(x.model).trim().slice(0, 80), revisado: true }));
+        const { error } = await client().from("mx_capturas").insert({ source_id: src, page_url: /^https:\/\//.test(page) ? page : "https://carcollection.app/", items });
+        if (error) { btn.disabled = false; msg.textContent = `Se guardaron ${saved}; los demás siguen en la lista: ${error.message}`; revSave(); return; }
+        const done = new Set(items.map(y => y.url));
+        REV.items = REV.items.filter(x => !done.has(x.url));
+        saved += items.length;
+      }
+    }
+    const descartados = REV.items.length;
+    REV.items = []; revSave(); revOpen = false;
+    capModal(`<p><b>Listo: ${saved === 1 ? "1 auto guardado" : `${nf.format(saved)} autos guardados`}</b>${descartados ? ` · ${nf.format(descartados)} descartados` : ""}.</p>
+      <p class="pc-foot" style="margin-top:0">En unos 10 a 20 minutos aparecen en Precio de Calle. Si la otra pestaña sigue bajando, los nuevos vuelven a llegar a esta lista.</p>`);
+    PC.loadCapturas();
+  };
+
   let capWait = null;
   PC.openCaptura = function () {
     const d = window.pcCaptura;
@@ -1399,69 +1535,29 @@
       return;
     }
     clearTimeout(capWait);
-    const src = capSource(d), name = S.sources[src] ? S.sources[src].name : sourceName(src);
-    const items = d.items.slice(0, 200);
-    const ambiguous = items.some(x => x.currency_ambiguous);
-    const row = (x, i) => {
-      const usd = x.currency === "USD", noPrice = !(Number(x.price) > 0);
-      return `<label class="pc-caprow${usd || noPrice ? " off" : ""}">
-        <input type="checkbox" data-i="${i}" ${usd || noPrice ? "disabled" : "checked"}>
-        ${x.photos && x.photos[0] ? `<img src="${h(x.photos[0])}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="pc-capimg"></span>`}
-        <span class="pc-captxt"><b>${h(x.title || "Sin título")}</b>
-          <span>${[x.year, x.km ? `${nf.format(Number(x.km))} ${x.km_unit === "mi" ? "millas" : "km"}` : null, x.city].filter(Boolean).map(h).join(" · ") || "Sin año ni km en la página"}</span></span>
-        <span class="pc-capprice">${x.price ? h(money({ price: x.price, currency: x.currency || "MXN" })) : "Sin precio"}${usd ? `<small>En dólares: no se guarda</small>` : noPrice ? `<small>Sin precio: no se guarda</small>` : ""}</span>
-      </label>`;
-    };
-    capModal(`<p class="pc-foot" style="margin-top:0">De <b>${h(name)}</b> · ${items.length === 1 ? "1 auto" : `${items.length} autos`} en la página que estabas viendo. Quita la palomita a los que no quieras.</p>
-      ${ambiguous ? `<p class="pc-foot">Los precios que solo dicen "$" se guardan como pesos mexicanos.</p>` : ""}
-      ${items.length > 1 && items.every(x => (x.photos || []).length <= 1) ? `<p class="pc-foot">Desde la lista solo viene la foto de portada. Para un auto que te interese (o uno marcado "¿Repetido?"), abre su anuncio y dale clic al botón ahí: trae todas las fotos, el color y la descripción, y se suman al que ya tenemos.</p>` : ""}
-      <div class="pc-caplist">${items.map(row).join("")}</div>
-      <p class="pc-formmsg" id="pcCapMsg" role="status"></p>
-      <div class="pc-formbtns"><button class="btn primary sm" id="pcCapSave" onclick="PrecioCalle.saveCaptura()">Guardar</button>
-        <button class="btn ghost sm" onclick="document.getElementById('pcScrim').classList.remove('show')">Cancelar</button></div>
-      <p class="pc-foot">Entran en unos 10 a 20 minutos: se revisan contra todo lo que ya tenemos (los repetidos se juntan), se quedan fuera los modelos que no seguimos y se suman a Precio de Calle.</p>`);
+    revAdd(d.items, d);
+    window.pcCaptura = null;
+    PC.openRevision();
   };
   PC.pasteCaptura = function (v) {
     try { const d = JSON.parse(v); if (d && d.type === "pc-captura" && Array.isArray(d.items)) { window.pcCaptura = d; PC.openCaptura(); } } catch (e) { /* aún no es el texto completo */ }
   };
-  PC.saveCaptura = async function () {
-    const d = window.pcCaptura, msg = document.getElementById("pcCapMsg"), btn = document.getElementById("pcCapSave");
-    const pick = [...document.querySelectorAll(".pc-caplist input:checked")].map(i => d.items[Number(i.dataset.i)])
-      .filter(x => x && x.currency !== "USD" && Number(x.price) > 0).map(capClean).filter(x => x.url && x.title);
-    if (!pick.length) { msg.textContent = "No hay autos marcados."; return; }
-    btn.disabled = true; msg.textContent = "Guardando…";
-    const { error } = await client().from("mx_capturas").insert({ source_id: capSource(d), page_url: String(d.page_url || "").slice(0, 2000), items: pick });
-    if (error) { btn.disabled = false; msg.textContent = `No se guardó: ${error.message}`; return; }
-    window.pcCaptura = null;
-    capModal(`<p><b>Listo: ${pick.length === 1 ? "1 auto guardado" : `${pick.length} autos guardados`}.</b></p>
-      <p class="pc-foot" style="margin-top:0">En unos 10 a 20 minutos aparecen en Precio de Calle (los repetidos se juntan con el que ya teníamos). Puedes cerrar esta ventana y seguir navegando.</p>`);
-    PC.loadCapturas();
-  };
 
-  // Modo grupo (Facebook): el botón baja solo por un grupo y manda tandas de autos. Se guardan sin
-  // revisión una por una (el normalizador y el anti-duplicados de la corrida hacen el filtro) y se le
-  // confirma cada tanda a la pestaña del grupo; si no hay sesión de admin, se le dice y la reenvía.
+  // Modo grupo / búsqueda (Facebook): las tandas llegan a la lista "Por revisar" (no se guardan solas)
+  // y se le confirma cada una a la otra pestaña; si no hay sesión de admin, se le dice y la reenvía.
   const grupoHechas = new Set();
-  let grupoOcupado = false, grupoTotal = 0;
-  PC.saveGrupo = async function () {
-    if (grupoOcupado) return;
-    grupoOcupado = true;
-    try {
-      const cola = window.pcGrupoCola || [];
-      while (cola.length) {
-        const { d, src, origin } = cola.shift();
-        const reply = m => { try { src.postMessage({ type: "pc-captura-guardada", batch: d.batch, ...m }, origin); } catch (e) {} };
-        if (grupoHechas.has(d.batch)) { reply({ ok: true }); continue; }
-        if (!canEdit()) { reply({ ok: false, error: "Inicia sesión con tu cuenta de admin en la ventana de carcollection.app (la tanda se reenvía sola)." }); continue; }
-        const pick = d.items.slice(0, 200).filter(x => x && x.currency !== "USD").map(capClean).filter(x => x.url && x.title);
-        if (!pick.length) { grupoHechas.add(d.batch); reply({ ok: true }); continue; }
-        const { error } = await client().from("mx_capturas").insert({ source_id: capSource(d), page_url: String(d.page_url || "").slice(0, 2000), items: pick });
-        if (error) { reply({ ok: false, error: `No se guardó: ${error.message}` }); continue; }
-        grupoHechas.add(d.batch); grupoTotal += pick.length; reply({ ok: true });
-        capModal(`<p><b>Modo grupo: ${grupoTotal === 1 ? "1 auto guardado" : `${nf.format(grupoTotal)} autos guardados`}</b> en esta sesión.</p>
-          <p class="pc-foot" style="margin-top:0">Deja esta ventana abierta mientras el botón baja por el grupo en la otra pestaña. Cada tanda entra en unos 10 a 20 minutos (los repetidos se juntan y se quedan fuera los modelos que no seguimos).</p>`);
-      }
-    } finally { grupoOcupado = false; }
+  PC.saveGrupo = function () {
+    const cola = window.pcGrupoCola || [];
+    while (cola.length) {
+      const { d, src, origin } = cola.shift();
+      const reply = m => { try { src.postMessage({ type: "pc-captura-guardada", batch: d.batch, ...m }, origin); } catch (e) {} };
+      if (grupoHechas.has(d.batch)) { reply({ ok: true }); continue; }
+      if (!canEdit()) { reply({ ok: false, error: "Inicia sesión con tu cuenta de admin en la ventana de carcollection.app (la tanda se reenvía sola)." }); continue; }
+      const from = REV.items.length;
+      revAdd(d.items, d);
+      grupoHechas.add(d.batch); reply({ ok: true });
+      if (REV.items.length > from) { if (revOpen) revAppend(from); else PC.openRevision(); }
+    }
   };
   if ((window.pcGrupoCola || []).length) setTimeout(PC.saveGrupo, 0);
 
@@ -1469,7 +1565,7 @@
   let marcadorHref = null;
   async function ensureMarcador() {
     if (marcadorHref) return marcadorHref;
-    try { const r = await fetch("captura-marcador.js?v=7", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
+    try { const r = await fetch("captura-marcador.js?v=8", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
     return marcadorHref;
   }
   function adminPanel() {
@@ -1479,7 +1575,7 @@
       <div class="pc-addrow">
         <div class="pc-addbtn"><a class="btn primary sm pc-marcador" id="pcMarcador" href="#" onclick="event.preventDefault();alert('Arrástralo a tu barra de favoritos; no se usa aquí.')">Guardar en Precio de Calle</a>
           <p class="pc-foot">Arrástralo a tu barra de favoritos (Ctrl + Shift + B si no la ves) y dale clic en Mercado Libre o Facebook Marketplace: en resultados guarda los autos que se ven; dentro de un anuncio, ese auto con todas sus fotos. <b>En un grupo o una búsqueda de Facebook</b> baja solo por la página (hasta 30 min, a ritmo pausado) y guarda las publicaciones de venta con su fecha; deja abiertas las dos ventanas. <b>Si cambia el botón</b>, bórralo de la barra y vuelve a arrastrarlo.</p></div>
-        <div class="pc-addlast"><h4 class="pc-h4">Últimas capturas</h4><div id="pcCapturas"><p class="pc-foot">Cargando…</p></div></div>
+        <div class="pc-addlast">${REV.items.length ? `<p style="margin:0 0 10px"><button class="btn primary sm" onclick="PrecioCalle.openRevision()">Por revisar (${nf.format(REV.items.length)})</button></p>` : ""}<h4 class="pc-h4">Últimas capturas</h4><div id="pcCapturas"><p class="pc-foot">Cargando…</p></div></div>
       </div>
       <div class="pc-sub"><h4 class="pc-h4">Buscar más autos por ciudad</h4>
         <p class="pc-foot" style="margin-top:0">Elige un modelo: se abre la búsqueda en cada ciudad. Ahí da clic en el botón de tu barra para guardar lo que veas. Arriba van los modelos con menos autos para comparar.</p>
@@ -1684,7 +1780,12 @@
     .pc-marcador{cursor:grab}
     .pc-caplist{max-height:min(52vh,460px);overflow:auto;border-top:1px solid var(--line);margin:10px 0}
     .pc-caprow{display:grid;grid-template-columns:20px 64px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
-    .pc-caprow.off{opacity:.5;cursor:default}
+    .pc-caprow.off{opacity:.55;cursor:default}
+    .pc-caprow.off .pc-capmm input{opacity:1}
+    .pc-capmm{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+    .pc-capmm .ctrl{flex:1 1 110px;min-width:0;padding:4px 8px;font-size:13px}
+    .pc-capwhy{display:block;margin-top:4px;color:var(--warn,#b45309)}
+    .pc-captxt a{color:inherit}
     .pc-caprow img,.pc-capimg{width:64px;height:48px;object-fit:cover;background:var(--card2);display:block}
     .pc-captxt{display:flex;flex-direction:column;gap:2px;min-width:0}
     .pc-captxt b{font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

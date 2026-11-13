@@ -117,6 +117,12 @@ Dentro de un grupo de compra-venta (`facebook.com/groups/…`), el mismo botón 
 grupo en tu pestaña**, a ritmo pausado (una pantalla cada ~4 s), hasta 30 minutos o hasta el final del grupo. Un panel
 abajo a la derecha muestra cuántas publicaciones leyó y cuántos autos encontró, con Pausar y Terminar.
 
+- Cada publicación se pone al centro de la pantalla, se le da clic a **"Ver más"** y se espera a que salga el texto
+  completo. La fecha exacta, el texto completo y las **fotos en su tamaño original (sin el recorte de la cuadrícula)**
+  salen de los datos que Facebook ya le mandó a tu navegador (los de arranque y los que llegan al bajar). Si una
+  publicación no los trae, se abre su primera foto en el visor de Facebook, se recorren con "Siguiente" y se cierra;
+  si tampoco, el globo de la hora y las fotos que se ven.
+- Sin precio (aun con el texto completo, p. ej. "informes por inbox") no se guarda; el panel dice cuántas.
 - De cada publicación de venta: fecha exacta (la del globo de la hora), texto, precio escrito a mano (`$1,650,000`,
   `4.2 mdp`, `850 mil`; con "antes … ahora" guarda la rebaja), año, km, ciudad, fotos y la liga a la publicación.
 - Se brinca "busco/compro", pláticas sin precio ni año, comentarios y lo vendido. No lee quién publicó; quita teléfonos,

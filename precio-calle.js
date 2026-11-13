@@ -1469,7 +1469,7 @@
   let marcadorHref = null;
   async function ensureMarcador() {
     if (marcadorHref) return marcadorHref;
-    try { const r = await fetch("captura-marcador.js?v=4", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
+    try { const r = await fetch("captura-marcador.js?v=5", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
     return marcadorHref;
   }
   function adminPanel() {

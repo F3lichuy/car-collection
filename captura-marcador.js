@@ -284,22 +284,91 @@
   }
   function sleep(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
   var POST_HREF = /\/groups\/([^/?#]+)\/(?:posts|permalink)\/(\d+)|[?&](?:story_fbid|multi_permalinks)=(\d+)|\/(?:commerce\/listing|marketplace\/item)\/(\d+)/;
+  // ── Lo que Facebook ya le mandó a tu navegador ──────────────────────
+  // Cada publicación del grupo llega a tu navegador como datos (la página los usa para dibujarse):
+  // ahí vienen la fecha exacta (creation_time), el texto completo sin "Ver más" y cada foto en su
+  // tamaño original, sin el recorte de la cuadrícula. Se leen las respuestas que la página recibe
+  // mientras bajas y los datos con que arrancó; no se pide nada extra a Facebook.
+  var FB = {};   // post_id → { t, text, photos: { clave: { u, w } }, order: [], price }
+  var PHOTO_KEY = /\/(\d+_\d+_\d+_[a-z])\.(?:jpe?g|png|webp)/i;
+  function harvestObj(root) {
+    (function walk(o, cur, depth) {
+      if (!o || typeof o !== "object" || depth > 80) return;
+      if (Array.isArray(o)) { for (var i = 0; i < o.length; i++) walk(o[i], cur, depth + 1); return; }
+      if (typeof o.post_id === "string" && /^\d{5,}$/.test(o.post_id)) cur = FB[o.post_id] || (FB[o.post_id] = { photos: {}, order: [] });
+      if (cur) {
+        if (typeof o.creation_time === "number" && o.creation_time > 9e8 && !cur.t) cur.t = o.creation_time;
+        if (o.message && typeof o.message.text === "string" && (!cur.text || o.message.text.length > cur.text.length)) cur.text = o.message.text;
+        if (typeof o.uri === "string" && /scontent|fbcdn/.test(o.uri) && Number(o.width) >= 480) {
+          var k = (o.uri.match(PHOTO_KEY) || [])[1] || o.uri.split("?")[0];
+          if (!cur.photos[k]) cur.order.push(k);
+          if (!cur.photos[k] || Number(o.width) > cur.photos[k].w) cur.photos[k] = { u: o.uri, w: Number(o.width) };
+        }
+        var fp = o.formatted_price && o.formatted_price.text || o.listing_price && (o.listing_price.formatted_amount || o.listing_price.amount && "$" + o.listing_price.amount);
+        if (fp && !cur.price) cur.price = String(fp);
+        if (typeof o.marketplace_listing_title === "string" && !cur.title) cur.title = o.marketplace_listing_title;
+        if (typeof o.url === "string" && !cur.url && POST_HREF.test(o.url)) cur.url = o.url;
+      }
+      for (var key in o) if (o[key] && typeof o[key] === "object") walk(o[key], cur, depth + 1);
+    })(root, null, 0);
+  }
+  function harvestText(s) {
+    String(s || "").replace(/^for \(;;\);/, "").split(/\r?\n(?=[{[])/).forEach(function (part) {
+      if (part.indexOf("post_id") < 0) return;
+      try { harvestObj(JSON.parse(part)); } catch (e) { /* trozo incompleto */ }
+    });
+  }
+  function hookNet() {
+    if (window.__pcHooked) return;
+    window.__pcHooked = true;
+    var isFeed = function (u) { return /\/api\/graphql|\/ajax\/|graphql/i.test(String(u || "")); };
+    var of = window.fetch;
+    if (of) window.fetch = function (input) {
+      var pr = of.apply(this, arguments);
+      try { if (isFeed(input && input.url || input)) pr.then(function (r) { r.clone().text().then(harvestText, function () {}); }, function () {}); } catch (e) {}
+      return pr;
+    };
+    var XO = XMLHttpRequest.prototype.open, XS = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.open = function (m, u) { this.__pcU = u; return XO.apply(this, arguments); };
+    XMLHttpRequest.prototype.send = function () {
+      var x = this;
+      if (isFeed(x.__pcU)) x.addEventListener("load", function () { try { if (!x.responseType || x.responseType === "text") harvestText(x.responseText); } catch (e) {} });
+      return XS.apply(this, arguments);
+    };
+  }
+  function harvestPage() {
+    qa(document, 'script[type="application/json"]').forEach(function (sc) { if (!sc.__pcVisto && sc.textContent.indexOf("post_id") >= 0) { sc.__pcVisto = true; harvestText(sc.textContent); } });
+  }
+  var normTxt = function (s) { return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim(); };
+  // sin liga: se reconoce la publicación por el principio de su texto
+  function fbByText(text) {
+    var head = normTxt(text).slice(0, 60);
+    if (head.length < 20) return null;
+    for (var id in FB) if (FB[id].text && normTxt(FB[id].text).indexOf(head) === 0) return { id: id, d: FB[id] };
+    return null;
+  }
+
   // Facebook llena la liga y la fecha completa de una publicación solo cuando pasas el mouse sobre la hora:
-  // se simula ese paso del mouse y se lee el globo ("martes, 12 de octubre de 2023 a las 10:15").
+  // se simula ese paso del mouse y se espera el globo ("martes, 12 de octubre de 2023 a las 10:15").
   async function postMeta(post) {
-    var as = qa(post, "a[href]").slice(0, 30), timeA = null, link = null, date = null;
+    var as = qa(post, "a[href]").filter(function (a) { return !a.closest('[role="article"] [role="article"]'); }).slice(0, 30), timeA = null, link = null, date = null;
     for (var i = 0; i < as.length && !timeA; i++) {
       var a = as[i];
       if (POST_HREF.test(a.getAttribute("href") || "") || (fbDate(txt(a)) && txt(a).length < 40)) timeA = a;
     }
     if (timeA) {
-      ["pointerover", "mouseover", "pointerenter", "mouseenter", "focus"].forEach(function (ev) { try { timeA.dispatchEvent(new MouseEvent(ev, { bubbles: true })); } catch (e) {} });
-      await sleep(700);
-      var tip = qa(document, '[role="tooltip"]').map(txt).filter(Boolean).pop();
-      date = fbDate(tip) || fbDate(timeA.getAttribute("aria-label")) || fbDate(txt(timeA));
-      ["pointerout", "mouseout", "pointerleave", "mouseleave", "blur"].forEach(function (ev) { try { timeA.dispatchEvent(new MouseEvent(ev, { bubbles: true })); } catch (e) {} });
+      ["pointerover", "mouseover", "pointerenter", "mouseenter", "pointermove", "mousemove", "focus"].forEach(function (ev) { try { timeA.dispatchEvent(new MouseEvent(ev, { bubbles: ev !== "mouseenter" && ev !== "pointerenter", view: window })); } catch (e) {} });
+      try { timeA.focus(); } catch (e) {}
+      for (var w = 0; w < 10 && !date; w++) {   // el globo tarda: hasta 2 s
+        await sleep(200);
+        var tip = qa(document, '[role="tooltip"]').map(txt).filter(Boolean).pop();
+        date = fbDate(tip);
+      }
+      date = date || fbDate(timeA.getAttribute("aria-label")) || fbDate(txt(timeA));
+      ["pointerout", "mouseout", "pointerleave", "mouseleave", "blur"].forEach(function (ev) { try { timeA.dispatchEvent(new MouseEvent(ev, { bubbles: ev !== "mouseleave" && ev !== "pointerleave", view: window })); } catch (e) {} });
+      try { timeA.blur(); } catch (e) {}
     }
-    as = qa(post, "a[href]");
+    as = qa(post, "a[href]").filter(function (a) { return !a.closest('[role="article"] [role="article"]'); });
     for (var j = 0; j < as.length && !link; j++) { var m = (as[j].href || "").match(POST_HREF); if (m) link = m; }
     return { date: date, link: link };
   }
@@ -307,46 +376,113 @@
     var m = location.pathname.match(/\/groups\/([^/?#]+)/);
     return window.__pcGroup || (m ? m[1] : "grupo");
   }
-  async function readPost(post) {
-    // "Ver más": el texto completo
-    qa(post, '[role="button"]').filter(function (b) { return /^(ver m[aá]s|see more)$/i.test(txt(b)); }).slice(0, 2).forEach(function (b) { try { b.click(); } catch (e) {} });
-    var meta = await postMeta(post);
-    var msgEl = q(post, '[data-ad-preview="message"], [data-ad-comet-preview="message"]');
-    var head = txt(post).split("\n").map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 8), headDate = null;
-    for (var h = 0; h < head.length && !headDate; h++) headDate = fbDate(head[h]);
-    var lines = txt(msgEl || post).split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
-    if (!msgEl) {
-      // sin el bloque del mensaje: se brinca el encabezado (quién publicó y cuándo) y se corta en la barra de reacciones
-      var hi = -1;
-      for (var i = 0; i < Math.min(lines.length, 8); i++) if (fbDate(lines[i])) { hi = i; break; }
-      lines = lines.slice(hi >= 0 ? hi + 1 : 1);   // sin fecha visible: el primer renglón es el nombre de quien publicó
-      var end = lines.findIndex(function (l) { return /^(me gusta|like|comentar|comment|todas las reacciones|all reactions)$/i.test(l); });
-      if (end >= 0) lines = lines.slice(0, end);
+  var inComment = function (el) { return !!(el.closest && el.closest('[role="article"] [role="article"]')); };
+  // "Ver más": se le da clic (también a los que aparecen después del primero) y se espera a que crezca el texto
+  async function expand(post) {
+    for (var round = 0; round < 3; round++) {
+      var btns = qa(post, '[role="button"], span, div').filter(function (b) {
+        var t = b.childElementCount > 2 ? "" : String(b.textContent || "").trim();
+        return t.length < 16 && /^(…|\.\.\.)?\s*(ver m[aá]s|see more)$/i.test(t) && !inComment(b) && !(b.parentElement && b.parentElement.closest && b.parentElement.closest('[role="button"]') && b.getAttribute("role") !== "button");
+      });
+      if (!btns.length) return;
+      var before = String(post.textContent || "").length;
+      btns.slice(0, 3).forEach(function (b) { try { b.click(); } catch (e) {} });
+      for (var w = 0; w < 10; w++) {
+        await sleep(200);
+        if (String(post.textContent || "").length > before + 5) break;
+      }
     }
-    lines = lines.filter(function (l) { return !NOISE_RE.test(l) && l.length > 1; });
-    var text = lines.join("\n");
-    if (!text || WANTED_RE.test(text) || !BRAND_RE.test(text)) return null;
+  }
+  var bigImg = function (i) { return /scontent|fbcdn/.test(i.src || "") && (i.naturalWidth || Number(i.getAttribute("width")) || i.width || 0) >= 150 && !inComment(i); };
+  // Si los datos no trajeron las fotos: se abre la primera en el visor de Facebook (sale completa y en
+  // su mejor tamaño), se recorren con "Siguiente" y se cierra el visor.
+  async function viewerPhotos(post, max) {
+    // solo fotos que abren el visor de Facebook (una vista previa de liga se saldría del grupo)
+    var first = qa(post, "img").filter(bigImg).filter(function (i) { var a = i.closest("a[href]"); return a && /\/photo|[?&]fbid=|\/photos\//.test(a.getAttribute("href") || ""); })[0];
+    if (!first) return [];
+    var opener = first.closest("a[href]"), url0 = location.href, out = [];
+    var big = function () {
+      return qa(document, '[role="dialog"] img, [data-pagelet*="Media"] img, [aria-label*="foto" i] img').filter(function (i) {
+        return /scontent|fbcdn/.test(i.src || "") && (i.naturalWidth || Number(i.getAttribute("width")) || 0) >= 480 && !post.contains(i);
+      }).sort(function (a, b) { return (b.naturalWidth || Number(b.getAttribute("width")) || 0) - (a.naturalWidth || Number(a.getAttribute("width")) || 0); })[0];
+    };
+    try { opener.click(); } catch (e) { return []; }
+    var img = null;
+    for (var w = 0; w < 20 && !img; w++) { await sleep(200); img = big(); }
+    while (img && out.length < max) {
+      if (out.indexOf(img.src) >= 0) break;   // dio la vuelta
+      out.push(img.src);
+      var next = qa(document, '[aria-label="Siguiente foto"], [aria-label="Next photo"], [aria-label="Siguiente"], [aria-label="Next"]').filter(function (b) { return !post.contains(b); })[0];
+      if (!next) break;
+      var prev = img.src;
+      try { next.click(); } catch (e) { break; }
+      img = null;
+      for (var v = 0; v < 15; v++) { await sleep(200); var c = big(); if (c && c.src !== prev) { img = c; break; } }
+    }
+    // cerrar el visor
+    var close = qa(document, '[aria-label="Cerrar"], [aria-label="Close"]').filter(function (b) { return !post.contains(b); })[0];
+    if (close) { try { close.click(); } catch (e) {} }
+    else { try { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", keyCode: 27, bubbles: true })); } catch (e) {} }
+    await sleep(700);
+    if (location.href !== url0) { try { history.back(); } catch (e) {} await sleep(1200); }
+    return out;
+  }
+  function postLines(el) { return txt(el).split("\n").map(function (s) { return s.trim(); }).filter(Boolean); }
+  async function readPost(post) {
+    try { post.scrollIntoView({ block: "center" }); } catch (e) {}
+    await sleep(500);
+    await expand(post);
+    var meta = await postMeta(post);
+    harvestPage();
+    var msgEl = qa(post, '[data-ad-preview="message"], [data-ad-comet-preview="message"]').filter(function (m) { return !inComment(m); })[0];
+    // todo lo de la publicación (sin encabezado ni comentarios): ahí también vienen precio y ciudad de las publicaciones de "venta"
+    var all = postLines(post), headDate = null, hi = -1;
+    for (var i = 0; i < Math.min(all.length, 8); i++) { var dd = fbDate(all[i]); if (dd) { headDate = dd; hi = i; break; } }
+    all = all.slice(hi >= 0 ? hi + 1 : 1);   // sin fecha visible: el primer renglón es el nombre de quien publicó
+    var end = all.findIndex(function (l) { return /^(me gusta|like|comentar|comment|todas las reacciones|all reactions)$/i.test(l); });
+    if (end >= 0) all = all.slice(0, end);
+    var msg = msgEl ? postLines(msgEl) : all.slice();
+    var gid = meta.link && meta.link[1] || groupId(), pid = meta.link ? (meta.link[2] || meta.link[3] || meta.link[4]) : null;
+    var fb = pid && FB[pid] ? { id: pid, d: FB[pid] } : fbByText(msg.join("\n"));
+    if (fb && !pid) {
+      pid = fb.id;
+      var lm = String(fb.d.url || "").match(POST_HREF);
+      if (lm && lm[1]) gid = lm[1];
+    }
+    if (fb && fb.d.text && fb.d.text.length > msg.join("\n").length) msg = fb.d.text.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+    var clean = function (ls) { return ls.filter(function (l) { return !NOISE_RE.test(l) && l.length > 1; }); };
+    msg = clean(msg);
+    var extra = clean(all).filter(function (l) { return msg.indexOf(l) < 0; });
+    var text = msg.join("\n"), every = msg.concat(extra).join("\n");
+    if (fb && fb.d.title) every = fb.d.title + "\n" + every;
+    if (!text && !(fb && fb.d.title)) return null;
+    if (WANTED_RE.test(text) || !BRAND_RE.test(every)) return null;
     if (/^\s*(vendido|sold)\b/i.test(text)) return null;
-    var p = priceFree(text), k = kmOf(text);
+    var p = priceFree(every) || (fb && fb.d.price ? (money(fb.d.price.replace(/\s/g, "")) && { price: money(fb.d.price.replace(/\s/g, "")).price, currency: money(fb.d.price.replace(/\s/g, "")).currency, list_price: null }) : null);
+    if (!p || !p.price) return { skip: "sin_precio" };   // aun con el texto completo no dice precio: no sirve para Precio de Calle
+    var k = kmOf(every);
+    var lines = (fb && fb.d.title ? [fb.d.title] : []).concat(msg, extra);
     var titleLine = lines.filter(function (l) { return BRAND_RE.test(l) && l.length <= 140; })[0] || lines[0];
     var nowY = new Date().getFullYear() + 1, years = (titleLine.match(/\b(19[5-9]\d|20[0-3]\d)\b/g) || []).concat((lines.slice(0, 4).join(" ").match(/\b(19[5-9]\d|20[0-3]\d)\b/g) || []))
       .map(Number).filter(function (y) { return y <= nowY; });
-    if (!p && !years.length) return null;   // ni precio ni año: plática, no anuncio
-    var gid = meta.link && meta.link[1] || groupId(), pid = meta.link ? (meta.link[2] || meta.link[3] || meta.link[4]) : null;
     var key = pid ? "g" + gid + "_" + pid : "g" + gid + "_t" + hash(text.slice(0, 400));
-    var url = pid ? (meta.link[4] ? "https://www.facebook.com/marketplace/item/" + pid + "/" : "https://www.facebook.com/groups/" + gid + "/posts/" + pid + "/")
+    var url = pid ? (meta.link && meta.link[4] ? "https://www.facebook.com/marketplace/item/" + pid + "/" : "https://www.facebook.com/groups/" + gid + "/posts/" + pid + "/")
       : "https://www.facebook.com/groups/" + gid + "/?pc_post=" + key;
     var city = lines.filter(function (l) { return l.length < 45 && /^[A-ZÁÉÍÓÚÑ][\wáéíóúñ .]+,\s*[A-Z][\w. ]{1,25}$/.test(l) && !BRAND_RE.test(l); })[0] || null;
-    var imgs = qa(post, "img").filter(function (i) { return /scontent|fbcdn/.test(i.src) && (i.naturalWidth || i.width || 0) >= 150 && !i.closest('[role="article"] [role="article"]'); })
-      .map(function (i) { return i.src; });
-    var date = meta.date || headDate;
+    // fecha: la exacta de los datos; si no, el globo de la hora; si no, lo que dice el encabezado ("Ayer", "3 d")
+    var date = fb && fb.d.t ? { date: iso(new Date(fb.d.t * 1000)), text: new Date(fb.d.t * 1000).toISOString(), exact: true } : meta.date || headDate;
+    // fotos: completas de los datos; si no vinieron, del visor; si tampoco, las de la publicación
+    var photos = fb ? fb.d.order.map(function (k2) { return fb.d.photos[k2].u; }) : [];
+    if (!photos.length && qa(post, "img").filter(bigImg).length) photos = await viewerPhotos(post, 12);
+    if (!photos.length) photos = qa(post, "img").filter(bigImg).map(function (im) { return im.src; });
     return {
       external_id: key, url: url, title: titleLine.slice(0, 140) + (years.length && !/\b(19|20)\d{2}\b/.test(titleLine) ? " " + years[0] : ""),
       year: years.length ? years[0] : null, km: k && k.km, km_unit: k && k.km_unit,
-      price: p && p.price, currency: p && p.currency, currency_ambiguous: false, list_price: p && p.list_price,
-      city: city, description: stripContact(text).slice(0, 4000), photos: Array.from(new Set(imgs)).slice(0, 12),
+      price: p.price, currency: p.currency, currency_ambiguous: false, list_price: p.list_price || null,
+      city: city, description: stripContact(text || every).slice(0, 4000), photos: Array.from(new Set(photos)).slice(0, 12),
       published_on: date && date.date, observed_on: date && date.date,
-      extra: { grupo: gid, publicado_texto: date ? String(date.text).slice(0, 80) : null, fecha_exacta: date ? !!date.exact : false },
+      extra: { grupo: gid, publicado_texto: date ? String(date.text).slice(0, 80) : null, fecha_exacta: date ? !!date.exact : false,
+        fotos_completas: !!(fb && fb.d.order.length) },
     };
   }
 
@@ -354,8 +490,9 @@
     if (window.__pcGrupo) { window.__pcGrupo.panel.style.display = ""; return; }
     var w = window.open(APP, "precio-calle-captura");
     if (!w) { alert("Precio de Calle: tu navegador bloqueó la ventana. Permite ventanas emergentes para este sitio y vuelve a intentarlo."); return; }
-    var S = window.__pcGrupo = { w: w, running: true, done: {}, queue: [], pending: {}, posts: 0, cars: 0, sent: 0, idle: 0, start: Date.now(),
-      minutes: 30, oldest: null, msg: "", batchN: 0, stopped: false };
+    hookNet(); harvestPage();
+    var S = window.__pcGrupo = { w: w, running: true, done: {}, queue: [], pending: {}, posts: 0, cars: 0, sent: 0, idle: 0, sinPrecio: 0, start: Date.now(),
+      minutes: 30, oldest: null, msg: "", batchN: 0, stopped: false, fb: FB };
     var panel = S.panel = document.createElement("div");
     panel.setAttribute("style", "position:fixed;right:16px;bottom:16px;z-index:2147483647;background:#111;color:#fff;font:13px/1.4 system-ui,sans-serif;" +
       "padding:12px 14px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.35);width:270px");
@@ -369,7 +506,7 @@
     q(panel, "[data-x]").addEventListener("click", function () { finish("Terminado."); });
     function show() {
       var left = Object.keys(S.pending).length;
-      st.innerHTML = S.posts + " publicaciones leídas · <b>" + S.cars + " autos</b><br>" + S.sent + " enviados" + (left ? " · " + left + " tanda(s) esperando a carcollection.app" : "") +
+      st.innerHTML = S.posts + " publicaciones leídas · <b>" + S.cars + " autos</b>" + (S.sinPrecio ? " · " + S.sinPrecio + " sin precio (no se guardan)" : "") + "<br>" + S.sent + " enviados" + (left ? " · " + left + " tanda(s) esperando a carcollection.app" : "") +
         (S.oldest ? "<br>Llegó hasta el " + S.oldest : "") + (S.msg ? "<br><span style='color:#ffcf6b'>" + S.msg + "</span>" : "");
     }
     // tandas de hasta 25 autos; se reenvían hasta que carcollection.app confirma que las guardó
@@ -406,6 +543,7 @@
           el.__pcLeido = true; fresh++; S.posts++;
           var it = null;
           try { it = await readPost(el); } catch (e) { /* publicación rara: se brinca */ }
+          if (it && it.skip) { if (it.skip === "sin_precio") S.sinPrecio++; it = null; }
           if (it && !S.done[it.external_id]) {
             S.done[it.external_id] = 1; S.cars++;
             if (it.currency !== "USD") S.queue.push(it);

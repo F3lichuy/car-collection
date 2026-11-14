@@ -95,7 +95,7 @@ test('modo grupo: lee los datos que Facebook manda al bajar (fetch y XHR, con "f
 });
 
 
-test('búsqueda de Facebook: mismo recorrido, ligas de páginas (pfbid) y de grupos', { skip: !chromium && 'Playwright no está instalado', timeout: 90000 }, async () => {
+test('búsqueda de Facebook: mismo recorrido, ligas de páginas (pfbid) y de grupos', { skip: !chromium && 'Playwright no está instalado', timeout: 180000 }, async () => {
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
@@ -104,13 +104,15 @@ test('búsqueda de Facebook: mismo recorrido, ligas de páginas (pfbid) y de gru
     await page.evaluate(readFileSync(new URL('../../captura-marcador.js', import.meta.url), 'utf8'));
     assert.match(await page.textContent('body'), /Precio de Calle · búsqueda/);
     // (el contador sube al empezar a leer cada publicación: se espera a que la quinta termine)
-    await page.waitForFunction(() => /5 publicaciones.*3 no son autos/.test(document.querySelector('[data-s]')?.textContent || ''), null, { timeout: 90000 });
-    assert.match(await page.textContent('[data-s]'), /2 autos · 3 no son autos/);   // Rolex, rines y el de escala; el bloque de Reels ni se cuenta
+    await page.waitForFunction(() => /7 publicaciones.*4 no son autos/.test(document.querySelector('[data-s]')?.textContent || ''), null, { timeout: 150000 });
+    assert.match(await page.textContent('[data-s]'), /3 autos · 4 no son autos/);   // casa, Rolex, rines y el de escala; el bloque de Reels ni se cuenta
     assert.equal(await page.evaluate(() => !!window.__entroAReels), false);
     await page.click('[data-x]');
     await page.waitForFunction(() => window.__sent.length > 0);
     const items = (await page.evaluate(() => window.__sent))[0].items;
-    assert.equal(items.length, 2, JSON.stringify(items.map(i => i.title)));
+    assert.equal(items.length, 3, JSON.stringify(items.map(i => i.title)));
+    // la que Facebook dibujó tarde se leyó completa, y sin emojis
+    assert.equal(items.find(i => /M4/.test(i.title))?.title, 'BMW M4 Competition 2022');
     const puro = items.find(i => /purosangue/i.test(i.title));
     assert.equal(puro.price, 14399000);
     assert.equal(puro.year, 2026);
@@ -121,6 +123,7 @@ test('búsqueda de Facebook: mismo recorrido, ligas de páginas (pfbid) y de gru
     const g63 = items.find(i => /G 63/.test(i.title));
     assert.equal(g63.url, 'https://www.facebook.com/groups/seminuevosgdl/posts/5551234/');
     assert.equal(g63.price, 3350000);
+    assert.ok(!/[\u{1F1E6}-\u{1F1FF}✅]/u.test(g63.title + g63.description), g63.title);
   } finally { await browser.close(); }
 });
 
@@ -142,7 +145,7 @@ test('se activa solo con la dirección real: búsqueda dentro de un grupo y bús
   } finally { await browser.close(); }
 });
 
-test('si algo saca la página a Reels, regresa solo y sigue', { skip: !chromium && 'Playwright no está instalado', timeout: 120000 }, async () => {
+test('si algo saca la página a Reels, regresa solo y sigue', { skip: !chromium && 'Playwright no está instalado', timeout: 180000 }, async () => {
   const browser = await chromium.launch();
   try {
     const html = readFileSync(new URL('./fixtures/captura/fb-busqueda.html', import.meta.url), 'utf8')
@@ -152,11 +155,11 @@ test('si algo saca la página a Reels, regresa solo y sigue', { skip: !chromium 
     await page.goto('https://www.facebook.com/search/top/?q=ferrari');
     await page.evaluate(() => { window.__sent = []; window.open = () => ({ closed: false, postMessage: m => window.__sent.push(JSON.parse(JSON.stringify(m))) }); });
     await page.evaluate(readFileSync(new URL('../../captura-marcador.js', import.meta.url), 'utf8'));
-    await page.waitForFunction(() => /5 publicaciones/.test(document.querySelector('[data-s]')?.textContent || ''), null, { timeout: 100000 });
+    await page.waitForFunction(() => /7 publicaciones.*4 no son autos/.test(document.querySelector('[data-s]')?.textContent || ''), null, { timeout: 150000 });
     assert.equal(new URL(page.url()).pathname, '/search/top/');   // regresó de /reel/999
     await page.click('[data-x]');
     await page.waitForFunction(() => window.__sent.length > 0);
-    assert.equal((await page.evaluate(() => window.__sent))[0].items.length, 2);
+    assert.equal((await page.evaluate(() => window.__sent))[0].items.length, 3);
   } finally { await browser.close(); }
 });
 

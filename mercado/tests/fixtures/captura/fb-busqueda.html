@@ -11,7 +11,15 @@
 </div></div>
 <div><div role="article">
   <span>Seminuevos GDL</span><a href="#" class="t" data-href="/groups/seminuevosgdl/permalink/5551234/" data-full="3 de noviembre de 2025"><span>10 d</span></a>
-  <div data-ad-preview="message"><div dir="auto">Mercedes-Benz G 63 AMG 2019, 41,000 km, $3,350,000</div></div>
+  <div data-ad-preview="message"><div dir="auto">🇩🇪 Mercedes-Benz G 63 AMG 2019 ✅, 41,000 km, $3,350,000</div></div>
+</div></div>
+<div><div role="article">
+  <span>Autos Premium</span><a href="#" class="t" data-href="/groups/premium/posts/7004/" data-full="4 de noviembre de 2025"><span>9 d</span></a>
+  <div data-ad-preview="message"><div dir="auto" class="tarde"></div></div>
+</div></div>
+<div><div role="article">
+  <span>Inmobiliaria Cumbres</span><a href="#" class="t" data-href="/groups/casas/posts/7005/" data-full="30 de octubre de 2025"><span>14 d</span></a>
+  <div data-ad-preview="message"><div dir="auto">🏡 Casa en venta en Cumbres, 3 recámaras, 250 m2<br>$5,200,000</div></div>
 </div></div>
 <div><div>
   <h2>Reels</h2>
@@ -33,6 +41,9 @@
 </div></div>
 </div></div>
 <script>
+// Facebook dibuja el texto de esta publicación un momento después de que entra en pantalla
+new IntersectionObserver(function (es, o) { es.forEach(function (e) { if (e.isIntersecting) { o.disconnect();
+  setTimeout(function () { document.querySelector(".tarde").innerHTML = "✨ BMW M4 Competition 2022<br>12,000 km<br>$1,900,000"; }, 900); } }); }).observe(document.querySelector(".tarde"));
 document.querySelector(".reels-mas").addEventListener("click", function (e) { e.preventDefault(); window.__entroAReels = true; });
 // a medio recorrido algo saca la página a un Reel (como cuando Facebook abre el visor solo)
 if (window.__pcTrampa) setTimeout(function () { history.pushState({}, "", "/reel/999"); }, 1500);

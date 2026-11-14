@@ -1401,10 +1401,10 @@
   const MIN_PRICE = () => Number((S.settings || {}).min_precio_captura) || 100000;
   const JUNK_RE = /\b(no (funciona|arranca|prende|enciende|camina|corre)|para (piezas|partes|refacciones|reparar|restaurar)|por (piezas|partes)|desarmad[oa]s?|sin motor|motor (desvielado|desbielado|fundido|desarmado|da[nñ]ado)|desvielad[oa]|desbielad[oa]|deshuesadero|chatarra|proyecto de restauraci[oó]n|como proyecto|se vende como est[aá])\b/i;
   // relojes, piezas y accesorios, modelos a escala (el botón ya los brinca; esto es la segunda red)
-  const NOTCAR_RE = /\b(reloj(es)?|rolex|patek|audemars|richard mille|hublot|royal oak|nautilus|submariner|datejust|a escala|escala 1|1[:\/](8|12|18|24|43)\b|hot ?wheels|maqueta|die-?cast)\b|^(vendo |venta de |se venden? )?(rines?|llantas?|faros?|calaveras?|fascias?|defensas?|escapes?|volantes?|asientos?|alerones?|frenos?|piezas|refacciones|autopartes)\b/;
+  const NOTCAR_RE = /\b(reloj(es)?|rolex|patek|audemars|richard mille|hublot|royal oak|nautilus|submariner|datejust|a escala|escala 1|1[:\/](8|12|18|24|43)\b|hot ?wheels|maqueta|die-?cast|recamaras?|m2|terreno en|departamento|inmobiliaria|bienes raices|casa en (venta|renta))\b|^(vendo |venta de |se venden? )?(rines?|llantas?|faros?|calaveras?|fascias?|defensas?|escapes?|volantes?|asientos?|alerones?|frenos?|piezas|refacciones|autopartes)\b/;
   function junkWhy(x) {
     if (x.currency === "USD") return "En dólares: no se guarda";
-    if (NOTCAR_RE.test(unacc(x.title).trim()) && !(Number(x.km) > 0)) return "No parece un auto (reloj, pieza o escala)";
+    if (NOTCAR_RE.test(unacc(x.title).trim()) && !(Number(x.km) > 0)) return "No parece un auto (casa, reloj, pieza o escala)";
     if (!(Number(x.price) > 0)) return "Sin precio: no se guarda";
     const m = JUNK_RE.exec(`${x.title || ""}\n${x.description || ""}`);
     if (m) return `Dice "${m[0]}"`;
@@ -1427,37 +1427,109 @@
     lobo: "Ford", "f-150": "Ford", raptor: "Ford", bronco: "Ford", explorer: "Ford", silverado: "Chevrolet", cheyenne: "Chevrolet", tahoe: "Chevrolet",
     suburban: "Chevrolet", aveo: "Chevrolet", escalade: "Cadillac", "model 3": "Tesla", "model s": "Tesla", "model y": "Tesla", "model x": "Tesla", "g63": "Mercedes-Benz", "g 63": "Mercedes-Benz", "range rover": "Land Rover", defender: "Land Rover" };
   const unacc = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-  const PREFIX = /^(serie|series|clase|range|grand|gran|model|new|amg|land|santa|grand|f|e|c|s|g|x|z)$/;
-  function guessMakeModel(x) {
-    const t = " " + unacc(x.title).replace(/[^a-z0-9-]+/g, " ") + " ";
-    let make = null, at = Infinity, len = 0;
-    for (const [name, ...al] of MAKES) for (const a of [name, ...al]) {
-      const i = t.indexOf(" " + unacc(a).replace(/[^a-z0-9-]+/g, " ") + " ");
-      if (i >= 0 && (i < at || (i === at && a.length > len))) { make = name; at = i; len = unacc(a).replace(/[^a-z0-9-]+/g, " ").length + 1; }
-    }
-    // el modelo antes que la marca ("Range Rover Sport 2018 Land Rover") o sin marca ("Corvette C8"): cuenta el modelo
-    for (const k in MODEL_MAKE) { const i = t.indexOf(" " + k + " "); if (i >= 0 && i < at) { make = MODEL_MAKE[k]; at = i - 1; len = 0; } }
-    if (!make) return { make: null, model: null };
-    const rest = t.slice(at + len + 1).trim().split(" ").filter(w => w && !/^(19|20)\d{2}$/.test(w) && !/^(de|del|modelo|año|ano|en|venta|vendo|precio)$/.test(w));
-    let model = rest[0] || null;
-    if (model && PREFIX.test(model) && rest[1] && !/^(19|20)\d{2}$/.test(rest[1])) model += " " + rest[1];
-    if (model) model = model.split(" ").map(w => /\d/.test(w) || w.length <= 3 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1)).join(" ");
-    return { make, model };
+  const PREFIX = /^(serie|series|clase|range|grand|gran|model|new|amg|land|santa|f|e|c|s|g|x|z)$/;
+  // Palabras que nunca son el modelo: ciudades y estados, zonas, nombres de agencia y palabras comunes
+  // ("Porsche Veracruz", "BMW Polanco", "Mercedes Center Monterrey", "Audi en venta").
+  const NOT_MODEL = new Set(("veracruz boca rio xalapa monterrey mty cdmx df mexico guadalajara gdl zapopan puebla queretaro qro cancun merida tijuana leon saltillo " +
+    "chihuahua juarez hermosillo culiacan mazatlan toluca metepec aguascalientes morelia oaxaca acapulco torreon durango zacatecas tampico reynosa matamoros " +
+    "nuevo laredo slp potosi colima tepic villahermosa campeche chiapas tuxtla ensenada mexicali cabo cabos vallarta playa carmen pachuca cuernavaca celaya " +
+    "irapuato jalisco sonora sinaloa coahuila tamaulipas yucatan quintana roo edomex estado ciudad polanco santa fe interlomas pedro garza garcia valle cumbres " +
+    "pedregal satelite lomas del valle norte sur centro center centre motors motor autos auto cars car seminuevos seminuevo certificado certificados certified " +
+    "approved club agencia distribuidor dealer group grupo store premium luxury exotic exoticos lujo venta vendo vende remato oferta ofertas precio modelo ano " +
+    "en de del la el los las ahi aqui con sin muy como mi su por para y o un una nuevo nueva usado usada impecable original unico dueno factura color blanco negro " +
+    "rojo azul gris plata verde amarillo automatico automatica manual standard estandar full equipado equipada todo excelente estado km kms millas mxn usd pesos " +
+    "dolares mdp the for sale new used").split(" "));
+  const tok = s => " " + unacc(s).replace(/[^a-z0-9]+/g, " ").trim() + " ";
+  // Catálogo de la base (modelos y sus alias, también los que creaste al aprobar autos): reconoce "911 Turbo S"
+  // en cualquier parte del texto, aunque el título diga "Porsche Veracruz".
+  let CAT = null, catLoading = null;
+  function loadCat() {
+    if (CAT || catLoading || !client()) return catLoading;
+    catLoading = (async () => {
+      try {
+        const [mk, md, al] = await Promise.all([
+          client().from("mx_makes").select("id,name").limit(2000),
+          client().from("mx_models").select("id,name,make_id").limit(5000),
+          client().from("mx_aliases").select("alias,level,target_id").in("level", ["make", "model"]).limit(10000)]);
+        const makes = new Map((mk.data || []).map(r => [r.id, r.name])), models = new Map((md.data || []).map(r => [r.id, { model: r.name, make: makes.get(r.make_id) || r.make_id }]));
+        const list = [], mlist = [];
+        for (const [id, r] of models) list.push({ a: tok(r.model.replace(/\(.*?\)/g, "")), ...r });
+        for (const [id, name] of makes) mlist.push({ a: tok(name), make: name });
+        for (const r of al.data || []) {
+          if (r.level === "model" && models.has(r.target_id)) list.push({ a: tok(r.alias), ...models.get(r.target_id) });
+          if (r.level === "make" && makes.has(r.target_id)) mlist.push({ a: tok(r.alias), make: makes.get(r.target_id) });
+        }
+        const ok = x => x.a.trim().length >= 2 && !NOT_MODEL.has(x.a.trim());
+        CAT = { models: list.filter(ok).sort((a, b) => b.a.length - a.a.length), makes: mlist.filter(ok) };
+      } catch (e) { CAT = { models: [], makes: [] }; }
+      return CAT;
+    })();
+    return catLoading;
   }
+  const findMake = t => {
+    let best = null;
+    const tryOne = (a, name) => { const i = t.indexOf(a); if (i >= 0 && (!best || i < best.i || (i === best.i && a.length > best.a.length))) best = { i, a, make: name }; };
+    for (const [name, ...al] of MAKES) for (const a of [name, ...al]) tryOne(tok(a), name);
+    for (const m of CAT ? CAT.makes : []) tryOne(m.a, m.make);
+    return best;
+  };
+  const cap = w => /\d/.test(w) || w.length <= 3 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1);
+  // → { make, model, sure }: sure = reconocido por el catálogo o por un modelo conocido (no adivinado)
+  function guessMakeModel(x) {
+    const t1 = tok(x.title), t2 = tok(`${x.title || ""} ${String(x.description || "").slice(0, 600)}`);
+    // 1. un modelo del catálogo en el título (o en la descripción si también aparece su marca)
+    if (CAT) {
+      const inTitle = CAT.models.filter(m => t1.includes(m.a));
+      const pick = inTitle.find(m => t2.includes(tok(m.make))) || inTitle[0]
+        || CAT.models.find(m => t2.includes(m.a) && t2.includes(tok(m.make)));
+      if (pick) return { make: pick.make, model: pick.model, sure: true };
+    }
+    // 2. un modelo conocido sin catálogo ("Corvette", "Jetta", "Range Rover")
+    let best = null;
+    for (const k in MODEL_MAKE) { const i = t2.indexOf(tok(k)); if (i >= 0 && (!best || i < best.i)) best = { i, k }; }
+    const mk = findMake(t1) || findMake(t2);
+    if (best && (!mk || MODEL_MAKE[best.k] === mk.make)) return { make: MODEL_MAKE[best.k], model: tok(best.k).trim().split(" ").map(cap).join(" "), sure: true };
+    if (!mk) return { make: null, model: null, sure: false };
+    // 3. la palabra que sigue a la marca, saltando ciudades, agencias y palabras comunes
+    const src = findMake(t1) ? t1 : t2;
+    const rest = src.slice(src.indexOf(mk.a) + mk.a.length).trim().split(" ").filter(Boolean);
+    let model = null;
+    for (let i = 0; i < Math.min(rest.length, 6) && !model; i++) {
+      const w = rest[i];
+      if (NOT_MODEL.has(w) || /^(19|20)\d{2}$/.test(w) || /^\d{4,}$/.test(w) || w.length < 2 && !/\d/.test(w)) continue;
+      model = PREFIX.test(w) && rest[i + 1] && !NOT_MODEL.has(rest[i + 1]) && !/^(19|20)\d{2}$/.test(rest[i + 1]) ? `${w} ${rest[i + 1]}` : w;
+    }
+    return { make: mk.make, model: model ? model.split(" ").map(cap).join(" ") : null, sure: false };
+  }
+  const MISSING = "Sin marca o modelo: complétalos si sirve";
+  // marca y modelo (adivinados, mientras no los hayas tocado) y si llega con palomita
+  function revGuess(x) {
+    x.title = noEmoji(x.title) || x.title;   // también los que llegaron antes de este cambio
+    if (!x._edited) {
+      const g = guessMakeModel(x);
+      x.make = x._orig_make || g.make || ""; x.model = x._orig_model || g.model || ""; x._sure = !!(x._orig_make && x._orig_model) || g.sure;
+    }
+    const why = junkWhy(x) || (!String(x.make).trim() || !String(x.model).trim() ? MISSING : null);
+    if (why !== x._why) { x._why = why; x._sel = !why; }
+  }
+  // orden: primero los que tienen marca y modelo (reconocidos antes que adivinados), luego los incompletos, al final los descartados
+  const revRank = x => (x._why ? (x._why === MISSING ? 2 : 3) : x._sure ? 0 : 1);
+  const revSort = () => { REV.items = REV.items.map((x, i) => [x, i]).sort((a, b) => revRank(a[0]) - revRank(b[0]) || a[1] - b[1]).map(p => p[0]); };
   function revAdd(items, d) {
     const have = new Set(REV.items.map(x => x.url));
     let n = 0;
     for (const raw of items.slice(0, 200)) {
       if (!raw || !raw.url || !raw.title || have.has(raw.url)) continue;
-      const x = { ...raw, _src: capSource(d), _page: String(d.page_url || "").slice(0, 2000) };
-      const g = guessMakeModel(x);
-      x.make = x.make || g.make || ""; x.model = x.model || g.model || "";
-      x._why = junkWhy(x); x._sel = !x._why;
+      const x = { ...raw, title: noEmoji(raw.title), city: raw.city ? noEmoji(raw.city) : raw.city, _src: capSource(d), _page: String(d.page_url || "").slice(0, 2000),
+        _orig_make: raw.make || "", _orig_model: raw.model || "" };
+      if (!x.title) continue;
+      x._why = undefined; revGuess(x);
       REV.items.push(x); have.add(x.url); n++;
     }
     revSave();
     return n;
   }
+  const noEmoji = s => String(s || "").replace(/[\u{1F1E6}-\u{1F1FF}]|\p{Extended_Pictographic}|[\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]|[•▪-◿☀-➿⬀-⯿]/gu, " ").replace(/\s{2,}/g, " ").trim();
   const revRow = (x, k) => {
     const blocked = x.currency === "USD" || !(Number(x.price) > 0);
     return `<div class="pc-caprow${x._sel ? "" : " off"}" data-k="${k}">
@@ -1466,24 +1538,64 @@
       <span class="pc-captxt"><b>${x.url ? `<a href="${h(x.url)}" target="_blank" rel="noopener">${h(x.title)}</a>` : h(x.title)}</b>
         <span>${[x.year, x.km ? `${nf.format(Number(x.km))} ${x.km_unit === "mi" ? "millas" : "km"}` : null, x.city, x.published_on ? `publicado ${fmtDate(x.published_on)}` : null].filter(Boolean).map(h).join(" · ") || "Sin año ni km"}</span>
         <span class="pc-capmm"><input class="ctrl" value="${h(x.make || "")}" placeholder="Marca" aria-label="Marca" oninput="PrecioCalle.revSet(${k},'make',this.value)">
-          <input class="ctrl" value="${h(x.model || "")}" placeholder="Modelo" aria-label="Modelo" oninput="PrecioCalle.revSet(${k},'model',this.value)"></span>
+          <input class="ctrl" value="${h(x.model || "")}" placeholder="Modelo" aria-label="Modelo" oninput="PrecioCalle.revSet(${k},'model',this.value)">${x._sure && !x._edited ? `<small title="Marca y modelo reconocidos">✓</small>` : ""}</span>
         ${x._why ? `<small class="pc-capwhy">${h(x._why)}</small>` : ""}</span>
-      <span class="pc-capprice">${Number(x.price) > 0 ? h(money({ price: x.price, currency: x.currency || "MXN" })) : "Sin precio"}${x.list_price ? `<small>antes ${h(money({ price: x.list_price, currency: x.currency || "MXN" }))}</small>` : ""}</span>
+      <span class="pc-capprice"><input class="ctrl pc-capp" inputmode="decimal" value="${Number(x.price) > 0 ? h(nf.format(Number(x.price))) : ""}" placeholder="Precio en pesos"
+          aria-label="Precio" title="Corrige el precio si está mal (en pesos: 1,650,000 o 1.65 mdp)" onchange="PrecioCalle.revPrice(${k},this.value)">
+        ${x.currency === "USD" && Number(x.price) > 0 ? `<small>Estaba en dólares</small>` : ""}${x._priceEdited ? `<small>corregido</small>` : ""}${x.list_price ? `<small>antes ${h(money({ price: x.list_price, currency: x.currency || "MXN" }))}</small>` : ""}</span>
     </div>`;
   };
-  PC.revSet = function (k, f, v) { const x = REV.items[k]; if (!x) return; x[f] = v; revSave(); revCount(); };
+  // "1,650,000" · "1650000" · "1.65 mdp" · "1.65 millones" · "850 mil" · "850k" → pesos
+  function parsePesos(v) {
+    const t = unacc(v).replace(/\s+/g, " ").trim(), m = t.match(/(\d[\d.,']*)\s*(mdp|millones?|mill?|m\b|mil|k)?/);
+    if (!m) return null;
+    let n;
+    if (/^(mdp|millon|mill|m$)/.test(m[2] || "")) n = Number(m[1].replace(/,/g, ".").replace(/'/g, "")) * 1e6;
+    else if (/^(mil|k)$/.test(m[2] || "")) n = Number(m[1].replace(/,/g, ".")) * 1e3;
+    else n = Number(m[1].replace(/[.,'](?=\d{3}(\D|$))/g, "").replace(/,/g, "."));
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+  }
+  PC.revPrice = function (k, v) {
+    const x = REV.items[k]; if (!x) return;
+    const n = parsePesos(v);
+    x.price = n; x.currency = n ? "MXN" : x.currency; x._priceEdited = true; x.list_price = null;
+    // se vuelve a evaluar: con precio, uno "sin precio" o "muy barato" puede ir marcado (o al revés)
+    const why = junkWhy(x) || (!String(x.make).trim() || !String(x.model).trim() ? MISSING : null);
+    x._why = why; x._sel = !why;
+    const row = document.querySelector(`.pc-caprow[data-k="${k}"]`);
+    if (row) row.outerHTML = revRow(x, k);
+    revSave(); revCount();
+  };
+  PC.revSet = function (k, f, v) {
+    const x = REV.items[k]; if (!x) return;
+    x[f] = v;
+    if (f === "make" || f === "model") {
+      x._edited = true;
+      // completaste la marca y el modelo de uno incompleto: ya puede ir marcado
+      if (x._why === MISSING && String(x.make).trim() && String(x.model).trim()) {
+        x._why = null; x._sel = true;
+        const row = document.querySelector(`.pc-caprow[data-k="${k}"]`);
+        if (row) { row.classList.remove("off"); const c = row.querySelector('input[type="checkbox"]'); if (c) c.checked = true; const w = row.querySelector(".pc-capwhy"); if (w) w.remove(); }
+      }
+    }
+    revSave(); revCount();
+  };
   function revCount() {
     const el = document.getElementById("pcRevCount"), n = REV.items.filter(x => x._sel).length;
-    if (el) el.textContent = `${nf.format(REV.items.length)} por revisar · ${nf.format(n)} marcados`;
+    const sure = REV.items.filter(x => !x._why).length;
+    if (el) el.textContent = `${nf.format(REV.items.length)} por revisar · ${nf.format(sure)} con marca y modelo · ${nf.format(n)} marcados`;
     const b = document.getElementById("pcCapSave"); if (b) b.textContent = `Guardar los ${nf.format(n)} marcados y descartar los demás`;
   }
   let revOpen = false;
-  PC.openRevision = function () {
+  PC.openRevision = async function () {
     if (!canEdit()) { capModal(`<p>Para revisar y guardar autos inicia sesión con tu cuenta de admin en esta ventana.</p>`); return; }
     if (!REV.items.length) { capModal(`<p>No hay autos por revisar.</p><p class="pc-foot">Dale clic al botón en un anuncio, una página de resultados, un grupo o una búsqueda de Facebook.</p>`); return; }
+    if (!CAT) { capModal(`<p>Cargando el catálogo de modelos…</p>`); await loadCat(); }
+    REV.items.forEach(revGuess);   // con el catálogo (y la lógica actual) los que no has corregido a mano
+    revSort(); revSave();
     revOpen = true;
-    capModal(`<p class="pc-foot" style="margin-top:0"><b id="pcRevCount"></b><br>Revisa la marca y el modelo de cada uno (si el modelo no lo teníamos, se crea) y quita la palomita a los que no quieras.
-        Los que dicen que no funcionan o son para piezas, los muy baratos y los sin precio llegan sin palomita. Si la otra pestaña sigue bajando, los nuevos se van sumando abajo.</p>
+    capModal(`<p class="pc-foot" style="margin-top:0"><b id="pcRevCount"></b><br>Arriba van los que ya traen marca y modelo (✓ = reconocidos del catálogo). Revísalos (si el modelo no lo teníamos, se crea)
+        y quita la palomita a los que no quieras. Sin palomita llegan los incompletos (complétalos si sirven), los que no funcionan o son para piezas, los muy baratos y los sin precio.</p>
       <div class="pc-caplist" id="pcRevList">${REV.items.map(revRow).join("")}</div>
       <p class="pc-formmsg" id="pcCapMsg" role="status"></p>
       <div class="pc-formbtns"><button class="btn primary sm" id="pcCapSave" onclick="PrecioCalle.saveRevision()">Guardar</button>
@@ -1491,11 +1603,18 @@
       <p class="pc-foot">Los guardados entran en unos 10 a 20 minutos: se revisan contra todo lo que ya tenemos (los repetidos se juntan) y se suman a Precio de Calle.</p>`);
     revCount();
   };
-  // los que llegan con la lista abierta se agregan abajo sin tocar lo que estás editando
+  // los que llegan con la lista abierta: se reordena todo, salvo si estás escribiendo en la lista (entonces van abajo)
   function revAppend(from) {
     const list = document.getElementById("pcRevList");
     if (!list || !document.getElementById("pcScrim")?.classList.contains("show")) return PC.openRevision();
-    list.insertAdjacentHTML("beforeend", REV.items.slice(from).map((x, i) => revRow(x, from + i)).join(""));
+    if (list.contains(document.activeElement)) {
+      list.insertAdjacentHTML("beforeend", REV.items.slice(from).map((x, i) => revRow(x, from + i)).join(""));
+    } else {
+      const y = list.scrollTop;
+      revSort(); revSave();
+      list.innerHTML = REV.items.map(revRow).join("");
+      list.scrollTop = y;
+    }
     revCount();
   }
   PC.saveRevision = async function () {
@@ -1551,6 +1670,7 @@
   const grupoHechas = new Set();
   PC.saveGrupo = function () {
     const cola = window.pcGrupoCola || [];
+    if (!CAT && canEdit()) loadCat().then(() => { if (CAT) { REV.items.forEach(revGuess); revSave(); } });
     while (cola.length) {
       const { d, src, origin } = cola.shift();
       const reply = m => { try { src.postMessage({ type: "pc-captura-guardada", batch: d.batch, ...m }, origin); } catch (e) {} };
@@ -1568,7 +1688,7 @@
   let marcadorHref = null;
   async function ensureMarcador() {
     if (marcadorHref) return marcadorHref;
-    try { const r = await fetch("captura-marcador.js?v=9", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
+    try { const r = await fetch("captura-marcador.js?v=10", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
     return marcadorHref;
   }
   function adminPanel() {
@@ -1795,6 +1915,7 @@
     .pc-captxt span{font-size:12px;color:var(--ink-faint)}
     .pc-capprice{text-align:right;font-size:14px;color:var(--ink);white-space:nowrap}
     .pc-capprice small{display:block;font-size:11px;color:var(--ink-faint)}
+    .pc-capprice .pc-capp{width:130px;text-align:right;padding:4px 8px;font-size:14px}
     .pc-addrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
     .pc-addbtn .pc-foot{margin-top:10px}
     .pc-lastcars{display:flex;flex-direction:column;gap:8px}

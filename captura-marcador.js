@@ -250,7 +250,8 @@
     while ((m = re.exec(text))) {
       var sym = m[1] || "", raw = m[2], mult = (m[3] || "").toLowerCase();
       if (!sym && !mult) continue;   // un número suelto (año, km, teléfono) no es precio
-      var before = text.slice(Math.max(0, m.index - 30), m.index).toLowerCase();
+      // lo que va antes del número, solo en el mismo renglón ("12,000 km\n$1,900,000": el km es del renglón de arriba)
+      var before = text.slice(Math.max(0, m.index - 30, text.lastIndexOf("\n", m.index - 1) + 1), m.index).toLowerCase();
       if (/(enganche|mensualidad|mensuales|pagos? de|apart|tenencia|seguro|servicio|refrendo|verificaci|km|kil[oó]metros|millas)\s*:?\s*(de\s*)?$/.test(before)) continue;
       if (/^\s*(km|kms|kil|millas|mi\b|hp|cv|cc|l\b)/i.test(text.slice(re.lastIndex, re.lastIndex + 6))) continue;
       var n;
@@ -267,18 +268,26 @@
     }
     return { price: out[0].price, currency: out[0].currency, list_price: null };
   }
-  var BRAND_RE = /\b(porsche|ferrari|lamborghini|lambo|mclaren|aston\s*martin|bentley|rolls[\s-]*royce|maserati|mercedes|benz|amg|bmw|audi|gt-?r|corvette|mustang|shelby|camaro|viper|jaguar|alfa\s*romeo|lotus|land\s*rover|defender|karmann|karman|mini\s*cooper|volvo|peugeot|bugatti|pagani|koenigsegg|lexus|nsx|g\s*63|g\s*wagon|e30|e-?type|911|cayman|boxster|carrera|huracan|hurac[aá]n|aventador|urus|gallardo|murcielago)\b/i;
+  var BRAND_RE = /\b(porsche|ferrari|lamborghini|lambo|mclaren|aston\s*martin|bentley|rolls[\s-]*royce|maserati|mercedes|benz|amg|bmw|audi|gt-?r|corvette|mustang|shelby|camaro|viper|jaguar|alfa\s*romeo|lotus|land\s*rover|range\s*rover|defender|karmann|karman|mini\s*cooper|volvo|peugeot|bugatti|pagani|koenigsegg|lexus|nsx|g\s*63|g\s*wagon|e30|e-?type|911|cayman|boxster|carrera|huracan|hurac[aá]n|aventador|urus|gallardo|murcielago|cayenne|macan|panamera|taycan|nissan|toyota|honda|volkswagen|vw|chevrolet|chevy|ford|dodge|jeep|ram|gmc|cadillac|lincoln|mazda|kia|hyundai|subaru|mitsubishi|tesla|fiat|seat|cupra|renault|suzuki|infiniti|acura|genesis|buick|chrysler|pontiac|datsun|supra|wrangler|bronco|raptor|lobo|tacoma|silverado|cheyenne|tahoe|suburban|escalade|jetta|golf|sentra|versa|civic|corolla|challenger|charger)\b/i;
+  // Emojis, banderas y adornos ("🇮🇹 Ferrari Roma", "✅ 38,000 km"): fuera del texto
+  function noEmoji(s) {
+    return String(s || "").replace(/[\u{1F1E6}-\u{1F1FF}]|\p{Extended_Pictographic}|[\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]|[\u2022\u25AA-\u25FF\u2600-\u27BF\u2B00-\u2BFF]/gu, " ")
+      .replace(/[ \t]{2,}/g, " ").trim();
+  }
   var WANTED_RE = /^\s*(busco|compro|se busca|ando buscando|quien venda|alguien (que )?venda|cambio mi|wtb\b)/i;
   // No es un coche: relojes, piezas y accesorios, modelos a escala, rentas. (texto sin acentos y en minúsculas)
   var WATCH_RE = /\b(reloj(es)?|rolex|patek|audemars|piguet|richard mille|hublot|cartier|tag heuer|breitling|panerai|iwc|tudor|royal oak|nautilus|aquanaut|submariner|gmt[- ]?master|datejust|day-?date|yacht-?master|sea-?dweller|skydweller|caratula|bisel|brazalete|full set|caja y papeles|box (and|&|y) papers)\b/;
   var SCALE_RE = /\b(a escala|escala 1|1[:\/](8|12|18|24|32|43|64)\b|hot ?wheels|maqueta|die-?cast|juguete|lego|minigt|bburago|maisto|autoart)\b/;
   var PART_START = /^(vendo |se venden? |venta de |remato |ofrezco |tengo )?(\d+ )?(rines?|llantas?|neumaticos?|faros?|calaveras?|fascias?|defensas?|cofre|salpicaderas?|parrillas?|escapes?|mofles?|volantes?|asientos?|tapetes?|alerones?|spoilers?|difusor(es)?|body ?kit|kit |frenos?|balatas|calipers?|turbos?|intercooler|piezas|refacciones|autopartes|partes|motor |transmision |caja de cambios|cubre ?autos?|fundas?|espejos?|emblemas?|llaveros?|gorras?|playeras?|sudaderas?|posters?|cuadros?|placas? de|bocinas?|estereo|pantalla|computadora|modulo|centralita)\b/;
+  // Casas, departamentos, terrenos, locales (bienes raíces)
+  var HOUSE_RE = /\b(rec[aá]maras?|habitaciones|m2|m²|mts2|metros cuadrados|terrenos? (en|de \d|con|residencial|habitacional)|lote (de terreno|residencial|habitacional)|fraccionamiento|inmobiliaria|bienes ra[ií]ces|infonavit|fovissste|hipoteca|escrituras|predial|departamento|depto|townhouse|penthouse|local comercial|bodega industrial)\b|\b(casa|residencia) (en venta|en renta|de \d|con \d|nueva|sola|amplia|en privada)/;
   var RENT_RE = /^(renta|alquiler|rento|se renta)\b|\b(renta (de|por) (dia|hora|evento)|para bodas|xv anos|sesion de fotos)\b/;
   function notCarWhy(title, text, km) {
     var t = String(title || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
     var head = String(text || "").slice(0, 300).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     if (WATCH_RE.test(t) || WATCH_RE.test(head)) return "reloj";
     if (SCALE_RE.test(t) || SCALE_RE.test(head)) return "escala";
+    if (HOUSE_RE.test(t) || HOUSE_RE.test(head)) return "casa";
     if (km) return null;   // dice el kilometraje: es un coche aunque mencione rines o asientos
     if (PART_START.test(t)) return "pieza";
     if (RENT_RE.test(t) || RENT_RE.test(head)) return "renta";
@@ -468,11 +477,23 @@
     if (location.href !== url0) { try { history.back(); } catch (e) {} await sleep(1200); }
     return out;
   }
-  function postLines(el) { return txt(el).split("\n").map(function (s) { return s.trim(); }).filter(Boolean); }
+  function postLines(el) { return txt(el).split("\n").map(function (s) { return noEmoji(s); }).filter(Boolean); }
+  // Facebook dibuja el texto y las fotos de una publicación cuando entra en pantalla: se espera a que deje de crecer
+  // (dos lecturas iguales seguidas, mínimo minMs, máximo 5 s) antes de leerla.
+  async function settle(post, minMs) {
+    var last = -1, same = 0, t0 = Date.now();
+    for (var w = 0; w < 25; w++) {
+      await sleep(200);
+      var n = String(post.textContent || "").length + qa(post, "img").length * 1000;
+      if (n === last) { if (++same >= 2 && Date.now() - t0 >= minMs) return; } else same = 0;
+      last = n;
+    }
+  }
   async function readPost(post) {
     try { post.scrollIntoView({ block: "center" }); } catch (e) {}
-    await sleep(500);
+    await settle(post, 1500);   // al entrar en pantalla
     await expand(post);
+    await settle(post, 400);    // después de "Ver más"
     var meta = await postMeta(post);
     harvestPage();
     var msgEl = qa(post, '[data-ad-preview="message"], [data-ad-comet-preview="message"]').filter(function (m) { return !inComment(m); })[0];
@@ -490,7 +511,7 @@
       pid = link ? link.pid : fb.id;
       if (link) gid = link.gid;
     }
-    if (fb && fb.d.text && fb.d.text.length > msg.join("\n").length) msg = fb.d.text.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+    if (fb && fb.d.text && fb.d.text.length > msg.join("\n").length) msg = fb.d.text.split("\n").map(function (s) { return noEmoji(s); }).filter(Boolean);
     var clean = function (ls) { return ls.filter(function (l) { return !NOISE_RE.test(l) && l.length > 1; }); };
     msg = clean(msg);
     var extra = clean(all).filter(function (l) { return msg.indexOf(l) < 0; });
@@ -507,7 +528,10 @@
     var nc = notCarWhy(firstLine, text || every, k && k.km);
     if (nc) return { skip: "no_es_auto" };
     var lines = (fb && fb.d.title ? [fb.d.title] : []).concat(msg, extra);
-    var titleLine = lines.filter(function (l) { return BRAND_RE.test(l) && l.length <= 140; })[0] || lines[0];
+    var plain = function (l) { return !/^[\s$\d.,:'’|-]*(km|kms|kil[oó]metros|millas|mxn|pesos|mdp|precio|mil)?[\s$\d.,:'’|-]*$/i.test(l) && !/^(precio|km|kilometraje|ubicaci[oó]n|informes|contacto|tel|whats)/i.test(l); };
+    var titleLine = lines.filter(function (l) { return BRAND_RE.test(l) && l.length <= 140; })[0]
+      || lines.filter(function (l) { return /\b(19[5-9]\d|20[0-3]\d)\b/.test(l) && /[a-záéíóúñ]{3,}/i.test(l) && plain(l) && l.length <= 140; })[0]
+      || lines.filter(plain)[0] || lines[0];
     var nowY = new Date().getFullYear() + 1, years = (titleLine.match(/\b(19[5-9]\d|20[0-3]\d)\b/g) || []).concat((lines.slice(0, 4).join(" ").match(/\b(19[5-9]\d|20[0-3]\d)\b/g) || []))
       .map(Number).filter(function (y) { return y <= nowY; });
     var key = pid ? "g" + gid + "_" + pid : "g" + gid + "_t" + hash(text.slice(0, 400));
@@ -554,7 +578,7 @@
     q(panel, "[data-x]").addEventListener("click", function () { finish("Terminado."); });
     function show() {
       var left = Object.keys(S.pending).length;
-      st.innerHTML = S.posts + " publicaciones leídas · <b>" + S.cars + " autos</b>" + (S.sinPrecio ? " · " + S.sinPrecio + " sin precio" : "") + (S.noCar ? " · " + S.noCar + " no son autos (relojes, piezas…)" : "") + "<br>" + S.sent + " en tu lista por revisar" + (left ? " · " + left + " tanda(s) esperando a carcollection.app" : "") +
+      st.innerHTML = S.posts + " publicaciones leídas · <b>" + S.cars + " autos</b>" + (S.sinPrecio ? " · " + S.sinPrecio + " sin precio" : "") + (S.noCar ? " · " + S.noCar + " no son autos (casas, relojes, piezas…)" : "") + "<br>" + S.sent + " en tu lista por revisar" + (left ? " · " + left + " tanda(s) esperando a carcollection.app" : "") +
         (S.oldest ? "<br>Llegó hasta el " + S.oldest : "") + (S.msg ? "<br><span style='color:#ffcf6b'>" + S.msg + "</span>" : "");
     }
     // tandas de hasta 25 autos; se reenvían hasta que carcollection.app confirma que las guardó

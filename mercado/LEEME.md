@@ -131,6 +131,12 @@ abajo a la derecha muestra cuántas publicaciones leyó y cuántos autos encontr
 - Sin precio (aun con el texto completo, p. ej. "informes por inbox") no se guarda; el panel dice cuántas.
 - De cada publicación de venta: fecha exacta (la del globo de la hora), texto, precio escrito a mano (`$1,650,000`,
   `4.2 mdp`, `850 mil`; con "antes … ahora" guarda la rebaja), año, km, ciudad, fotos y la liga a la publicación.
+- No se atora: los bloques de Reels, videos, personas y páginas de la búsqueda se brincan sin tocarlos; nunca se le
+  da clic a un "Ver más" que sea liga; si algo saca la página (Reels, video, foto) regresa solo (3 intentos, si no, se
+  pausa y lo dice); ninguna publicación lo detiene más de 25 s. En la búsqueda conviene la pestaña "Publicaciones".
+- Se brincan y se cuentan aparte ("no son autos"): relojes (Rolex, AP, Patek…), piezas y accesorios cuando el título
+  empieza con ellos (rines, faros, defensas, asientos… salvo que diga el kilometraje), modelos a escala y rentas.
+  La lista "Por revisar" los vuelve a revisar (llegan sin palomita).
 - Se brinca "busco/compro", pláticas sin precio ni año, comentarios y lo vendido. No lee quién publicó; quita teléfonos,
   correos y ligas de WhatsApp del texto.
 - Manda tandas de 25 a la ventana de carcollection.app que abre al empezar. **Nada se guarda solo**: todo cae en la lista

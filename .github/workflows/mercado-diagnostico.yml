@@ -1,0 +1,37 @@
+# Mercado MX · diagnóstico de fotos por fuente (solo lectura: no escribe en la base).
+# Actions → "Mercado MX · diagnóstico de fotos" → Run workflow → fuentes separadas por coma.
+name: Mercado MX · diagnóstico de fotos
+
+on:
+  workflow_dispatch:
+    inputs:
+      fuentes:
+        description: 'Fuentes separadas por coma (ids de sources.yaml)'
+        required: true
+        default: 'exotic-avenue,prestige-dlc'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: mercado
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mercado/package-lock.json
+      - run: npm ci
+      - name: Diagnóstico
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          FUENTES: ${{ inputs.fuentes }}
+        run: |
+          if [[ ! "$FUENTES" =~ ^[a-z0-9,-]+$ ]]; then echo "fuentes inválidas"; exit 2; fi
+          node scripts/diagnostico-fotos.mjs "$FUENTES"

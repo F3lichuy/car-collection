@@ -151,6 +151,10 @@ abajo a la derecha muestra cuántas publicaciones leyó y cuántos autos encontr
   incompletos llegan sin palomita y abajo (al completarlos se marcan solos).
 - **Precio editable** en cada auto de la lista (en pesos: `1,650,000`, `1.65 mdp`, `850 mil`): al corregirlo se vuelve a
   evaluar (uno "sin precio" o "muy barato" puede quedar marcado) y se guarda el que escribiste.
+- **Todas las fotos y la liga exacta**: la publicación se reconoce en los datos de Facebook por su liga, su texto o
+  cualquiera de sus fotos. Si ahí vienen menos de 4 fotos, se recorren todas en el visor ("Foto siguiente" o →) y se
+  juntan sin repetir. La liga a la publicación sale de la hora; si no, del número que llevan las ligas de sus fotos
+  (`set=pcb.<número>`), con el grupo de la página o del encabezado de la publicación.
 - **Fotos que subes tú** (en la lista "Por revisar" y en la ficha de cualquier auto guardado, solo admin): eliges
   archivos, los arrastras o pegas una imagen copiada (Ctrl + V). Se reducen a 1600 px, se guardan en el almacenamiento
   "images" de Supabase (no caducan, a diferencia de las ligas de fotos de Facebook) y quedan como portada. En la ficha
@@ -166,6 +170,16 @@ abajo a la derecha muestra cuántas publicaciones leyó y cuántos autos encontr
   anterior por sus fotos (así salen las rebajas).
 - Facebook prohíbe la recolección automática y puede pedir verificación o limitar la cuenta si nota actividad rara:
   úsalo en sesiones cortas, mientras estás en la computadora. Página de prueba: `tests/fixtures/captura/fb-grupo.html`.
+
+## Fotos de las fuentes web
+
+- `ficha` lee también `srcset`/`data-srcset` y se queda con la versión más grande de cada foto (YOOtheme de Joomla
+  sirve cada foto en varios anchos desde `/templates/yootheme/cache/`, como Exotic Avenue desde 2026-11).
+- Si el adaptador leyó la ficha completa (`fotos_completas`: `ficha` y WooCommerce), la corrida quita del anuncio las
+  fotos que el sitio ya no publica (nunca las que subiste tú); las nuevas van al final.
+- En la página, si una portada ya no abre se prueba la siguiente (hasta 8), y las fotos de Facebook (caducan) van al final.
+- Diagnóstico de solo lectura: Actions → "Mercado MX · diagnóstico de fotos" (`scripts/diagnostico-fotos.mjs`): por
+  fuente, anuncios sin fotos, fotos guardadas que ya no abren y qué fotos encuentra hoy el adaptador.
 
 ## Wayback Machine (anuncios ya borrados)
 

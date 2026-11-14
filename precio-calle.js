@@ -741,6 +741,7 @@
         <button class="iconbtn" onclick="document.getElementById('pcScrim').classList.remove('show')" aria-label="Cerrar">×</button></div>
       <div class="mb">
         ${photos.length ? `<div class="pc-photos">${photos.map((u, i) => `<img src="${h(thumb(u))}" alt="" ${i < 3 ? "" : 'loading="lazy"'} referrerpolicy="no-referrer" onerror="this.remove()">`).join("")}</div>` : ""}
+        ${canEdit() ? photoDrop(`PrecioCalle.addPhotos('${x.id}', %F)`, "pcAddPh") : ""}
         <p class="pc-path" id="pcVerLine">${path || "Versión por confirmar"}${x.version ? "" : ` <span class="pc-note">versión por confirmar</span>`}${x.versionManual ? ` <span class="pc-man" title="Versión elegida a mano">a mano</span>` : ""}
           ${canEdit() ? `<button class="btn ghost sm pc-verbtn" onclick="PrecioCalle.editVersion('${x.id}')">${x.version ? "Cambiar versión" : "Elegir versión"}</button>` : ""}</p>
         <div id="pcVerForm"></div>
@@ -979,6 +980,46 @@
   };
 
   // Borrar = ocultar para todos, con deshacer (solo la cuenta dueña; la base lo vuelve a revisar)
+  // ── Fotos que subes tú ──────────────────────────────────────────────────
+  // Las ligas de las fotos de Facebook caducan a los pocos días (la página oculta la foto rota): las que subes
+  // quedan en el almacenamiento de la página ("images" de Supabase) y no caducan. Se reducen a 1600 px.
+  // Eliges archivos, los arrastras o haces clic en el cuadro y pegas (Ctrl + V) una imagen copiada.
+  function photoDrop(call, id) {
+    const run = call.replace("%F", "this.files");
+    return `<div class="pc-phdrop" id="${id}" tabindex="0" role="button" aria-label="Agregar fotos: elige, arrastra o pega una imagen"
+      onpaste="PrecioCalle.pastePhotos(event, this)" ondragover="event.preventDefault();this.classList.add('on')" ondragleave="this.classList.remove('on')"
+      ondrop="event.preventDefault();this.classList.remove('on');PrecioCalle.dropPhotos(event, this)" data-call="${h(call)}">
+      <label class="btn ghost sm">Agregar fotos<input type="file" accept="image/*" multiple hidden onchange="${h(run)}"></label>
+      <span>o arrástralas aquí, o haz clic aquí y pega una imagen (Ctrl + V)</span><b class="pc-phmsg" role="status"></b></div>`;
+  }
+  const runDrop = (el, files) => { if (files && files.length) new Function("files", "return " + el.dataset.call.replace("%F", "files"))(files); };
+  PC.pastePhotos = (e, el) => { const f = [...(e.clipboardData?.files || [])].filter(x => /^image\//.test(x.type)); if (f.length) { e.preventDefault(); runDrop(el, f); } };
+  PC.dropPhotos = (e, el) => runDrop(el, [...(e.dataTransfer?.files || [])].filter(x => /^image\//.test(x.type)));
+  // sube cada imagen y devuelve sus ligas permanentes
+  async function uploadPhotos(files, msgEl) {
+    const out = [], list = [...files].filter(f => /^image\//.test(f.type)).slice(0, 20);
+    for (const [i, f] of list.entries()) {
+      if (msgEl) msgEl.textContent = `Subiendo ${i + 1} de ${list.length}…`;
+      const blob = await new Promise(ok => (typeof downscaleBlob === "function" ? downscaleBlob(f, 1600, ok) : ok(f)));
+      const url = blob && typeof uploadImage === "function" ? await uploadImage(blob) : null;
+      if (url) out.push(url);
+    }
+    if (msgEl) msgEl.textContent = out.length === list.length ? "" : `No se pudieron subir ${list.length - out.length}.`;
+    return out;
+  }
+  PC.addPhotos = async function (id, files) {
+    const x = S.vehicles.find(v => v.id === id); if (!x || !canEdit()) return;
+    const msg = document.querySelector("#pcAddPh .pc-phmsg");
+    const urls = await uploadPhotos(files, msg);
+    if (!urls.length) { if (msg) msg.textContent = "No se subió ninguna foto (¿sesión de admin?)."; return; }
+    // van al anuncio más reciente del auto y quedan primero (portada)
+    const l = x.listings[0];
+    const first = Math.min(0, ...x.listings.flatMap(z => (z.photos || []).map(p => p.position ?? 0)));
+    const { error } = await client().from("mx_photos").insert(urls.map((url, i) => ({ listing_id: l.id, url, position: first - urls.length + i })));
+    if (error) { if (msg) msg.textContent = `No se guardaron: ${error.message}`; return; }
+    S.loaded = false; S.loading = load(); await S.loading; draw(root()); PC.open(id);
+  };
+
   PC.deleteCar = async function (id) {
     const x = S.vehicles.find(v => v.id === id);
     if (!x || !S.owner) return;
@@ -1534,7 +1575,10 @@
     const blocked = x.currency === "USD" || !(Number(x.price) > 0);
     return `<div class="pc-caprow${x._sel ? "" : " off"}" data-k="${k}">
       <input type="checkbox" aria-label="Guardar este auto" ${x._sel ? "checked" : ""} ${blocked ? "disabled" : ""} onchange="PrecioCalle.revSet(${k},'_sel',this.checked);this.closest('.pc-caprow').classList.toggle('off',!this.checked)">
-      ${x.photos && x.photos[0] ? `<img src="${h(x.photos[0])}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="pc-capimg"></span>`}
+      <span class="pc-capph" tabindex="0" title="Agregar fotos: haz clic y pega (Ctrl + V), o arrastra una imagen"
+        onpaste="PrecioCalle.pastePhotos(event, this)" ondragover="event.preventDefault()" ondrop="event.preventDefault();PrecioCalle.dropPhotos(event, this)"
+        data-call="PrecioCalle.revPhotos(${k}, %F)">${x.photos && x.photos[0] ? `<img src="${h(x.photos[0])}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="pc-capimg"></span>`}
+        <label class="pc-capadd">${(x.photos || []).length ? `${x.photos.length} foto${x.photos.length > 1 ? "s" : ""} · ` : ""}+ foto<input type="file" accept="image/*" multiple hidden onchange="PrecioCalle.revPhotos(${k}, this.files)"></label></span>
       <span class="pc-captxt"><b>${x.url ? `<a href="${h(x.url)}" target="_blank" rel="noopener">${h(x.title)}</a>` : h(x.title)}</b>
         <span>${[x.year, x.km ? `${nf.format(Number(x.km))} ${x.km_unit === "mi" ? "millas" : "km"}` : null, x.city, x.published_on ? `publicado ${fmtDate(x.published_on)}` : null].filter(Boolean).map(h).join(" · ") || "Sin año ni km"}</span>
         <span class="pc-capmm"><input class="ctrl" value="${h(x.make || "")}" placeholder="Marca" aria-label="Marca" oninput="PrecioCalle.revSet(${k},'make',this.value)">
@@ -1555,6 +1599,15 @@
     else n = Number(m[1].replace(/[.,'](?=\d{3}(\D|$))/g, "").replace(/,/g, "."));
     return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
   }
+  PC.revPhotos = async function (k, files) {
+    const x = REV.items[k]; if (!x) return;
+    const row = document.querySelector(`.pc-caprow[data-k="${k}"]`), lab = row && row.querySelector(".pc-capadd");
+    if (lab) lab.firstChild.textContent = "Subiendo… ";
+    const urls = await uploadPhotos(files, null);
+    x.photos = [...urls, ...(x.photos || [])].slice(0, 30);   // las tuyas primero (portada)
+    if (row) row.outerHTML = revRow(x, k);
+    revSave();
+  };
   PC.revPrice = function (k, v) {
     const x = REV.items[k]; if (!x) return;
     const n = parsePesos(v);
@@ -1902,7 +1955,7 @@
     .pc-admin{margin-top:8px;margin-bottom:36px}
     .pc-marcador{cursor:grab}
     .pc-caplist{max-height:min(52vh,460px);overflow:auto;border-top:1px solid var(--line);margin:10px 0}
-    .pc-caprow{display:grid;grid-template-columns:20px 64px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+    .pc-caprow{display:grid;grid-template-columns:20px 84px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
     .pc-caprow.off{opacity:.55;cursor:default}
     .pc-caprow.off .pc-capmm input{opacity:1}
     .pc-capmm{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
@@ -1910,6 +1963,12 @@
     .pc-capwhy{display:block;margin-top:4px;color:var(--warn,#b45309)}
     .pc-captxt a{color:inherit}
     .pc-caprow img,.pc-capimg{width:64px;height:48px;object-fit:cover;background:var(--card2);display:block}
+    .pc-capph{display:flex;flex-direction:column;gap:3px;align-items:flex-start;outline-offset:2px}
+    .pc-capadd{font-size:11px;color:var(--ink-faint);cursor:pointer;white-space:nowrap}
+    .pc-capadd:hover{color:var(--ink)}
+    .pc-phdrop{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:10px 0 4px;padding:10px 12px;border:1px dashed var(--line);font-size:13px;color:var(--ink-faint)}
+    .pc-phdrop.on,.pc-phdrop:focus{border-color:var(--ink);outline:none}
+    .pc-phmsg{font-weight:500;color:var(--ink)}
     .pc-captxt{display:flex;flex-direction:column;gap:2px;min-width:0}
     .pc-captxt b{font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .pc-captxt span{font-size:12px;color:var(--ink-faint)}

@@ -151,6 +151,10 @@ abajo a la derecha muestra cuántas publicaciones leyó y cuántos autos encontr
   incompletos llegan sin palomita y abajo (al completarlos se marcan solos).
 - **Precio editable** en cada auto de la lista (en pesos: `1,650,000`, `1.65 mdp`, `850 mil`): al corregirlo se vuelve a
   evaluar (uno "sin precio" o "muy barato" puede quedar marcado) y se guarda el que escribiste.
+- **Fotos que subes tú** (en la lista "Por revisar" y en la ficha de cualquier auto guardado, solo admin): eliges
+  archivos, los arrastras o pegas una imagen copiada (Ctrl + V). Se reducen a 1600 px, se guardan en el almacenamiento
+  "images" de Supabase (no caducan, a diferencia de las ligas de fotos de Facebook) y quedan como portada. En la ficha
+  se agregan a `mx_photos` del anuncio más reciente; la corrida de cada 10 minutos les calcula la huella (repetidos).
 - **Cualquier marca y modelo**: si apruebas un auto cuyo modelo no está en la taxonomía (BMW M3, Ferrari Roma, Nissan
   Versa…), la corrida crea la marca y el modelo en `mx_makes`/`mx_models` (sin generaciones) y desde ahí lo reconoce
   siempre. Lo que apruebas no vuelve a la cola de normalización por confianza baja.

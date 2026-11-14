@@ -134,7 +134,10 @@ abajo a la derecha muestra cuántas publicaciones leyó y cuántos autos encontr
 - No se atora: los bloques de Reels, videos, personas y páginas de la búsqueda se brincan sin tocarlos; nunca se le
   da clic a un "Ver más" que sea liga; si algo saca la página (Reels, video, foto) regresa solo (3 intentos, si no, se
   pausa y lo dice); ninguna publicación lo detiene más de 25 s. En la búsqueda conviene la pestaña "Publicaciones".
-- Se brincan y se cuentan aparte ("no son autos"): relojes (Rolex, AP, Patek…), piezas y accesorios cuando el título
+- Antes de leer una publicación espera a que Facebook termine de dibujarla (texto y fotos estables, mínimo 1.5 s).
+  Quita emojis, banderas y viñetas del texto. El título es el renglón con marca o modelo; si no hay, uno con año y
+  palabras; nunca un renglón que solo dice km, precio o ciudad.
+- Se brincan y se cuentan aparte ("no son autos"): casas, departamentos, terrenos y locales; relojes (Rolex, AP, Patek…), piezas y accesorios cuando el título
   empieza con ellos (rines, faros, defensas, asientos… salvo que diga el kilometraje), modelos a escala y rentas.
   La lista "Por revisar" los vuelve a revisar (llegan sin palomita).
 - Se brinca "busco/compro", pláticas sin precio ni año, comentarios y lo vendido. No lee quién publicó; quita teléfonos,
@@ -142,6 +145,12 @@ abajo a la derecha muestra cuántas publicaciones leyó y cuántos autos encontr
 - Manda tandas de 25 a la ventana de carcollection.app que abre al empezar. **Nada se guarda solo**: todo cae en la lista
   **"Por revisar"** (también lo de Marketplace y Mercado Libre). Ahí marcas cuáles sí, corriges la marca y el modelo
   detectados y guardas; los demás se descartan. La lista vive en ese navegador hasta que la guardas.
+- **Marca y modelo** se reconocen con el catálogo de la base (modelos y alias, también los que creaste): "Porsche
+  Veracruz … este 911 Turbo S" → Porsche · 911. Si no está, la palabra que sigue a la marca, saltando ciudades, zonas,
+  nombres de agencia y palabras comunes. Arriba de la lista van los que traen marca y modelo (✓ = del catálogo); los
+  incompletos llegan sin palomita y abajo (al completarlos se marcan solos).
+- **Precio editable** en cada auto de la lista (en pesos: `1,650,000`, `1.65 mdp`, `850 mil`): al corregirlo se vuelve a
+  evaluar (uno "sin precio" o "muy barato" puede quedar marcado) y se guarda el que escribiste.
 - **Cualquier marca y modelo**: si apruebas un auto cuyo modelo no está en la taxonomía (BMW M3, Ferrari Roma, Nissan
   Versa…), la corrida crea la marca y el modelo en `mx_makes`/`mx_models` (sin generaciones) y desde ahí lo reconoce
   siempre. Lo que apruebas no vuelve a la cola de normalización por confianza baja.

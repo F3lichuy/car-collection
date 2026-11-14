@@ -234,7 +234,7 @@ sources:
       include: "^/nuestros-autos/9-autos-exoticos/\\d+-"   # "uncategorised" trae autos de pista (Huracán Super Trofeo)
       content_end: "Acerca del Auto"
       labels: { year: [modelo, año], model: [] }
-      photo_path: "^/images/yootheme/autos/"
+      photo_path: "^/(images/yootheme/autos|templates/yootheme/cache)/"   # 2026-11-14: el sitio sirve las fotos desde la caché de YOOtheme
       sold: "Precio\\s+VENDIDO"          # los vendidos siguen publicados con "Precio: VENDIDO"
     capture_mode: scraper
     data: "Joomla: lista en /nuestros-autos + etiquetas de la ficha (Transmisión, Kilometraje, Color); precio '$1,450,000.00 MXN'. Ojo: su etiqueta 'Modelo:' es el año"

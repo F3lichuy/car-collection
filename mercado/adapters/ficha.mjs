@@ -132,20 +132,28 @@ export class FichaAdapter {
     // Prestige DLC publica "https://prestigedlc.comhttps://…blob…": se toma la URL de adentro
     const ldImages = [].concat(ld?.image ?? []).map(i => (typeof i === 'string' ? i : i?.url)).filter(Boolean)
       .map(u => String(u).replace(/^https?:\/\/[^/]+(?=https?:\/\/)/i, ''));
-    // una foto por archivo: WordPress repite cada imagen en tamaños (-300x200, -scaled, -Grande)
+    // una foto por archivo: WordPress repite cada imagen en tamaños (-300x200, -scaled, -Grande) y YOOtheme
+    // (Joomla) la sirve desde /templates/yootheme/cache/ en varios anchos (IMG_1663-43bfb088.jpeg, -b4250055…).
+    // De cada una se queda la más grande: el ancho del srcset si lo dice; si no, la original sobre la recortada.
     const byBase = new Map();
     // config.photo_path: carpeta de las fotos de autos en ese sitio (WordPress: /wp-content/uploads/)
     const photoPath = new RegExp(this.cfg.photo_path ?? '/wp-content/uploads/', 'i');
-    const candidates = [...main.matchAll(/(?:https?:\/\/[^"'\s)]+|(?<=["'(])\/[^"'\s)]+)\.(?:jpe?g|png|webp)/gi)]
-      .map(m => { try { return new URL(m[0], url).href; } catch { return null; } })
-      .filter(u => u && photoPath.test(new URL(u).pathname));
-    for (const u of candidates) {
-      if (/logo|icon|favicon|placeholder|banner/i.test(u)) continue;
-      const base = u.replace(/-\d{2,4}x\d{2,4}(?=\.\w+$)/, '').replace(/-(scaled|grande)(?=\.\w+$)/i, '');
+    const abs = u => { try { return new URL(u.replace(/&amp;/g, '&'), url).href; } catch { return null; } };
+    const found = [];
+    // srcset / data-srcset: "ruta 768w, ruta 1024w"
+    for (const m of main.matchAll(/(?:data-)?srcset=["']([^"']+)["']/gi))
+      for (const part of m[1].split(',')) { const [u, d] = part.trim().split(/\s+/); if (u) found.push({ u: abs(u), w: Number(String(d ?? '').replace(/w$/, '')) || null }); }
+    for (const m of main.matchAll(/(?:https?:\/\/[^"'\s)]+|(?<=["'(])\/[^"'\s)]+)\.(?:jpe?g|png|webp)/gi)) found.push({ u: abs(m[0]), w: null });
+    for (const { u, w } of found) {
+      if (!u || !photoPath.test(new URL(u).pathname) || /logo|icon|favicon|placeholder|banner/i.test(u)) continue;
+      const cache = /\/cache\//i.test(u);
+      const base = u.replace(/-\d{2,4}x\d{2,4}(?=\.\w+$)/, '').replace(/-(scaled|grande)(?=\.\w+$)/i, '').replace(cache ? /-[0-9a-f]{8}(?=\.\w+$)/i : /$^/, '');
       const resized = /-\d{2,4}x\d{2,4}\.\w+$/.test(u);
-      if (!byBase.has(base) || (byBase.get(base).resized && !resized)) byBase.set(base, { u, resized });
+      const score = w ?? (resized ? 0 : cache ? 1 : 1e6);
+      const prev = byBase.get(base);
+      if (!prev || score > prev.score) byBase.set(base, { u, score, order: prev?.order ?? byBase.size });
     }
-    const pageImages = [...byBase.values()].map(x => x.u);
+    const pageImages = [...byBase.values()].sort((x, y) => x.order - y.order).map(x => x.u);
     // config.photos: "og" = solo la foto de portada (og:image), para sitios donde las demás imágenes son del diseño
     const ogImage = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/i)?.[1] ?? null;
     const photos = this.cfg.photos === 'og' ? [ogImage].filter(Boolean) : ldImages.length ? ldImages : pageImages;

@@ -43,7 +43,7 @@
   <span>Antes $4,500,000 ahora 4.2 mdp</span>
   <span>18,000 km</span>
   <span>San Pedro Garza García, NL</span>
-  <a href="/photo/?fbid=777" class="foto"><img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39/458-recorte.jpg" width="500" height="300"></a>
+  <a href="/photo/?fbid=777&amp;set=pcb.4580001" class="foto"><img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39/458-recorte.jpg" width="500" height="300"></a>
   <a href="https://agencia.example/ferrari"><img src="https://scontent.fmty1-1.fna.fbcdn.net/v/t39/vista-previa-liga.jpg" width="500" height="260"></a>
   <span>Me gusta</span><span>Comentar</span>
   <div role="article" aria-label="Comentario de Ana"><span>Ana</span><span>Me interesa, $3,900,000?</span>
@@ -87,13 +87,15 @@ document.querySelector(".vermas2").addEventListener("click", function () {
   this.parentElement.innerHTML = "Porsche Cayman GT4 2016 en venta, manual, color azul. Informes por inbox";
 });
 // el visor de fotos: completa y en tamaño grande, con "Siguiente foto" y "Cerrar"
-var FOTOS = ["https://scontent.fmty1-1.fna.fbcdn.net/v/t39/458-completa-1.jpg", "https://scontent.fmty1-1.fna.fbcdn.net/v/t39/458-completa-2.jpg"];
+var FOTOS = { 777: ["https://scontent.fmty1-1.fna.fbcdn.net/v/t39/458-completa-1.jpg", "https://scontent.fmty1-1.fna.fbcdn.net/v/t39/458-completa-2.jpg", "https://scontent.fmty1-1.fna.fbcdn.net/v/t39/458-completa-3.jpg"],
+  111: ["https://scontent.fmty1-1.fna.fbcdn.net/v/t39.30808-6/111_222_333_n.jpg?visor", "https://scontent.fmty1-1.fna.fbcdn.net/v/t39.30808-6/444_555_666_n.jpg?visor"],
+  444: ["https://scontent.fmty1-1.fna.fbcdn.net/v/t39.30808-6/444_555_666_n.jpg?visor", "https://scontent.fmty1-1.fna.fbcdn.net/v/t39.30808-6/111_222_333_n.jpg?visor"] };
 document.querySelectorAll("a[href^='/photo/']").forEach(function (a) {
   a.addEventListener("click", function (e) {
     e.preventDefault();
-    var i = 0, d = document.createElement("div"); d.setAttribute("role", "dialog");
-    d.innerHTML = '<div aria-label="Cerrar" role="button">x</div><img width="1600" height="1067" src="' + FOTOS[0] + '"><div aria-label="Siguiente foto" role="button">&gt;</div>';
-    d.querySelector('[aria-label="Siguiente foto"]').onclick = function () { i = (i + 1) % FOTOS.length; d.querySelector("img").src = FOTOS[i]; };
+    var F = FOTOS[(a.getAttribute("href").match(/fbid=(\d+)/) || [])[1]] || [], i = 0, d = document.createElement("div"); d.setAttribute("role", "dialog");
+    d.innerHTML = '<div aria-label="Cerrar" role="button">x</div><img width="1600" height="1067" src="' + F[0] + '"><div aria-label="Foto siguiente" role="button">&gt;</div>';
+    d.querySelector('[aria-label="Foto siguiente"]').onclick = function () { i = (i + 1) % F.length; d.querySelector("img").src = F[i]; };
     d.querySelector('[aria-label="Cerrar"]').onclick = function () { d.remove(); };
     setTimeout(function () { document.body.appendChild(d); }, 400);
   });

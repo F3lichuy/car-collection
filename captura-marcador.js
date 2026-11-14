@@ -340,18 +340,21 @@
   // tamaño original, sin el recorte de la cuadrícula. Se leen las respuestas que la página recibe
   // mientras bajas y los datos con que arrancó; no se pide nada extra a Facebook.
   var FB = {};   // post_id → { t, text, photos: { clave: { u, w } }, order: [], price }
+  var PHOTO2POST = {};   // clave de foto ("123_456_789_n") → post_id
+  var photoKey = function (u) { return (String(u || "").match(/\/(\d+_\d+_\d+_[a-z])\./i) || [])[1] || String(u || "").split("?")[0]; };
   var PHOTO_KEY = /\/(\d+_\d+_\d+_[a-z])\.(?:jpe?g|png|webp)/i;
   function harvestObj(root) {
     (function walk(o, cur, depth) {
       if (!o || typeof o !== "object" || depth > 80) return;
       if (Array.isArray(o)) { for (var i = 0; i < o.length; i++) walk(o[i], cur, depth + 1); return; }
-      if (typeof o.post_id === "string" && /^\d{5,}$/.test(o.post_id)) cur = FB[o.post_id] || (FB[o.post_id] = { photos: {}, order: [] });
+      if (typeof o.post_id === "string" && /^\d{5,}$/.test(o.post_id)) cur = FB[o.post_id] || (FB[o.post_id] = { id: o.post_id, photos: {}, order: [] });
       if (cur) {
         if (typeof o.creation_time === "number" && o.creation_time > 9e8 && !cur.t) cur.t = o.creation_time;
         if (o.message && typeof o.message.text === "string" && (!cur.text || o.message.text.length > cur.text.length)) cur.text = o.message.text;
         if (typeof o.uri === "string" && /scontent|fbcdn/.test(o.uri) && Number(o.width) >= 480) {
           var k = (o.uri.match(PHOTO_KEY) || [])[1] || o.uri.split("?")[0];
           if (!cur.photos[k]) cur.order.push(k);
+          if (cur.id) PHOTO2POST[k] = cur.id;   // para reconocer la publicación por cualquiera de sus fotos
           if (!cur.photos[k] || Number(o.width) > cur.photos[k].w) cur.photos[k] = { u: o.uri, w: Number(o.width) };
         }
         var fp = o.formatted_price && o.formatted_price.text || o.listing_price && (o.listing_price.formatted_amount || o.listing_price.amount && "$" + o.listing_price.amount);
@@ -420,7 +423,24 @@
     }
     as = qa(post, "a[href]").filter(function (a) { return !a.closest('[role="article"] [role="article"]'); });
     for (var j = 0; j < as.length && !link; j++) if (POST_HREF.test(as[j].href || "")) link = postLink(as[j].href);
+    // sin liga en la hora: las fotos de la publicación llevan su número ("photo/?fbid=…&set=pcb.<número>")
+    if (!link) for (var k = 0; k < as.length && !link; k++) {
+      var pm = (as[k].getAttribute("href") || "").match(/[?&]set=(?:pcb|gm)\.(\d+)/);
+      if (pm) link = linkFor(post, pm[1]);
+    }
     return { date: date, link: link };
+  }
+  // Liga a una publicación por su número: en un grupo, /groups/<grupo>/posts/<número>/ (el grupo, de la página o del
+  // encabezado de la publicación en una búsqueda); si no se sabe el grupo, facebook.com/<número> (Facebook la abre).
+  function linkFor(post, pid) {
+    var g = (location.pathname.match(/^\/groups\/([^/?#]+)/) || [])[1] || window.__pcGroup;
+    if (!g) {
+      var ga = qa(post, 'a[href*="/groups/"]').filter(function (a) { return !inComment(a); })
+        .map(function (a) { return ((a.getAttribute("href") || "").match(/\/groups\/([^/?#]+)/) || [])[1]; })
+        .filter(function (x) { return x && !/^(feed|discover|joins|create|search)$/.test(x); })[0];
+      g = ga || null;
+    }
+    return g ? { gid: g, pid: pid, url: "https://www.facebook.com/groups/" + g + "/posts/" + pid + "/" } : { gid: "fb", pid: pid, url: "https://www.facebook.com/" + pid };
   }
   function groupId() {
     var m = location.pathname.match(/\/groups\/([^/?#]+)/);
@@ -446,28 +466,46 @@
   var bigImg = function (i) { return /scontent|fbcdn/.test(i.src || "") && (i.naturalWidth || Number(i.getAttribute("width")) || i.width || 0) >= 150 && !inComment(i); };
   // Si los datos no trajeron las fotos: se abre la primera en el visor de Facebook (sale completa y en
   // su mejor tamaño), se recorren con "Siguiente" y se cierra el visor.
+  // Fotos desde el visor de Facebook: se abre la primera foto de la publicación (sale completa y en su mejor tamaño),
+  // se recorren con "Foto siguiente" (o la flecha →) y se cierra. La liga de la foto trae además el número de la
+  // publicación ("set=pcb.<número>"). La imagen del visor es la más grande que aparece en pantalla al abrirlo.
+  var PHOTO_LINK = /\/photo|[?&]fbid=|\/photos\//;
   async function viewerPhotos(post, max) {
-    // solo fotos que abren el visor de Facebook (una vista previa de liga se saldría del grupo)
-    var first = qa(post, "img").filter(bigImg).filter(function (i) { var a = i.closest("a[href]"); return a && /\/photo|[?&]fbid=|\/photos\//.test(a.getAttribute("href") || ""); })[0];
-    if (!first) return [];
-    var opener = first.closest("a[href]"), url0 = location.href, out = [];
+    var links = qa(post, "a[href]").filter(function (a) { return !inComment(a) && PHOTO_LINK.test(a.getAttribute("href") || "") && q(a, "img"); });
+    if (!links.length) return { photos: [], pid: null };
+    var opener = links[0], url0 = location.href, out = [];
+    var pid = ((opener.getAttribute("href") || "").match(/[?&]set=(?:pcb|gm)\.(\d+)/) || [])[1] || null;
+    var before = new Map(qa(document, "img").map(function (i) { return [i, i.src]; }));
     var big = function () {
-      return qa(document, '[role="dialog"] img, [data-pagelet*="Media"] img, [aria-label*="foto" i] img').filter(function (i) {
-        return /scontent|fbcdn/.test(i.src || "") && (i.naturalWidth || Number(i.getAttribute("width")) || 0) >= 480 && !post.contains(i);
-      }).sort(function (a, b) { return (b.naturalWidth || Number(b.getAttribute("width")) || 0) - (a.naturalWidth || Number(a.getAttribute("width")) || 0); })[0];
+      var best = null, area = 0;
+      qa(document, "img").forEach(function (i) {
+        if (!/scontent|fbcdn/.test(i.src || "") || post.contains(i) || (window.__pcGrupo && window.__pcGrupo.panel.contains(i))) return;
+        if (before.has(i) && before.get(i) === i.src) return;   // ya estaba antes de abrir el visor (otra publicación)
+        var r = i.getBoundingClientRect(), a = r.width * r.height;
+        if (r.width >= 300 && r.height >= 200 && r.bottom > 0 && r.top < innerHeight && a > area) { best = i; area = a; }
+      });
+      return best;
     };
-    try { opener.click(); } catch (e) { return []; }
+    try { opener.click(); } catch (e) { return { photos: [], pid: pid }; }
     var img = null;
-    for (var w = 0; w < 20 && !img; w++) { await sleep(200); img = big(); }
+    for (var w = 0; w < 25 && !img; w++) { await sleep(200); img = big(); }
+    pid = pid || (location.href.match(/[?&]set=(?:pcb|gm)\.(\d+)/) || [])[1] || null;
+    var NEXT = '[aria-label="Foto siguiente"], [aria-label="Siguiente foto"], [aria-label="Ver foto siguiente"], [aria-label="Next photo"], [aria-label="Siguiente"], [aria-label="Next"]';
     while (img && out.length < max) {
       if (out.indexOf(img.src) >= 0) break;   // dio la vuelta
       out.push(img.src);
-      var next = qa(document, '[aria-label="Siguiente foto"], [aria-label="Next photo"], [aria-label="Siguiente"], [aria-label="Next"]').filter(function (b) { return !post.contains(b); })[0];
-      if (!next) break;
-      var prev = img.src;
-      try { next.click(); } catch (e) { break; }
+      var prev = img.src, cur = img;
+      var next = qa(document, NEXT).filter(function (b) { return !post.contains(b); })[0];
+      try {
+        if (next) next.click();
+        else ["keydown", "keyup"].forEach(function (t) { document.dispatchEvent(new KeyboardEvent(t, { key: "ArrowRight", keyCode: 39, bubbles: true })); });
+      } catch (e) { break; }
       img = null;
-      for (var v = 0; v < 15; v++) { await sleep(200); var c = big(); if (c && c.src !== prev) { img = c; break; } }
+      for (var v = 0; v < 15; v++) {
+        await sleep(200);
+        if (cur.isConnected && cur.src !== prev) { img = cur; break; }
+        var c = big(); if (c && c.src !== prev) { img = c; break; }
+      }
     }
     // cerrar el visor
     var close = qa(document, '[aria-label="Cerrar"], [aria-label="Close"]').filter(function (b) { return !post.contains(b); })[0];
@@ -475,7 +513,7 @@
     else { try { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", keyCode: 27, bubbles: true })); } catch (e) {} }
     await sleep(700);
     if (location.href !== url0) { try { history.back(); } catch (e) {} await sleep(1200); }
-    return out;
+    return { photos: out, pid: pid };
   }
   function postLines(el) { return txt(el).split("\n").map(function (s) { return noEmoji(s); }).filter(Boolean); }
   // Facebook dibuja el texto y las fotos de una publicación cuando entra en pantalla: se espera a que deje de crecer
@@ -506,6 +544,10 @@
     var msg = msgEl ? postLines(msgEl) : all.slice();
     var link = meta.link, gid = link ? link.gid : groupId(), pid = link ? link.pid : null;
     var fb = pid && FB[pid] ? { id: pid, d: FB[pid] } : fbByText(msg.join("\n"));
+    if (!fb) {   // por cualquiera de sus fotos
+      var pk = qa(post, "img").filter(bigImg).map(function (i) { return PHOTO2POST[photoKey(i.src)]; }).filter(Boolean)[0];
+      if (pk && FB[pk]) fb = { id: pk, d: FB[pk] };
+    }
     if (fb && !pid) {
       link = fb.d.url ? postLink(fb.d.url) : null;
       pid = link ? link.pid : fb.id;
@@ -542,7 +584,13 @@
     var date = fb && fb.d.t ? { date: iso(new Date(fb.d.t * 1000)), text: new Date(fb.d.t * 1000).toISOString(), exact: true } : meta.date || headDate;
     // fotos: completas de los datos; si no vinieron, del visor; si tampoco, las de la publicación
     var photos = fb ? fb.d.order.map(function (k2) { return fb.d.photos[k2].u; }) : [];
-    if (!photos.length && qa(post, "img").filter(bigImg).length) photos = await viewerPhotos(post, 12);
+    // pocas fotos en los datos (Facebook manda solo las de la cuadrícula): se recorren todas en el visor
+    if (photos.length < 4 && qa(post, "img").filter(bigImg).length) {
+      var vw = await viewerPhotos(post, 15);
+      var seenK = {};
+      photos = photos.concat(vw.photos).filter(function (u) { var k3 = photoKey(u); if (seenK[k3]) return false; seenK[k3] = 1; return true; });
+      if (!link && vw.pid) { link = linkFor(post, vw.pid); pid = link.pid; gid = link.gid; key = "g" + gid + "_" + pid; url = link.url; }
+    }
     if (!photos.length) photos = qa(post, "img").filter(bigImg).map(function (im) { return im.src; });
     return {
       external_id: key, url: url, title: titleLine.slice(0, 140) + (years.length && !/\b(19|20)\d{2}\b/.test(titleLine) ? " " + years[0] : ""),

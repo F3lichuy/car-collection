@@ -175,7 +175,10 @@
       if (x.colorEst) x.colorExt = `${x.photoColor[0].toUpperCase()}${x.photoColor.slice(1)} (por la foto)`;
       x.city = main.city || main.state || "";
       x.demo = !!(x.v.is_demo || main.is_demo);
-      x.photos = [...new Set(x.listings.flatMap(l => (l.photos || []).slice().sort((a, b) => (a.position ?? 99) - (b.position ?? 99)).map(p => p.url)))];
+      // las ligas de fotos de Facebook caducan a los pocos días: van al final (primero las de agencias y las que subiste)
+      const allPh = [...new Set(x.listings.flatMap(l => (l.photos || []).slice().sort((a, b) => (a.position ?? 99) - (b.position ?? 99)).map(p => p.url)))];
+      const fbPh = u => /(^|\.)(fbcdn\.net|facebook\.com)\//.test(String(u).replace(/^https?:\/\//, ""));
+      x.photos = [...allPh.filter(u => !fbPh(u)), ...allPh.filter(fbPh)];
       x.photo = x.photos[0] || null;
       x.sourceIds = [...new Set(x.listings.map(l => l.source_id))];
       x.seg = x.year && x.year <= now - classicAge ? "clasico" : (m.segment || "");
@@ -208,6 +211,12 @@
   }
   const km = v => (v == null ? "— km" : `${nf.format(v)} km`);
   const thumb = u => { if (!u) return ""; try { const x = new URL(u); if (/cdn\.shopify\.com|\.myshopify\.com/.test(x.host) || /\/cdn\/shop\//.test(x.pathname)) { x.searchParams.set("width", "640"); return x.toString(); } } catch (e) {} return u; };
+  // Portada con respaldo: si una foto ya no abre (liga caducada o borrada), se prueba la siguiente (hasta 8)
+  const coverImg = (list, attrs = 'loading="lazy"') => {
+    const l = (list || []).filter(Boolean);
+    return l.length ? `<img src="${h(thumb(l[0]))}" data-alts="${h(JSON.stringify(l.slice(1, 8).map(thumb)))}" alt="" ${attrs} referrerpolicy="no-referrer" onerror="PrecioCalle.nextPh(this)">` : "";
+  };
+  PC.nextPh = img => { let alts = []; try { alts = JSON.parse(img.dataset.alts || "[]"); } catch (e) {} if (!alts.length) { img.remove(); return; } img.dataset.alts = JSON.stringify(alts.slice(1)); img.src = alts[0]; };
   const median = a => { const s = a.slice().sort((x, y) => x - y), n = s.length; return n ? (n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2) : null; };
   // "Mini clásico", no "Mini Mini clásico": si el modelo ya empieza con la marca, no se repite.
   const modelLabel = (make, model) => (model && make && model.toLowerCase().startsWith(make.toLowerCase()) ? model : [make, model].filter(Boolean).join(" "));
@@ -327,7 +336,7 @@
   function card(x) {
     const p = x.price, low = x.confidence < 0.7;
     return `<article class="car pc-card" onclick="PrecioCalle.open('${x.id}')" tabindex="0" onkeydown="if(event.key==='Enter')PrecioCalle.open('${x.id}')">
-      <div class="ph">${x.photo ? `<img src="${h(thumb(x.photo))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<div class="noimg"></div>`}
+      <div class="ph">${x.photo ? coverImg(x.photos) : `<div class="noimg"></div>`}
         <div class="pc-badges">${[x.demo ? `<span class="pc-badge pc-demo">DEMO</span>` : "",
           x.sourceIds.length > 1 ? `<span class="pc-badge">En ${x.sourceIds.length} fuentes</span>` : "",
           x.stale ? `<span class="pc-badge" title="Publicado el ${h(fmtDate(x.publishedOn))}">Prob. vendido · ${h(String(x.publishedOn).slice(0, 4))}</span>` : "",
@@ -456,6 +465,7 @@
       // foto del mercado: la del auto en venta visto más recientemente que tenga foto
       const withPhoto = (m.live.length ? m.live : m.vehicles).filter(v => v.photo).sort((a, b) => String(b.lastSeen).localeCompare(String(a.lastSeen)));
       m.photo = withPhoto[0] ? withPhoto[0].photo : null;
+      m.photos = withPhoto.flatMap(v => v.photos.slice(0, 2)).slice(0, 8);   // de respaldo si la portada ya no abre
       const yrs = m.vehicles.map(v => v.year).filter(Boolean);
       m.years = yrs.length ? (Math.min(...yrs) === Math.max(...yrs) ? String(yrs[0]) : `${Math.min(...yrs)}–${Math.max(...yrs)}`) : "";
       m.prices = m.live.map(v => toMxn(v.price)).filter(p => p != null);
@@ -482,7 +492,8 @@
     const live = list.flatMap(m => m.live), all = list.flatMap(m => m.vehicles);
     const withPhoto = (live.length ? live : all).filter(v => v.photo).sort((a, b) => String(b.lastSeen).localeCompare(String(a.lastSeen)));
     const yrs = all.map(v => v.year).filter(Boolean), prices = list.flatMap(m => m.prices);
-    return { live: live.length, total: all.length, photo: withPhoto[0] ? withPhoto[0].photo : null, prices,
+    // portada y sus respaldos (si una foto ya no abre, la siguiente): hasta 2 fotos de cada uno de los autos más recientes
+    return { live: live.length, total: all.length, photo: withPhoto.length ? withPhoto.flatMap(v => v.photos.slice(0, 2)).slice(0, 8) : null, prices,
       minYear: yrs.length ? Math.min(...yrs) : 0,
       years: yrs.length ? (Math.min(...yrs) === Math.max(...yrs) ? String(yrs[0]) : `${Math.min(...yrs)}–${Math.max(...yrs)}`) : "" };
   }
@@ -490,7 +501,7 @@
     return ps.length >= 3 ? `Mediana ${short(median(ps))}` : lo === hi ? short(lo) : `${short(lo)} – ${short(hi)}`; };
   const enVenta = n => (n === 1 ? "1 en venta" : `${nf.format(n)} en venta`);
   const dcard = (onclick, photo, title, sub, price) => `<button class="pc-mcard" onclick="${onclick}">
-        <span class="pc-mph">${photo ? `<img src="${h(thumb(photo))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}</span>
+        <span class="pc-mph">${coverImg(Array.isArray(photo) ? photo : [photo])}</span>
         <span class="pc-mtx"><b>${h(title)}</b><small>${h(sub)}</small><span class="pc-mprice">${h(price)}</span></span></button>`;
   const jsq = s => String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
   PC.goModel = function (label, gen) {
@@ -517,7 +528,7 @@
         <select class="ctrl" aria-label="Orden" onchange="PrecioCalle.setView('dsort', this.value)">${opt("autos", v.dsort, "Más autos en venta")}${opt("precio", v.dsort, "Precio (mediana)")}${opt("nombre", v.dsort, "Nombre")}</select>
       </div>`;
     const verCard = m => { const a = aggOf([m]);
-      return dcard(`PrecioCalle.goMarket('${m.slug}')`, m.photo, m.vname || m.variant,
+      return dcard(`PrecioCalle.goMarket('${m.slug}')`, m.photo ? [m.photo, ...(m.photos || [])] : null, m.vname || m.variant,
         `${a.years ? `${a.years} · ` : ""}${enVenta(m.live.length)}${m.vehicles.length !== m.live.length ? ` · ${m.vehicles.length} en total` : ""}`, priceTxt(m.prices)); };
     const wrap = (inner, count) => `<div class="pc-mercados">${toolbar}<p class="pc-count">${count}</p>${inner}</div>`;
 
@@ -589,7 +600,7 @@
     return `<div class="pc-market" id="pcMarket">
       <button class="btn ghost sm pc-back" onclick="PrecioCalle.backFromMarket('${m.slug}')">← ${h(m.label)}${m.gen && !m.label.toLowerCase().includes(m.gen.toLowerCase()) ? ` · ${h(m.gen)}` : ""}</button>
       <header class="pc-mhead">
-        ${m.photo ? `<img src="${h(thumb(m.photo))}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}
+        ${m.photo ? coverImg([m.photo, ...(m.photos || [])], "") : ""}
         <div><p class="pc-path">${h(m.make)} › ${h(m.model)}${m.gen ? ` › ${h(m.gen)}` : ""}</p>
           <h3 class="pc-mtitle">${h(m.label)} · ${h(m.variant)}</h3>
           <p class="pc-foot" style="margin-top:4px">${m.years ? `${h(m.years)} · ` : ""}${m.live.length} en venta hoy · ${m.vehicles.length} en total desde que medimos</p></div>
@@ -630,7 +641,7 @@
   function lcard(x) {
     const st = statusOf(x), src = x.listings[0] ? (S.sources[x.listings[0].source_id] ? S.sources[x.listings[0].source_id].name : sourceName(x.listings[0].source_id)) : "";
     return `<article class="pc-lcard" onclick="PrecioCalle.open('${x.id}')" tabindex="0" onkeydown="if(event.key==='Enter')PrecioCalle.open('${x.id}')">
-      <div class="pc-lph">${x.photo ? `<img src="${h(thumb(x.photo))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}
+      <div class="pc-lph">${x.photo ? coverImg(x.photos) : ""}
         ${place(x) ? `<span class="pc-lloc">${h(place(x))}</span>` : ""}${x.photos.length > 1 ? `<span class="pc-lnum">${x.photos.length} fotos</span>` : ""}</div>
       <div class="pc-lbody">
         <h5>${h([x.year, x.name].filter(Boolean).join(" "))}</h5>
@@ -909,7 +920,7 @@
       const snippet = (x.desc || "").replace(/\s+/g, " ").slice(0, 260);
       const l0 = x.listings[0] || {};
       return `<form class="pc-cfrow" onsubmit="event.preventDefault();PrecioCalle.saveConfirm('${x.id}', this)">
-        <span class="pc-cfph">${x.photo ? `<img src="${h(thumb(x.photo))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}</span>
+        <span class="pc-cfph">${x.photo ? coverImg(x.photos) : ""}</span>
         <div class="pc-cfbody"><b>${h([x.year, l0.title].filter(Boolean).join(" · "))}</b>
           <small>${h(money(x.price))} · ${h(km(x.km))}${place(x) ? ` · ${h(place(x))}` : ""} · ${h(srcOf(x))}${l0.url ? ` · <a class="link" href="${h(l0.url)}" target="_blank" rel="noopener noreferrer nofollow">ver anuncio ↗</a>` : ""}</small>
           ${snippet ? `<p class="pc-cfdesc">${h(snippet)}${x.desc.length > 260 ? "…" : ""}</p>` : descErr ? "" : `<p class="pc-cfdesc pc-unk">El anuncio no trae descripción.</p>`}
@@ -1063,7 +1074,7 @@
   function dupPanel() {
     const rs = S.reviews;
     if (!rs.length) return "";
-    const mini = x => `<span class="pc-dupcar">${x.photo ? `<img src="${h(thumb(x.photo))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="pc-capimg"></span>`}
+    const mini = x => `<span class="pc-dupcar">${x.photo ? coverImg(x.photos) : `<span class="pc-capimg"></span>`}
       <span><b>${h(x.name)}${x.year ? ` · ${x.year}` : ""}</b><br><small>${h(km(x.km))} · ${h(money(x.price))}<br>${h(srcOf(x))}${x.city ? ` · ${h(x.city)}` : ""}</small></span></span>`;
     return `<details class="pc-dupalert"${S.dupOpen ? " open" : ""} ontoggle="PrecioCalle.dupToggle(this.open)"><summary><b>${rs.length === 1 ? "Hay 1 posible repetido" : `Hay ${rs.length} posibles repetidos`} por revisar</b> <span>· toca para verlos</span></summary>
       <p class="pc-foot" style="margin-top:8px">Mismo modelo, versión, año y color, pero falta algo que lo confirme. Compáralos y decide: tu decisión se guarda y no se vuelve a preguntar.</p>
@@ -1082,7 +1093,7 @@
     if (!cands.length) return undo ? `<section class="pc-sub">${undo}</section>` : "";
     return `<details class="pc-sub pc-mergebox"${undo ? " open" : ""}><summary class="pc-h4">¿Está repetido? Únelo con el mismo auto (${cands.length})</summary>${undo}
       <p class="pc-foot" style="margin-top:6px">Mismo mercado y año. Al unirlos, sus anuncios quedan en un solo auto (este) y se puede deshacer.</p>
-      ${cands.map(v => `<div class="pc-dupline"><span class="pc-dupcar">${v.photo ? `<img src="${h(thumb(v.photo))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : `<span class="pc-capimg"></span>`}
+      ${cands.map(v => `<div class="pc-dupline"><span class="pc-dupcar">${v.photo ? coverImg(v.photos) : `<span class="pc-capimg"></span>`}
         <span><b>${h([v.year, v.name].filter(Boolean).join(" "))}</b><br><small>${h(km(v.km))} · ${h(money(v.price))}${place(v) ? ` · ${h(place(v))}` : ""}<br>${h(srcOf(v))} · ${h(pubTxt(v))}</small></span></span>
         <span class="pc-mergebtns"><button class="btn ghost sm" onclick="PrecioCalle.open('${v.id}')">Ver</button><button class="btn sm" onclick="PrecioCalle.mergeInto('${x.id}','${v.id}')">Es el mismo</button></span></div>`).join("")}
     </details>`;
@@ -1741,7 +1752,7 @@
   let marcadorHref = null;
   async function ensureMarcador() {
     if (marcadorHref) return marcadorHref;
-    try { const r = await fetch("captura-marcador.js?v=10", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
+    try { const r = await fetch("captura-marcador.js?v=11", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
     return marcadorHref;
   }
   function adminPanel() {

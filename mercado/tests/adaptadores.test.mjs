@@ -166,6 +166,22 @@ describe('errores encontrados en la primera corrida real', () => {
   });
 });
 
+describe('ficha: fotos en la caché de YOOtheme (Exotic Avenue, 2026-11-14)', () => {
+  const source = { id: 'ea2', adapter: 'ficha', name: 'EA', base_url: 'https://ea.test', cities: ['CDMX'],
+    config: { list_pages: ['/nuestros-autos'], include: String.raw`^/nuestros-autos/9-[a-z-]+/\d+-`, content_end: 'Acerca del Auto',
+      labels: { year: ['modelo', 'año'], model: [] }, photo_path: '^/(images/yootheme/autos|templates/yootheme/cache)/' } };
+  const img = n => `<img class="el-image" alt uk-img="target: !.uk-slideshow-items" uk-cover data-src="/templates/yootheme/cache/IMG_${n}-43bfb088.jpeg"
+    data-srcset="/templates/yootheme/cache/IMG_${n}-b4250055.jpeg 768w, /templates/yootheme/cache/IMG_${n}-c0ffee12.jpeg 1024w, /templates/yootheme/cache/IMG_${n}-ad571b09.jpeg 1920w" data-sizes="(max-aspect-ratio: 1920/1080) 178vh">`;
+  const ficha = `<title>Bentley Continental GTC 2020</title><img alt="Exotic Avenue" src="/images/yootheme/logo/logo-exotic-avenue.svg">
+    <link rel="icon" href="/images/yootheme/logo-exotic-avenue-favicon-naranja.png">${img(1663)}${img(1664)}${img(1665)}
+    <p>Modelo:</p><p>2020</p><p>Precio</p><p>$3,250,000.00 MXN</p><h3>Acerca del Auto</h3>
+    <img data-src="/templates/yootheme/cache/IMG_9999-12345678.jpeg">`;
+  test('una foto por imagen, la más grande del srcset, sin logos ni las de "otros autos"', async () => {
+    const rows = await collect(source, { '/nuestros-autos/9-x/134-bentley-continental-gtc-2020': ficha, '/nuestros-autos': '<a href="/nuestros-autos/9-x/134-bentley-continental-gtc-2020">a</a>' });
+    assert.deepEqual(rows[0].photos, [1663, 1664, 1665].map(n => `https://ea.test/templates/yootheme/cache/IMG_${n}-ad571b09.jpeg`));
+  });
+});
+
 describe('ficha sin sitemap (Exotic Avenue)', () => {
   const source = { id: 'ea', adapter: 'ficha', name: 'EA', base_url: 'https://ea.test', cities: ['CDMX'],
     config: { list_pages: ['/nuestros-autos'], include: String.raw`^/nuestros-autos/9-[a-z-]+/\d+-`, content_end: 'Acerca del Auto',

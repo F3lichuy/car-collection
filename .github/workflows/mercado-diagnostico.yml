@@ -32,6 +32,7 @@ jobs:
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
           FUENTES: ${{ inputs.fuentes }}
+          DIAG_TAG_LARGO: '1'
         run: |
           if [[ ! "$FUENTES" =~ ^[a-z0-9,-]+$ ]]; then echo "fuentes inválidas"; exit 2; fi
           node scripts/diagnostico-fotos.mjs "$FUENTES"

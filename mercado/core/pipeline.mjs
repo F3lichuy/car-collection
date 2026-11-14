@@ -52,7 +52,7 @@ export async function runSource({ adapter, source, store, fetcher, today, trigge
           if (n.inScope) r.modelos_nuevos = (r.modelos_nuevos ?? 0) + 1;
         }
         if (!n.inScope) { r.fuera_de_taxonomia++; continue; }
-        await ingestOne({ n, store, index, today, staleBefore, hashPhotos, fetcher, r });
+        await ingestOne({ n, store, index, today, staleBefore, hashPhotos, fetcher, r, fullPhotos: !adapter.partial && raw.fotos_completas === true });
         consecutiveErrors = 0;
       } catch (e) {
         consecutiveErrors++;
@@ -76,7 +76,7 @@ export async function runSource({ adapter, source, store, fetcher, today, trigge
   return r;
 }
 
-async function ingestOne({ n, store, index, today, staleBefore = null, hashPhotos, fetcher, r }) {
+async function ingestOne({ n, store, index, today, staleBefore = null, hashPhotos, fetcher, r, fullPhotos = false }) {
   // El día de la observación: el de la fuente si trae uno (copia de Wayback, fecha de la publicación), si no hoy.
   const day = n.specs.observed_on && n.specs.observed_on < today ? n.specs.observed_on : today;
   const old = staleBefore != null && day < staleBefore;
@@ -86,14 +86,25 @@ async function ingestOne({ n, store, index, today, staleBefore = null, hashPhoto
     // con su hash: el barrido del final las usa para encontrar repetidos.
     // (Mercado Libre sirve la misma foto con varias direcciones: se compara por su id de imagen)
     const key = u => String(u).match(/(\d{5,}-MLM\d+_\d+)/)?.[1] ?? u;
-    const have = new Set((await store.db.query(`select url from mx_photos where listing_id = $1`, [existing.id])).rows.map(x => key(x.url)));
+    // El adaptador leyó la ficha completa (raw.fotos_completas; no una lista de resultados ni una captura parcial)
+    // y trae fotos hoy: las que el sitio ya no publica se quitan
+    // (sitios que vuelven a subir fotos con otro nombre dejan ligas rotas al frente). Nunca las que subiste tú.
+    if (fullPhotos && n.photos.length && existing.vehicle_id) {
+      const now = new Set(n.photos.map(key));
+      const gone = (await store.db.query(`select id, url from mx_photos where listing_id = $1`, [existing.id])).rows
+        .filter(x => !now.has(key(x.url)) && !/\/storage\/v1\/object\/public\/images\//.test(x.url)).map(x => x.id);
+      if (gone.length) { await store.db.query(`delete from mx_photos where id = any($1::bigint[])`, [gone]); r.fotos_quitadas = (r.fotos_quitadas ?? 0) + gone.length; }
+    }
+    const cur = (await store.db.query(`select url, position from mx_photos where listing_id = $1`, [existing.id])).rows;
+    const have = new Set(cur.map(x => key(x.url)));
+    const nextPos = cur.length ? Math.max(...cur.map(x => x.position ?? 0)) + 1 : 0;   // las nuevas, al final
     const added = [...new Map(n.photos.filter(u => !have.has(key(u))).map(u => [key(u), u])).values()].map(url => ({ url }));
-    if (added.length) await hashAll(added, { hashPhotos, fetcher, firstPosition: have.size });
+    if (added.length) await hashAll(added, { hashPhotos, fetcher, firstPosition: nextPos });
     const res = await store.db.transaction(async tx => {
       await store.touchListing(tx, existing.id, n.listing, day, { reactivate: !old });
       if (n.private.description || n.private.seller_name) await store.upsertPrivate(tx, existing.id, n.private);
       await store.upsertSpecs(tx, existing.vehicle_id, existing.id, n.specs);
-      if (added.length) await store.insertPhotos(tx, existing.id, added, have.size);
+      if (added.length) await store.insertPhotos(tx, existing.id, added, nextPos);
       return store.recordPrice(tx, existing.id, n.price, day);
     });
     if (added.length) {

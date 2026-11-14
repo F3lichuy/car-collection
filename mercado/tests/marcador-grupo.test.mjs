@@ -52,7 +52,10 @@ test('modo grupo: lee las publicaciones de venta, sin vendedor ni teléfonos, co
     assert.equal(f458.km, '18000');
     assert.equal(f458.city, 'San Pedro Garza García, NL');
     // del visor (completas, todas), sin la del comentario ni la vista previa de una liga; el visor queda cerrado
-    assert.deepEqual(f458.photos, ['https://scontent.fmty1-1.fna.fbcdn.net/v/t39/458-completa-1.jpg', 'https://scontent.fmty1-1.fna.fbcdn.net/v/t39/458-completa-2.jpg']);
+    assert.deepEqual(f458.photos, [1, 2, 3].map(n => `https://scontent.fmty1-1.fna.fbcdn.net/v/t39/458-completa-${n}.jpg`));   // todas, con "Foto siguiente"
+    // la hora no daba la liga: el número de la publicación sale de la liga de su foto (set=pcb.<número>)
+    assert.equal(f458.url, 'https://www.facebook.com/groups/autosmty/posts/4580001/');
+    assert.equal(f458.external_id, 'gautosmty_4580001');
     assert.equal(await page.evaluate(() => document.querySelectorAll('[role=dialog]').length), 0);
     assert.equal(await page.evaluate(() => !!window.__salioDelGrupo), false);
     assert.ok(!/Juan|Ana|interesa/.test(JSON.stringify(f458)), JSON.stringify(f458));

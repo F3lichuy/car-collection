@@ -65,7 +65,7 @@ export class WooStoreAdapter {
           price: amount > 0 && currency ? amount : null, currency: amount > 0 ? currency : null,
           list_price: amount > 0 && regular > amount ? regular : null,
           description: [short, long].filter(Boolean).join('\n'),
-          photos: (p.images ?? []).map(i => i.src).filter(Boolean),
+          photos: (p.images ?? []).map(i => i.src).filter(Boolean), fotos_completas: (p.images ?? []).length > 0,
           city: this.source.cities?.[0] ?? null, seller_type: 'broker', seller_name: this.source.name,
           extra: { categorias: (p.categories ?? []).map(c => c.slug) },
         };

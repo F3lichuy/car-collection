@@ -170,7 +170,7 @@ export class FichaAdapter {
       price: price > 0 && currency ? price : null, currency: price > 0 ? currency : null,
       list_price: price > 0 && listPrice > price ? listPrice : null,
       description: [stripHtml(ld?.description ?? ''), text.slice(0, 4000)].filter(Boolean).join('\n'),
-      photos: photos.slice(0, 40),
+      photos: photos.slice(0, 40), fotos_completas: photos.length > 0,   // la ficha completa: el pipeline quita las que ya no publica
       // fecha de publicación que declara la página (JSON-LD del auto o de la página, o la meta de WordPress/Yoast)
       published_on: ld?.datePosted ?? ld?.datePublished ?? findSchemaObjects(jsonLdBlocks(html), ['WebPage', 'ItemPage'])[0]?.datePublished
         ?? html.match(/<meta[^>]+property=["']article:published_time["'][^>]+content=["']([^"']+)/i)?.[1]

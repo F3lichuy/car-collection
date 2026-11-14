@@ -64,7 +64,7 @@ for (const id of process.env.DIAG_SOLO_BASE ? [] : ids) {
     for (const u of raw.photos.slice(0, 3)) console.log(`    ${u}\n      → ${await probe(u)}`);
     // lo que hay en el HTML, por si el adaptador no lo está viendo
     const html = (await fetcher.get(raw.url)).text;
-    const imgs = [...html.matchAll(/<img[^>]+>/gi)].map(m => m[0].slice(0, 220)).slice(0, 8);
+    const imgs = [...html.matchAll(/<img[^>]+>/gi)].map(m => m[0].slice(0, process.env.DIAG_TAG_LARGO ? 1500 : 220)).slice(0, 8);
     const og = html.match(/<meta[^>]+property=["']og:image["'][^>]*>/i)?.[0];
     const ld = [...html.matchAll(/"image"\s*:\s*(\[[^\]]{0,600}|"[^"]{0,300}")/g)].map(m => m[1].slice(0, 300)).slice(0, 2);
     console.log(`    og:image: ${og ?? '—'}\n    JSON-LD image: ${ld.join(' | ') || '—'}\n    <img> (primeras):\n      ${imgs.join('\n      ')}`);

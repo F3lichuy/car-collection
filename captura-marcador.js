@@ -269,12 +269,35 @@
   }
   var BRAND_RE = /\b(porsche|ferrari|lamborghini|lambo|mclaren|aston\s*martin|bentley|rolls[\s-]*royce|maserati|mercedes|benz|amg|bmw|audi|gt-?r|corvette|mustang|shelby|camaro|viper|jaguar|alfa\s*romeo|lotus|land\s*rover|defender|karmann|karman|mini\s*cooper|volvo|peugeot|bugatti|pagani|koenigsegg|lexus|nsx|g\s*63|g\s*wagon|e30|e-?type|911|cayman|boxster|carrera|huracan|hurac[aá]n|aventador|urus|gallardo|murcielago)\b/i;
   var WANTED_RE = /^\s*(busco|compro|se busca|ando buscando|quien venda|alguien (que )?venda|cambio mi|wtb\b)/i;
+  // No es un coche: relojes, piezas y accesorios, modelos a escala, rentas. (texto sin acentos y en minúsculas)
+  var WATCH_RE = /\b(reloj(es)?|rolex|patek|audemars|piguet|richard mille|hublot|cartier|tag heuer|breitling|panerai|iwc|tudor|royal oak|nautilus|aquanaut|submariner|gmt[- ]?master|datejust|day-?date|yacht-?master|sea-?dweller|skydweller|caratula|bisel|brazalete|full set|caja y papeles|box (and|&|y) papers)\b/;
+  var SCALE_RE = /\b(a escala|escala 1|1[:\/](8|12|18|24|32|43|64)\b|hot ?wheels|maqueta|die-?cast|juguete|lego|minigt|bburago|maisto|autoart)\b/;
+  var PART_START = /^(vendo |se venden? |venta de |remato |ofrezco |tengo )?(\d+ )?(rines?|llantas?|neumaticos?|faros?|calaveras?|fascias?|defensas?|cofre|salpicaderas?|parrillas?|escapes?|mofles?|volantes?|asientos?|tapetes?|alerones?|spoilers?|difusor(es)?|body ?kit|kit |frenos?|balatas|calipers?|turbos?|intercooler|piezas|refacciones|autopartes|partes|motor |transmision |caja de cambios|cubre ?autos?|fundas?|espejos?|emblemas?|llaveros?|gorras?|playeras?|sudaderas?|posters?|cuadros?|placas? de|bocinas?|estereo|pantalla|computadora|modulo|centralita)\b/;
+  var RENT_RE = /^(renta|alquiler|rento|se renta)\b|\b(renta (de|por) (dia|hora|evento)|para bodas|xv anos|sesion de fotos)\b/;
+  function notCarWhy(title, text, km) {
+    var t = String(title || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    var head = String(text || "").slice(0, 300).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (WATCH_RE.test(t) || WATCH_RE.test(head)) return "reloj";
+    if (SCALE_RE.test(t) || SCALE_RE.test(head)) return "escala";
+    if (km) return null;   // dice el kilometraje: es un coche aunque mencione rines o asientos
+    if (PART_START.test(t)) return "pieza";
+    if (RENT_RE.test(t) || RENT_RE.test(head)) return "renta";
+    return null;
+  }
   var NOISE_RE = /^(me gusta|like|comentar|comment|compartir|share|responder|reply|enviar|send|ver m[aá]s|see more|ver traducci[oó]n|see translation|todas las reacciones|all reactions|escribe un comentario|write a comment|\d+\s*(comentarios?|comments?|veces compartido|shares?)|[\d.,]+\s*(mil|k)?$|·|seguir|follow|unirte|join|miembro|admin|moderador)/i;
   function stripContact(s) {
     return String(s || "").replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "[correo]").replace(/(?:wa\.me|api\.whatsapp\.com)\/\S+/gi, "[whatsapp]")
       .replace(/(\+?52[\s.-]?)?(\(?\d{2,3}\)?[\s.-]?)\d{3,4}[\s.-]?\d{4}\b/g, function (x) { return /\d{2,3}[\s.-]?\d{3,4}[\s.-]?\d{4}/.test(x) && !/^\d{1,3}([.,]\d{3})+$/.test(x.trim()) ? "[tel]" : x; });
   }
   function hash(s) { var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+  // Bloques de Reels, videos e historias (en la pestaña "Todo" de la búsqueda): no son publicaciones de venta y
+  // cualquier clic ahí abre el visor de Reels. Se brincan sin tocarlos.
+  function isReelsBlock(el) {
+    if (q(el, '[data-ad-preview="message"], [data-ad-comet-preview="message"]')) return false;
+    var head = String(el.innerText || el.textContent || "").trim().slice(0, 40);
+    return /^(reels|videos?|watch|historias|stories|personas|people|grupos|groups|p[aá]ginas|pages|lugares|marketplace)\b/i.test(head)
+      || qa(el, 'a[href*="/reel/"], a[href*="/reels/"], a[href*="/watch/"], a[href*="/stories/"]').length >= 2;
+  }
   function topPosts() {
     var feed = q(document, '[role="feed"]');
     if (feed) return Array.prototype.slice.call(feed.children);
@@ -400,7 +423,7 @@
     for (var round = 0; round < 3; round++) {
       var btns = qa(post, '[role="button"], span, div').filter(function (b) {
         var t = b.childElementCount > 2 ? "" : String(b.textContent || "").trim();
-        return t.length < 16 && /^(…|\.\.\.)?\s*(ver m[aá]s|see more)$/i.test(t) && !inComment(b) && !(b.parentElement && b.parentElement.closest && b.parentElement.closest('[role="button"]') && b.getAttribute("role") !== "button");
+        return t.length < 16 && /^(…|\.\.\.)?\s*(ver m[aá]s|see more)$/i.test(t) && !inComment(b) && !(b.closest && b.closest("a[href]")) && !(b.parentElement && b.parentElement.closest && b.parentElement.closest('[role="button"]') && b.getAttribute("role") !== "button");
       });
       if (!btns.length) return;
       var before = String(post.textContent || "").length;
@@ -480,6 +503,9 @@
     var p = priceFree(every) || (fb && fb.d.price ? (money(fb.d.price.replace(/\s/g, "")) && { price: money(fb.d.price.replace(/\s/g, "")).price, currency: money(fb.d.price.replace(/\s/g, "")).currency, list_price: null }) : null);
     if (!p || !p.price) return { skip: "sin_precio" };   // aun con el texto completo no dice precio: no sirve para Precio de Calle
     var k = kmOf(every);
+    var firstLine = (fb && fb.d.title) || msg[0] || "";
+    var nc = notCarWhy(firstLine, text || every, k && k.km);
+    if (nc) return { skip: "no_es_auto" };
     var lines = (fb && fb.d.title ? [fb.d.title] : []).concat(msg, extra);
     var titleLine = lines.filter(function (l) { return BRAND_RE.test(l) && l.length <= 140; })[0] || lines[0];
     var nowY = new Date().getFullYear() + 1, years = (titleLine.match(/\b(19[5-9]\d|20[0-3]\d)\b/g) || []).concat((lines.slice(0, 4).join(" ").match(/\b(19[5-9]\d|20[0-3]\d)\b/g) || []))
@@ -511,7 +537,7 @@
     if (!w) { alert("Precio de Calle: tu navegador bloqueó la ventana. Permite ventanas emergentes para este sitio y vuelve a intentarlo."); return; }
     hookNet(); harvestPage();
     var S = window.__pcGrupo = { w: w, running: true, done: {}, queue: [], pending: {}, posts: 0, cars: 0, sent: 0, idle: 0, sinPrecio: 0, start: Date.now(),
-      minutes: 30, oldest: null, msg: "", batchN: 0, stopped: false, fb: FB };
+      minutes: 30, oldest: null, msg: "", batchN: 0, stopped: false, fb: FB, noCar: 0, home: location.href.split("#")[0] };
     var panel = S.panel = document.createElement("div");
     panel.setAttribute("style", "position:fixed;right:16px;bottom:16px;z-index:2147483647;background:#111;color:#fff;font:13px/1.4 system-ui,sans-serif;" +
       "padding:12px 14px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.35);width:270px");
@@ -521,11 +547,14 @@
     document.body.appendChild(panel);
     var st = q(panel, "[data-s]"), bp = q(panel, "[data-p]");
     q(panel, "[data-min]").addEventListener("change", function (e) { S.minutes = Math.max(5, Number(e.target.value) || 30); });
-    bp.addEventListener("click", function () { S.running = !S.running; bp.textContent = S.running ? "Pausar" : "Seguir"; if (S.running) loop(); });
+    bp.addEventListener("click", function () {
+      S.running = !S.running; bp.textContent = S.running ? "Pausar" : "Seguir";
+      if (S.running) { S.home = location.href.split("#")[0]; S.msg = ""; loop(); }   // sigue desde donde estás
+    });
     q(panel, "[data-x]").addEventListener("click", function () { finish("Terminado."); });
     function show() {
       var left = Object.keys(S.pending).length;
-      st.innerHTML = S.posts + " publicaciones leídas · <b>" + S.cars + " autos</b>" + (S.sinPrecio ? " · " + S.sinPrecio + " sin precio (no se guardan)" : "") + "<br>" + S.sent + " en tu lista por revisar" + (left ? " · " + left + " tanda(s) esperando a carcollection.app" : "") +
+      st.innerHTML = S.posts + " publicaciones leídas · <b>" + S.cars + " autos</b>" + (S.sinPrecio ? " · " + S.sinPrecio + " sin precio" : "") + (S.noCar ? " · " + S.noCar + " no son autos (relojes, piezas…)" : "") + "<br>" + S.sent + " en tu lista por revisar" + (left ? " · " + left + " tanda(s) esperando a carcollection.app" : "") +
         (S.oldest ? "<br>Llegó hasta el " + S.oldest : "") + (S.msg ? "<br><span style='color:#ffcf6b'>" + S.msg + "</span>" : "");
     }
     // tandas de hasta 25 autos; se reenvían hasta que carcollection.app confirma que las guardó
@@ -552,17 +581,46 @@
     function finish(why) {
       S.running = false; S.stopped = true; bp.disabled = true; S.msg = why; flush(true);
     }
+    // Si algo abrió Reels, un video o una foto (o Facebook cambió de página), se regresa a donde empezó.
+    // Tres intentos; si no se puede, se pausa y lo dice en el panel.
+    async function backHome() {
+      for (var t = 0; t < 3; t++) {
+        // solo visores (video, Reels, foto grande); un chat abierto no cuenta
+        var dlg = qa(document, '[role="dialog"]').filter(function (d) {
+          return !panel.contains(d) && !!(q(d, 'video, a[href*="/reel/"]') || qa(d, "img").some(function (i) { return (i.naturalWidth || Number(i.getAttribute("width")) || 0) >= 480; }));
+        });
+        if (location.href.split("#")[0] === S.home && !dlg.length) return true;
+        if (dlg.length) {
+          var c = qa(document, '[aria-label="Cerrar"], [aria-label="Close"]').filter(function (b) { return dlg.some(function (d) { return d.contains(b); }); })[0];
+          if (c) { try { c.click(); } catch (e) {} }
+          else { try { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", keyCode: 27, bubbles: true })); } catch (e) {} }
+        }
+        if (location.href.split("#")[0] !== S.home) { try { history.back(); } catch (e) {} }
+        S.msg = "Me salí de la página (Reels, video o foto): regresando…"; show();
+        await sleep(2500);
+      }
+      if (location.href.split("#")[0] === S.home) { S.msg = ""; return true; }
+      S.running = false; bp.textContent = "Seguir";
+      S.msg = "Me salí de la página y no pude regresar. Vuelve a la búsqueda o al grupo y dale Seguir.";
+      show();
+      return false;
+    }
     async function loop() {
       while (S.running) {
         if (Date.now() - S.start > S.minutes * 60000) return finish("Se cumplió el tiempo de la sesión.");
+        if (!(await backHome())) return;
         var fresh = 0, posts = topPosts();
         for (var i = 0; i < posts.length && S.running; i++) {
           var el = posts[i];
           if (el.__pcLeido) continue;
-          el.__pcLeido = true; fresh++; S.posts++;
+          el.__pcLeido = true; fresh++;
+          if (isReelsBlock(el)) continue;
+          S.posts++;
           var it = null;
-          try { it = await readPost(el); } catch (e) { /* publicación rara: se brinca */ }
-          if (it && it.skip) { if (it.skip === "sin_precio") S.sinPrecio++; it = null; }
+          // ninguna publicación detiene el recorrido más de 25 s
+          try { it = await Promise.race([readPost(el), sleep(25000).then(function () { return { skip: "lenta" }; })]); } catch (e) { /* publicación rara: se brinca */ }
+          if (!(await backHome())) return;
+          if (it && it.skip) { if (it.skip === "sin_precio") S.sinPrecio++; else if (it.skip === "no_es_auto") S.noCar++; it = null; }
           if (it && !S.done[it.external_id]) {
             S.done[it.external_id] = 1; S.cars++;
             if (it.currency !== "USD") S.queue.push(it);
@@ -577,6 +635,8 @@
         await sleep(4000);   // que Facebook alcance a cargar las siguientes
       }
     }
+    // en la pestaña "Todo" de la búsqueda salen Reels, personas y páginas: "Publicaciones" va directo a lo que sirve
+    if (/^\/search\/top\b/.test(location.pathname)) S.msg = "Consejo: en la pestaña \"Publicaciones\" de la búsqueda no salen Reels y avanza más rápido.";
     show();
     loop();
   }

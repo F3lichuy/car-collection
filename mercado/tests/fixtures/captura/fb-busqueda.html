@@ -13,8 +13,29 @@
   <span>Seminuevos GDL</span><a href="#" class="t" data-href="/groups/seminuevosgdl/permalink/5551234/" data-full="3 de noviembre de 2025"><span>10 d</span></a>
   <div data-ad-preview="message"><div dir="auto">Mercedes-Benz G 63 AMG 2019, 41,000 km, $3,350,000</div></div>
 </div></div>
+<div><div>
+  <h2>Reels</h2>
+  <a href="/reel/111"><img src="https://scontent.x.fbcdn.net/v/t39/reel1.jpg" width="300" height="500"></a>
+  <a href="/reel/222"><img src="https://scontent.x.fbcdn.net/v/t39/reel2.jpg" width="300" height="500"></a>
+  <a href="/reels/search/?q=ferrari" class="reels-mas"><span>Ver más</span></a>
+</div></div>
+<div><div role="article">
+  <span>Relojes MX</span><a href="#" class="t" data-href="/groups/relojesmx/posts/7001/" data-full="2 de noviembre de 2025"><span>11 d</span></a>
+  <div data-ad-preview="message"><div dir="auto">Rolex Daytona 116500 2022 full set<br>$650,000</div></div>
+</div></div>
+<div><div role="article">
+  <span>Partes GDL</span><a href="#" class="t" data-href="/groups/partes/posts/7002/" data-full="1 de noviembre de 2025"><span>12 d</span></a>
+  <div data-ad-preview="message"><div dir="auto">Rines BBS originales 20" para Ferrari 488 2018<br>$185,000</div></div>
+</div></div>
+<div><div role="article">
+  <span>Coleccionables</span><a href="#" class="t" data-href="/groups/escala/posts/7003/" data-full="31 de octubre de 2025"><span>13 d</span></a>
+  <div data-ad-preview="message"><div dir="auto">Porsche 918 Spyder a escala 1:8 edición limitada $120,000</div></div>
+</div></div>
 </div></div>
 <script>
+document.querySelector(".reels-mas").addEventListener("click", function (e) { e.preventDefault(); window.__entroAReels = true; });
+// a medio recorrido algo saca la página a un Reel (como cuando Facebook abre el visor solo)
+if (window.__pcTrampa) setTimeout(function () { history.pushState({}, "", "/reel/999"); }, 1500);
 document.querySelectorAll("a.t").forEach(function (a) {
   a.addEventListener("mouseover", function () {
     a.href = a.dataset.href + "?__cft__=x";

@@ -103,10 +103,14 @@ test('búsqueda de Facebook: mismo recorrido, ligas de páginas (pfbid) y de gru
     await page.evaluate(() => { window.__sent = []; window.open = () => ({ closed: false, postMessage: m => window.__sent.push(JSON.parse(JSON.stringify(m))) }); });
     await page.evaluate(readFileSync(new URL('../../captura-marcador.js', import.meta.url), 'utf8'));
     assert.match(await page.textContent('body'), /Precio de Calle · búsqueda/);
-    await page.waitForFunction(() => /2 publicaciones/.test(document.querySelector('[data-s]')?.textContent || ''), null, { timeout: 60000 });
+    // (el contador sube al empezar a leer cada publicación: se espera a que la quinta termine)
+    await page.waitForFunction(() => /5 publicaciones.*3 no son autos/.test(document.querySelector('[data-s]')?.textContent || ''), null, { timeout: 90000 });
+    assert.match(await page.textContent('[data-s]'), /2 autos · 3 no son autos/);   // Rolex, rines y el de escala; el bloque de Reels ni se cuenta
+    assert.equal(await page.evaluate(() => !!window.__entroAReels), false);
     await page.click('[data-x]');
     await page.waitForFunction(() => window.__sent.length > 0);
     const items = (await page.evaluate(() => window.__sent))[0].items;
+    assert.equal(items.length, 2, JSON.stringify(items.map(i => i.title)));
     const puro = items.find(i => /purosangue/i.test(i.title));
     assert.equal(puro.price, 14399000);
     assert.equal(puro.year, 2026);
@@ -137,3 +141,22 @@ test('se activa solo con la dirección real: búsqueda dentro de un grupo y bús
     }
   } finally { await browser.close(); }
 });
+
+test('si algo saca la página a Reels, regresa solo y sigue', { skip: !chromium && 'Playwright no está instalado', timeout: 120000 }, async () => {
+  const browser = await chromium.launch();
+  try {
+    const html = readFileSync(new URL('./fixtures/captura/fb-busqueda.html', import.meta.url), 'utf8')
+      .replace(/<script>window\.__pc[^<]*<\/script>/, '<script>window.__pcTrampa = true;</script>');
+    const page = await browser.newPage();
+    await page.route('https://www.facebook.com/**', r => r.fulfill({ status: 200, contentType: 'text/html', body: html }));
+    await page.goto('https://www.facebook.com/search/top/?q=ferrari');
+    await page.evaluate(() => { window.__sent = []; window.open = () => ({ closed: false, postMessage: m => window.__sent.push(JSON.parse(JSON.stringify(m))) }); });
+    await page.evaluate(readFileSync(new URL('../../captura-marcador.js', import.meta.url), 'utf8'));
+    await page.waitForFunction(() => /5 publicaciones/.test(document.querySelector('[data-s]')?.textContent || ''), null, { timeout: 100000 });
+    assert.equal(new URL(page.url()).pathname, '/search/top/');   // regresó de /reel/999
+    await page.click('[data-x]');
+    await page.waitForFunction(() => window.__sent.length > 0);
+    assert.equal((await page.evaluate(() => window.__sent))[0].items.length, 2);
+  } finally { await browser.close(); }
+});
+

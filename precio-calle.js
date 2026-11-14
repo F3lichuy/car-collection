@@ -1400,8 +1400,11 @@
   const revSave = () => { try { localStorage.setItem(REV_KEY, JSON.stringify({ items: REV.items.slice(-600) })); } catch (e) { /* lleno o bloqueado */ } };
   const MIN_PRICE = () => Number((S.settings || {}).min_precio_captura) || 100000;
   const JUNK_RE = /\b(no (funciona|arranca|prende|enciende|camina|corre)|para (piezas|partes|refacciones|reparar|restaurar)|por (piezas|partes)|desarmad[oa]s?|sin motor|motor (desvielado|desbielado|fundido|desarmado|da[nñ]ado)|desvielad[oa]|desbielad[oa]|deshuesadero|chatarra|proyecto de restauraci[oó]n|como proyecto|se vende como est[aá])\b/i;
+  // relojes, piezas y accesorios, modelos a escala (el botón ya los brinca; esto es la segunda red)
+  const NOTCAR_RE = /\b(reloj(es)?|rolex|patek|audemars|richard mille|hublot|royal oak|nautilus|submariner|datejust|a escala|escala 1|1[:\/](8|12|18|24|43)\b|hot ?wheels|maqueta|die-?cast)\b|^(vendo |venta de |se venden? )?(rines?|llantas?|faros?|calaveras?|fascias?|defensas?|escapes?|volantes?|asientos?|alerones?|frenos?|piezas|refacciones|autopartes)\b/;
   function junkWhy(x) {
     if (x.currency === "USD") return "En dólares: no se guarda";
+    if (NOTCAR_RE.test(unacc(x.title).trim()) && !(Number(x.km) > 0)) return "No parece un auto (reloj, pieza o escala)";
     if (!(Number(x.price) > 0)) return "Sin precio: no se guarda";
     const m = JUNK_RE.exec(`${x.title || ""}\n${x.description || ""}`);
     if (m) return `Dice "${m[0]}"`;
@@ -1565,7 +1568,7 @@
   let marcadorHref = null;
   async function ensureMarcador() {
     if (marcadorHref) return marcadorHref;
-    try { const r = await fetch("captura-marcador.js?v=8", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
+    try { const r = await fetch("captura-marcador.js?v=9", { cache: "no-cache" }); if (r.ok) marcadorHref = "javascript:" + encodeURIComponent(await r.text()); } catch (e) {}
     return marcadorHref;
   }
   function adminPanel() {
